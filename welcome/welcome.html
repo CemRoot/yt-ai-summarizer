@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="welcome.css">
+  <title>Welcome to YouTube AI Summarizer</title>
+</head>
+<body>
+  <div class="welcome-container">
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="#ff0000">
+          <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+        </svg>
+      </div>
+      <h1>YouTube AI Summarizer</h1>
+      <p class="hero-subtitle">Summarize any YouTube video instantly with AI</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <!-- Step 1: API Key -->
+      <div class="step active" id="step1">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div>
+            <h2>Get Your Free API Key</h2>
+            <p>You'll need a Groq API key to use AI summarization. It's completely free!</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="instruction-card">
+            <div class="instruction-step">
+              <span class="badge">a</span>
+              <span>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a></span>
+            </div>
+            <div class="instruction-step">
+              <span class="badge">b</span>
+              <span>Sign up for a free account (Google or GitHub login)</span>
+            </div>
+            <div class="instruction-step">
+              <span class="badge">c</span>
+              <span>Click <strong>"Create API Key"</strong> and copy the key</span>
+            </div>
+            <div class="instruction-step">
+              <span class="badge">d</span>
+              <span>Paste it below:</span>
+            </div>
+          </div>
+
+          <div class="api-input-area">
+            <input type="password" id="apiKeyInput" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" spellcheck="false" autocomplete="off">
+            <button id="validateBtn" class="btn btn-primary">Validate & Save</button>
+          </div>
+          <div id="validationStatus" class="validation-status hidden"></div>
+        </div>
+      </div>
+
+      <!-- Step 2: How it works -->
+      <div class="step" id="step2">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div>
+            <h2>How It Works</h2>
+            <p>Simple 3-step process on any YouTube video</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="feature-cards">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="#ff0000">
+                  <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                </svg>
+              </div>
+              <h3>Open a YouTube Video</h3>
+              <p>Navigate to any YouTube video with captions</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="#065fd4">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+              </div>
+              <h3>Click the AI Button</h3>
+              <p>Click the floating brain icon on the bottom-right</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="#0d7e3f">
+                  <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                </svg>
+              </div>
+              <h3>Get AI Summary</h3>
+              <p>Choose Summary, Key Points, or Detailed Analysis</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Ready -->
+      <div class="step" id="step3">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div>
+            <h2>You're All Set!</h2>
+            <p>Start saving time with AI-powered video summaries</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="ready-actions">
+            <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-large">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+              </svg>
+              Go to YouTube
+            </a>
+            <p class="tip">💡 <strong>Tip:</strong> You can also access settings anytime by clicking the extension icon in your toolbar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="welcome-footer">
+      <p>Powered by <a href="https://groq.com" target="_blank" rel="noopener noreferrer">Groq</a> AI · <a href="#" id="privacyLink">Privacy Policy</a></p>
+    </div>
+  </div>
+
+  <script src="welcome.js"></script>
+</body>
+</html>

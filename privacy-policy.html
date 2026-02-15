@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - YouTube AI Summarizer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.7;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f0f0f;
+      margin-bottom: 8px;
+    }
+    .last-updated {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 19px;
+      font-weight: 600;
+      color: #0f0f0f;
+      margin: 28px 0 12px;
+    }
+    p {
+      margin-bottom: 14px;
+      font-size: 15px;
+    }
+    ul {
+      margin: 8px 0 14px 24px;
+    }
+    li {
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+    strong {
+      color: #0f0f0f;
+    }
+    a {
+      color: #065fd4;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .highlight {
+      background: #e6f9ed;
+      border-left: 3px solid #0d7e3f;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+    }
+    .highlight p {
+      margin: 0;
+      font-size: 14px;
+      color: #0d7e3f;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 13px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: February 15, 2026</p>
+
+    <p>YouTube AI Summarizer ("the Extension") is committed to protecting your privacy. This policy explains what data the Extension accesses, how it is used, and your rights.</p>
+
+    <div class="highlight">
+      <p><strong>Summary:</strong> We do not collect, store, or sell any personal data. All processing happens locally in your browser or through the AI API you configure.</p>
+    </div>
+
+    <h2>1. Data We Access</h2>
+    <p>The Extension accesses the following data solely for its functionality:</p>
+    <ul>
+      <li><strong>YouTube Video Transcripts:</strong> When you request a summary, the Extension extracts the video's publicly available caption/subtitle data from the YouTube page you are viewing.</li>
+      <li><strong>Your Groq API Key:</strong> You provide your own API key, which is stored locally in your browser's extension storage (<code>chrome.storage.local</code>).</li>
+      <li><strong>Extension Settings:</strong> Your preferences (language, model choice, auto-run preference) are stored locally in your browser.</li>
+    </ul>
+
+    <h2>2. How Data Is Used</h2>
+    <ul>
+      <li><strong>Transcript text</strong> is sent to the Groq API (api.groq.com) solely for AI summarization. The text is processed by Groq's servers and the summary is returned to your browser.</li>
+      <li><strong>Your API key</strong> is sent to Groq API for authentication. It is never sent anywhere else.</li>
+      <li><strong>No personal information</strong> (name, email, browsing history, etc.) is ever collected or transmitted.</li>
+    </ul>
+
+    <h2>3. Data Storage</h2>
+    <ul>
+      <li>All data is stored <strong>locally in your browser</strong> using Chrome's extension storage API.</li>
+      <li>Summary results may be temporarily cached in your browser session to avoid redundant API calls.</li>
+      <li>No data is stored on any external server controlled by us.</li>
+      <li>You can clear all stored data at any time from the Extension's settings.</li>
+    </ul>
+
+    <h2>4. Third-Party Services</h2>
+    <p>The Extension communicates with the following third-party service:</p>
+    <ul>
+      <li><strong>Groq API</strong> (<a href="https://groq.com" target="_blank" rel="noopener noreferrer">groq.com</a>): Used for AI-powered text summarization. Your transcript text is sent to Groq's servers for processing. Please review <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a> for details on how they handle data.</li>
+    </ul>
+    <p>We do not use any analytics, tracking, advertising, or data collection services.</p>
+
+    <h2>5. Data Sharing</h2>
+    <p>We do <strong>not</strong>:</p>
+    <ul>
+      <li>Sell your data to anyone</li>
+      <li>Share your data with third parties (other than sending transcripts to Groq for summarization, as described above)</li>
+      <li>Use your data for advertising or profiling</li>
+      <li>Track your browsing activity</li>
+    </ul>
+
+    <h2>6. Permissions Explanation</h2>
+    <ul>
+      <li><strong>storage:</strong> To save your API key and preferences locally in your browser.</li>
+      <li><strong>activeTab:</strong> To interact with the YouTube page you're currently viewing and extract transcript data.</li>
+      <li><strong>Host permission (youtube.com):</strong> To run the Extension's content script on YouTube video pages.</li>
+      <li><strong>Host permission (api.groq.com):</strong> To send API requests for AI summarization.</li>
+    </ul>
+
+    <h2>7. Your Rights</h2>
+    <ul>
+      <li>You can delete all Extension data by removing the Extension from Chrome.</li>
+      <li>You can clear cached data from the Extension's settings at any time.</li>
+      <li>You can revoke your Groq API key from <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a> at any time.</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+    <p>The Extension is not directed at children under 13. We do not knowingly collect any personal information from children.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be reflected in the "Last updated" date at the top of this page. Continued use of the Extension after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>10. Contact</h2>
+    <p>If you have questions about this Privacy Policy, please open an issue on our GitHub repository or contact us through the Chrome Web Store listing.</p>
+
+    <div class="footer">
+      <p>YouTube AI Summarizer · Privacy Policy</p>
+    </div>
+  </div>
+</body>
+</html>

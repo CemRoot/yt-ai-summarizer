@@ -1,0 +1,86 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "Extension name shown in Chrome Web Store and browser"
+  },
+  "extDescription": {
+    "message": "Summarize any YouTube video instantly with AI. Get key points, summaries, and detailed analysis without watching the full video.",
+    "description": "Extension description for Chrome Web Store listing"
+  },
+  "apiKeyRequired": {
+    "message": "Please enter your Groq API key to get started.",
+    "description": "Message shown when API key is not configured"
+  },
+  "summarize": {
+    "message": "Summarize",
+    "description": "Button label for summarize action"
+  },
+  "keyPoints": {
+    "message": "Key Points",
+    "description": "Button label for key points mode"
+  },
+  "detailedAnalysis": {
+    "message": "Detailed Analysis",
+    "description": "Button label for detailed analysis mode"
+  },
+  "loading": {
+    "message": "Analyzing video...",
+    "description": "Loading state message"
+  },
+  "noTranscript": {
+    "message": "No transcript available for this video.",
+    "description": "Error when transcript cannot be found"
+  },
+  "errorGeneric": {
+    "message": "Something went wrong. Please try again.",
+    "description": "Generic error message"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings page title"
+  },
+  "apiKey": {
+    "message": "Groq API Key",
+    "description": "Label for API key input"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button label"
+  },
+  "language": {
+    "message": "Response Language",
+    "description": "Label for language preference"
+  },
+  "autoRun": {
+    "message": "Auto-summarize on page load",
+    "description": "Label for auto-run toggle"
+  },
+  "model": {
+    "message": "AI Model",
+    "description": "Label for model selection"
+  },
+  "modelFast": {
+    "message": "Fast (Llama 3.1 8B)",
+    "description": "Fast model option"
+  },
+  "modelBalanced": {
+    "message": "Balanced (Llama 3.3 70B)",
+    "description": "Balanced model option"
+  },
+  "defaultMode": {
+    "message": "Default Mode",
+    "description": "Label for default summary mode"
+  },
+  "summary": {
+    "message": "Summary",
+    "description": "Summary mode label"
+  },
+  "detailed": {
+    "message": "Detailed Analysis",
+    "description": "Detailed mode label"
+  },
+  "copied": {
+    "message": "Copied to clipboard!",
+    "description": "Feedback when text is copied"
+  }
+}

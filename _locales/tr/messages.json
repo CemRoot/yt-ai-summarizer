@@ -1,0 +1,86 @@
+{
+  "extName": {
+    "message": "YouTube AI Özetleyici",
+    "description": "Chrome Web Store ve tarayıcıda gösterilen uzantı adı"
+  },
+  "extDescription": {
+    "message": "Herhangi bir YouTube videosunu AI ile anında özetleyin. Videoyu izlemeden önemli noktaları, özetleri ve detaylı analizleri alın.",
+    "description": "Chrome Web Store listeleme açıklaması"
+  },
+  "apiKeyRequired": {
+    "message": "Başlamak için lütfen Groq API anahtarınızı girin.",
+    "description": "API anahtarı yapılandırılmamışken gösterilen mesaj"
+  },
+  "summarize": {
+    "message": "Özetle",
+    "description": "Özetleme butonu etiketi"
+  },
+  "keyPoints": {
+    "message": "Önemli Noktalar",
+    "description": "Önemli noktalar modu butonu"
+  },
+  "detailedAnalysis": {
+    "message": "Detaylı Analiz",
+    "description": "Detaylı analiz modu butonu"
+  },
+  "loading": {
+    "message": "Video analiz ediliyor...",
+    "description": "Yükleme durumu mesajı"
+  },
+  "noTranscript": {
+    "message": "Bu video için altyazı bulunamadı.",
+    "description": "Transcript bulunamadığında gösterilen hata"
+  },
+  "errorGeneric": {
+    "message": "Bir hata oluştu. Lütfen tekrar deneyin.",
+    "description": "Genel hata mesajı"
+  },
+  "settings": {
+    "message": "Ayarlar",
+    "description": "Ayarlar sayfası başlığı"
+  },
+  "apiKey": {
+    "message": "Groq API Anahtarı",
+    "description": "API anahtarı giriş etiketi"
+  },
+  "save": {
+    "message": "Kaydet",
+    "description": "Kaydet butonu etiketi"
+  },
+  "language": {
+    "message": "Yanıt Dili",
+    "description": "Dil tercihi etiketi"
+  },
+  "autoRun": {
+    "message": "Sayfa yüklendiğinde otomatik özetle",
+    "description": "Otomatik çalıştırma etiketi"
+  },
+  "model": {
+    "message": "AI Modeli",
+    "description": "Model seçimi etiketi"
+  },
+  "modelFast": {
+    "message": "Hızlı (Llama 3.1 8B)",
+    "description": "Hızlı model seçeneği"
+  },
+  "modelBalanced": {
+    "message": "Dengeli (Llama 3.3 70B)",
+    "description": "Dengeli model seçeneği"
+  },
+  "defaultMode": {
+    "message": "Varsayılan Mod",
+    "description": "Varsayılan özet modu etiketi"
+  },
+  "summary": {
+    "message": "Özet",
+    "description": "Özet modu etiketi"
+  },
+  "detailed": {
+    "message": "Detaylı Analiz",
+    "description": "Detaylı mod etiketi"
+  },
+  "copied": {
+    "message": "Panoya kopyalandı!",
+    "description": "Metin kopyalandığında geri bildirim"
+  }
+}
