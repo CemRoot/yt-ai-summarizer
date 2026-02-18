@@ -225,11 +225,13 @@ const TranscriptExtractor = (() => {
   }
 
   async function fetchTranscriptDirect(trackUrl) {
+    const fetchOpts = { credentials: 'include' };
+
     // JSON3
     try {
       const url = new URL(trackUrl);
       url.searchParams.set('fmt', 'json3');
-      const resp = await fetch(url.toString());
+      const resp = await fetch(url.toString(), fetchOpts);
       if (resp.ok) {
         const entries = parseJSON3Events(await resp.json());
         if (entries) {
@@ -243,7 +245,7 @@ const TranscriptExtractor = (() => {
 
     // XML fallback
     try {
-      const resp = await fetch(trackUrl);
+      const resp = await fetch(trackUrl, fetchOpts);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const xmlText = await resp.text();
       const parser = new DOMParser();

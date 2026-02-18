@@ -310,11 +310,13 @@ async function validateKey(apiKey) {
  * Service worker fetch avoids CORS / redirect issues that content scripts hit.
  */
 async function proxyFetchTranscript(trackUrl) {
+  const fetchOpts = { credentials: 'include' };
+
   // Try JSON3
   try {
     const url = new URL(trackUrl);
     url.searchParams.set('fmt', 'json3');
-    const resp = await fetch(url.toString());
+    const resp = await fetch(url.toString(), fetchOpts);
     if (resp.ok) {
       const data = await resp.json();
       if (data?.events) {
@@ -333,7 +335,7 @@ async function proxyFetchTranscript(trackUrl) {
 
   // Try XML (DOMParser not available in SW, use regex)
   try {
-    const resp = await fetch(trackUrl);
+    const resp = await fetch(trackUrl, fetchOpts);
     if (!resp.ok) return { entries: null };
     const text = await resp.text();
     const entries = [];
@@ -363,6 +365,7 @@ async function proxyFetchCaptionTracks(videoId) {
   try {
     const resp = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         context: {
@@ -396,8 +399,8 @@ async function proxyFetchCaptionTracks(videoId) {
   // Method B: Fetch the watch page HTML and extract player response
   try {
     const resp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      credentials: 'include',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9'
       }
     });
