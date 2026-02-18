@@ -32,23 +32,20 @@
     const videoId = TranscriptExtractor.getVideoId();
     if (!videoId) return;
 
-    // Don't re-initialize for the same video
     if (videoId === currentVideoId) return;
+
+    // New video – wipe stale transcript / summary caches for previous video
     currentVideoId = videoId;
-
-    // Reset state
     isProcessing = false;
+    summaryCache = {};
 
-    // Initialize UI
     SummarizerUI.init();
 
-    // Check if API key is configured
     const hasKey = await StorageHelper.hasApiKey();
     if (!hasKey && SummarizerUI.isPanelOpen()) {
       SummarizerUI.showApiKeyPrompt();
     }
 
-    // Check auto-run setting
     const settings = await StorageHelper.getSettings();
     if (settings.autoRun && hasKey) {
       SummarizerUI.autoOpen();
@@ -57,15 +54,16 @@
   }
 
   /**
-   * Debounced initialize - prevents triple calls from simultaneous navigation events
+   * Debounced initialize – waits for YouTube's player to load fresh data after SPA nav
    */
   function debouncedInitialize() {
     clearTimeout(initTimeout);
     initTimeout = setTimeout(() => {
+      currentVideoId = null; // force re-init even if URL polled same ID briefly
       initialize().catch((err) => {
         console.warn('[YT-AI-Summarizer] Init error:', err);
       });
-    }, 500);
+    }, 800);
   }
 
   /**

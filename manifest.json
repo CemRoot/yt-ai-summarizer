@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "default_locale": "en",
-  "minimum_chrome_version": "102",
+  "minimum_chrome_version": "111",
 
   "permissions": [
     "storage",
@@ -21,6 +21,12 @@
   },
 
   "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/watch*"],
+      "js": ["content/page-bridge.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
     {
       "matches": ["https://www.youtube.com/watch*"],
       "js": [
