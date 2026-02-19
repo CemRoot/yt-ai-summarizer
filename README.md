@@ -1,120 +1,223 @@
 # YouTube AI Summarizer
 
-> Summarize any YouTube video instantly with AI. Get key points, summaries, and detailed analysis without watching the full video.
+> **Stop watching. Start reading.** Summarize any YouTube video for free with your own AI — no subscriptions, no hidden fees.
+
+[![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
+![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.2.0-orange)
+
+---
+
+## What It Does
+
+Turn any YouTube video into a concise, actionable summary in seconds. Bring your own AI key, choose your language, and get:
+
+- **Summary** — Full picture in 3–5 clean paragraphs
+- **Key Points** — 5–10 evidence-backed takeaways as a numbered list
+- **Detailed Analysis** — Section-by-section breakdown with names, dates, data preserved
+
+All three are generated in a **single API call** — no rate limit issues.
+
+---
 
 ## Features
 
-- **AI-Powered Summaries** — Get concise summaries of any YouTube video with captions
-- **Three Analysis Modes:**
-  - **Summary** — 3-5 paragraph overview of the video content
-  - **Key Points** — Numbered list of the most important takeaways
-  - **Detailed Analysis** — Section-by-section breakdown
-- **Multiple Languages** — Supports 12+ languages for AI responses
-- **Dark/Light Theme** — Automatically matches YouTube's theme
-- **Transcript Caching** — Avoids redundant API calls for the same video
-- **SPA-Compatible** — Works seamlessly with YouTube's single-page navigation
-- **Compact UI** — Collapsible side panel that doesn't interfere with video playback
+| Feature | Details |
+|---------|---------|
+| **Dual AI Provider** | Choose between **Groq** (ultra-fast) or **Ollama Cloud** (flexible models). Switch anytime. |
+| **20+ Languages** | Output in English, Türkçe, Español, Français, Deutsch, 日本語, 한국어, 中文 and more — regardless of video language. |
+| **Modern UI/UX** | Seamless YouTube integration, underline-style tabs, smooth animations, Inter font. |
+| **Dark & Light Mode** | Automatically matches YouTube's theme + system preference. |
+| **Onboarding Flow** | Step-by-step welcome page with provider selection and guided API key setup. |
+| **First-Visit Tooltip** | Animated "Hey! I'm here" bubble guides new users to the button. |
+| **One-Click Copy** | Copy any analysis to clipboard instantly. |
+| **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
+| **Smart Caching** | In-memory + persistent storage — tab switching is instant, no re-fetching. |
+| **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
+| **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
+
+---
 
 ## Getting Started
 
-### 1. Install the Extension
-- Download or clone this repository
-- Open Chrome and navigate to `chrome://extensions/`
-- Enable **Developer mode** (toggle in top-right)
-- Click **Load unpacked** and select the extension folder
+### 1. Install
 
-### 2. Get a Free Groq API Key
-- Visit [console.groq.com/keys](https://console.groq.com/keys)
-- Sign up for a free account
-- Create a new API key and copy it
+```bash
+# Clone the repo
+git clone https://github.com/CemRoot/yt-ai-summarizer.git
 
-### 3. Configure the Extension
-- Click the extension icon in your Chrome toolbar
-- Paste your Groq API key
-- Choose your preferred model and settings
-- Save!
+# Or download the latest release ZIP
+```
 
-### 4. Start Summarizing
-- Go to any YouTube video
-- Click the floating brain icon (bottom-right of the page)
-- Choose your analysis mode and get instant AI summaries!
+Then in Chrome:
+1. Navigate to `chrome://extensions/`
+2. Enable **Developer mode** (toggle top-right)
+3. Click **Load unpacked** → select the extension folder
+
+### 2. Get a Free API Key
+
+Choose your provider:
+
+| Provider | Get Key | Free Tier |
+|----------|---------|-----------|
+| **Groq** (recommended) | [console.groq.com/keys](https://console.groq.com/keys) | 30 RPM, up to 500K tokens/day |
+| **Ollama Cloud** | [ollama.com/settings/keys](https://ollama.com/settings/keys) | Flexible limits, 10+ models |
+
+### 3. Configure & Go
+
+1. Click the extension icon → paste your API key
+2. Pick your AI model and output language
+3. Open any YouTube video → click the floating brain icon
+4. Done. Summaries in seconds.
+
+---
 
 ## How It Works
 
 ```
-YouTube Video Page → Extract Transcript → Send to Groq AI → Display Summary
+YouTube Video → Extract Transcript → Send to AI Provider → Parse 3 Sections → Display
 ```
 
-1. **Transcript Extraction**: The extension extracts the video's caption/subtitle data directly from YouTube's page data (no external APIs needed for this step).
-2. **AI Processing**: The transcript is sent to Groq's fast AI API (powered by Llama models) for summarization.
-3. **Result Display**: The AI-generated summary is displayed in a compact side panel on the YouTube page.
+1. **Transcript Extraction** — Pulls caption data directly from YouTube using Android client context (no external APIs).
+2. **Combined AI Call** — A single prompt generates Summary + Key Points + Detailed Analysis simultaneously.
+3. **Robust Parsing** — 4-layer parser: exact delimiters → regex variants → heuristic headings → smart split.
+4. **Instant Display** — Results shown in a native-feeling side panel. Switch tabs instantly from cache.
 
-## Tech Stack
-
-- **Chrome Extension Manifest V3** — Latest extension platform
-- **Groq API** — Ultra-fast AI inference (free tier available)
-- **Llama 3.3 70B** — High-quality language model for summarization
-- **Vanilla JavaScript** — No frameworks, minimal footprint
+---
 
 ## AI Models
 
-| Model | Speed | Quality | Rate Limit |
-|-------|-------|---------|------------|
-| Llama 3.1 8B (Fast) | ⚡⚡⚡ | ★★★ | 30 RPM, 500K TPD |
-| Llama 3.3 70B (Balanced) | ⚡⚡ | ★★★★★ | 30 RPM, 100K TPD |
+### Groq
+
+| Model | Speed | Quality | Best For |
+|-------|-------|---------|----------|
+| Llama 3.3 70B | ⚡⚡ | ★★★★★ | Highest quality summaries |
+| Llama 3.1 8B | ⚡⚡⚡ | ★★★ | Fast results, higher rate limit |
+| Llama 4 Scout 17B | ⚡⚡ | ★★★★ | New generation model |
+| Qwen3 32B | ⚡⚡ | ★★★★ | Strong reasoning |
+
+### Ollama Cloud
+
+| Model | Size | Best For |
+|-------|------|----------|
+| Qwen3-Next 80B | 80B | Reasoning & thinking |
+| DeepSeek V3.2 | 671B | Most powerful |
+| GPT-OSS 120B | 120B | General purpose |
+| Gemini 3 Flash | — | Fast responses |
+| Kimi K2.5 | — | Multimodal |
+| Devstral Small | 24B | Code-focused |
+
+---
 
 ## Project Structure
 
 ```
-Chrome-extention/
-├── manifest.json            # Extension manifest (V3)
-├── service-worker.js        # Background service worker
+yt-ai-summarizer/
+├── manifest.json              # Extension manifest (V3)
+├── service-worker.js          # Background: AI calls, routing, parsing
 ├── content/
-│   ├── content.js           # Main content script controller
-│   ├── content.css          # Injected panel styles
-│   ├── transcript.js        # YouTube transcript extraction
-│   └── ui.js                # Panel UI management
+│   ├── content.js             # Main controller (cache, SPA nav)
+│   ├── content.css            # Panel styles + dark/light theme
+│   ├── transcript.js          # YouTube transcript extraction
+│   ├── ui.js                  # Panel UI, tabs, onboarding tooltip
+│   └── page-bridge.js         # MAIN world bridge for YT data
 ├── popup/
-│   ├── popup.html           # Settings popup
-│   ├── popup.js             # Settings logic
-│   └── popup.css            # Popup styles
+│   ├── popup.html             # Settings panel (dual provider)
+│   ├── popup.js               # Settings logic
+│   └── popup.css              # Modern card-based styles
 ├── welcome/
-│   ├── welcome.html         # Onboarding page
-│   ├── welcome.js           # Onboarding logic
-│   └── welcome.css          # Onboarding styles
+│   ├── welcome.html           # Step-by-step onboarding
+│   ├── welcome.js             # Provider selection & validation
+│   └── welcome.css            # Onboarding styles
 ├── utils/
-│   └── storage.js           # Chrome storage helpers
-├── icons/                   # Extension icons (16, 48, 128px)
+│   └── storage.js             # Provider-aware storage helpers
+├── icons/                     # Extension icons (16, 48, 128px)
 ├── _locales/
-│   ├── en/messages.json     # English translations
-│   └── tr/messages.json     # Turkish translations
-├── privacy-policy.html      # Privacy policy page
+│   ├── en/messages.json       # English strings
+│   └── tr/messages.json       # Turkish strings
+├── privacy-policy.html        # Privacy policy (Groq + Ollama)
+├── .github/workflows/ci.yml   # CI/CD pipeline
 └── README.md
 ```
 
+---
+
+## CI/CD Pipeline
+
+Every push to `main` triggers 4 automated checks:
+
+| Job | What It Does |
+|-----|-------------|
+| **Manifest Check** | Validates JSON, required fields, manifest_version 3, referenced file existence |
+| **JS Lint** | Syntax checks on all `.js` files, JSON validation, HTML structure checks |
+| **Security Audit** | Scans for hardcoded API keys, `eval()`, `document.write()`, CSP validation, host permission audit |
+| **Build & Package** | Creates versioned `.zip` artifact for Chrome Web Store submission |
+
+---
+
 ## Privacy
 
-- **No data collection** — We don't collect any personal information
-- **Local storage only** — Your API key and settings stay in your browser
-- **No tracking** — No analytics, ads, or tracking of any kind
-- **Minimal permissions** — Only `storage` and `activeTab` required
+- **Zero data collection** — no analytics, no tracking, no telemetry
+- **Local storage only** — API keys and settings never leave your browser
+- **Direct API calls** — transcripts go straight to your chosen AI provider
+- **Minimal permissions** — only `storage` and `activeTab`
+- **Open source** — inspect every line of code
 
-See [Privacy Policy](privacy-policy.html) for full details.
+See the full [Privacy Policy](privacy-policy.html).
 
-## Chrome Web Store
-
-This extension is designed to be published on the Chrome Web Store. It complies with:
-- Manifest V3 requirements
-- Chrome Web Store content policies
-- Single purpose policy
-- Permission justification requirements
-- Privacy policy requirements
+---
 
 ## Requirements
 
-- Chrome 88 or later
-- A free Groq API key ([get one here](https://console.groq.com/keys))
+- Chrome 111 or later
+- A free API key from [Groq](https://console.groq.com/keys) or [Ollama](https://ollama.com/settings/keys)
+
+---
+
+## Changelog
+
+### v1.2.0
+
+- Dual AI provider support (Groq + Ollama Cloud)
+- Complete UI/UX redesign (Inter font, card-based settings, underline tabs)
+- 20+ language support with flag emojis in selector
+- First-visit onboarding tooltip ("Hey! I'm here")
+- Robust 4-layer response parser (fixes all-tabs-same-content bug)
+- GitHub Actions CI/CD pipeline
+- Updated privacy policy for both providers
+- Marketing-focused Chrome Web Store descriptions
+
+### v1.0.2
+
+- Fix: credentials added to all YouTube fetch calls
+
+### v1.0.1
+
+- Fix: empty transcript bug in transcript extraction
+
+### v1.0.0
+
+- Initial release
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing`)
+3. Commit your changes
+4. Push and open a Pull Request
+
+---
 
 ## License
 
-MIT License — feel free to use, modify, and distribute.
+MIT License — free to use, modify, and distribute.
+
+---
+
+<p align="center">
+  Built for people who learn faster by reading.<br>
+  Built by people who got tired of 45-minute videos with 3 minutes of useful content.
+</p>
