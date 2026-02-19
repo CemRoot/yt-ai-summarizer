@@ -1,0 +1,285 @@
+name: Chrome Extension CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ─── 1. Manifest Validation ───
+  manifest-check:
+    name: Manifest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest.json is valid JSON
+        run: python3 -m json.tool manifest.json > /dev/null
+
+      - name: Check required manifest fields
+        run: |
+          python3 -c "
+          import json, sys
+          m = json.load(open('manifest.json'))
+          required = ['manifest_version', 'name', 'version', 'permissions', 'background', 'content_scripts', 'action', 'icons']
+          missing = [f for f in required if f not in m]
+          if missing:
+              print(f'FAIL: Missing required fields: {missing}')
+              sys.exit(1)
+          if m['manifest_version'] != 3:
+              print('FAIL: manifest_version must be 3')
+              sys.exit(1)
+          print(f'OK: Manifest v{m[\"version\"]} — all required fields present')
+          "
+
+      - name: Verify all referenced files exist
+        run: |
+          python3 -c "
+          import json, os, sys
+          m = json.load(open('manifest.json'))
+          missing = []
+
+          # Service worker
+          sw = m.get('background', {}).get('service_worker')
+          if sw and not os.path.exists(sw):
+              missing.append(sw)
+
+          # Content scripts
+          for cs in m.get('content_scripts', []):
+              for js in cs.get('js', []):
+                  if not os.path.exists(js):
+                      missing.append(js)
+              for css in cs.get('css', []):
+                  if not os.path.exists(css):
+                      missing.append(css)
+
+          # Popup
+          popup = m.get('action', {}).get('default_popup')
+          if popup and not os.path.exists(popup):
+              missing.append(popup)
+
+          # Icons
+          for size, path in m.get('icons', {}).items():
+              if not os.path.exists(path):
+                  missing.append(path)
+          for size, path in m.get('action', {}).get('default_icon', {}).items():
+              if not os.path.exists(path):
+                  missing.append(path)
+
+          if missing:
+              print(f'FAIL: Referenced files not found: {missing}')
+              sys.exit(1)
+          print('OK: All referenced files exist')
+          "
+
+  # ─── 2. JavaScript Lint ───
+  js-lint:
+    name: JavaScript Syntax & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check JS syntax with Node
+        run: |
+          errors=0
+          for f in $(find . -name '*.js' -not -path './node_modules/*'); do
+            if ! node --check "$f" 2>/dev/null; then
+              echo "SYNTAX ERROR: $f"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "FAIL: $errors file(s) have syntax errors"
+            exit 1
+          fi
+          echo "OK: All JS files have valid syntax"
+
+      - name: Validate all JSON files
+        run: |
+          errors=0
+          for f in $(find . -name '*.json' -not -path './node_modules/*'); do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "INVALID JSON: $f"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "FAIL: $errors JSON file(s) are invalid"
+            exit 1
+          fi
+          echo "OK: All JSON files are valid"
+
+      - name: Validate HTML files
+        run: |
+          for f in $(find . -name '*.html' -not -path './node_modules/*'); do
+            if ! grep -q '<!DOCTYPE html>' "$f"; then
+              echo "WARNING: $f missing DOCTYPE"
+            fi
+            if ! grep -q '</html>' "$f"; then
+              echo "FAIL: $f missing closing </html> tag"
+              exit 1
+            fi
+          done
+          echo "OK: All HTML files have valid structure"
+
+  # ─── 3. Security Audit ───
+  security-audit:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded API keys
+        run: |
+          echo "Scanning for potential API key leaks..."
+          patterns=(
+            'gsk_[a-zA-Z0-9]{20,}'
+            'sk-[a-zA-Z0-9]{20,}'
+            'AKIA[A-Z0-9]{16}'
+            '[a-f0-9]{32}\.[a-zA-Z0-9_-]{20,}'
+          )
+          found=0
+          for pattern in "${patterns[@]}"; do
+            matches=$(grep -rn --include='*.js' --include='*.json' --include='*.html' -E "$pattern" . \
+              --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "POTENTIAL SECRET FOUND with pattern: $pattern"
+              echo "$matches"
+              found=1
+            fi
+          done
+          if [ $found -eq 1 ]; then
+            echo ""
+            echo "FAIL: Potential hardcoded secrets detected! Review the matches above."
+            exit 1
+          fi
+          echo "OK: No hardcoded API keys found"
+
+      - name: Check for unsafe eval/innerHTML patterns
+        run: |
+          echo "Scanning for potentially unsafe code patterns..."
+          warnings=0
+
+          # Check for eval()
+          eval_matches=$(grep -rn --include='*.js' '\beval(' . --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null || true)
+          if [ -n "$eval_matches" ]; then
+            echo "WARNING: eval() usage found:"
+            echo "$eval_matches"
+            warnings=$((warnings + 1))
+          fi
+
+          # Check for document.write
+          dw_matches=$(grep -rn --include='*.js' 'document\.write(' . --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null || true)
+          if [ -n "$dw_matches" ]; then
+            echo "WARNING: document.write() usage found:"
+            echo "$dw_matches"
+            warnings=$((warnings + 1))
+          fi
+
+          echo "Security scan complete. Warnings: $warnings"
+
+      - name: Verify CSP in manifest
+        run: |
+          python3 -c "
+          import json, sys
+          m = json.load(open('manifest.json'))
+          csp = m.get('content_security_policy', {}).get('extension_pages', '')
+          if 'unsafe-eval' in csp:
+              print('FAIL: CSP contains unsafe-eval')
+              sys.exit(1)
+          if 'unsafe-inline' in csp:
+              print('WARNING: CSP contains unsafe-inline')
+          if csp:
+              print(f'OK: CSP is set: {csp}')
+          else:
+              print('INFO: No custom CSP — Chrome defaults apply')
+          "
+
+      - name: Check host_permissions are minimal
+        run: |
+          python3 -c "
+          import json
+          m = json.load(open('manifest.json'))
+          hosts = m.get('host_permissions', [])
+          print(f'Host permissions ({len(hosts)}):')
+          allowed = ['youtube.com', 'groq.com', 'ollama.com']
+          for h in hosts:
+              is_known = any(a in h for a in allowed)
+              status = 'OK' if is_known else 'REVIEW'
+              print(f'  [{status}] {h}')
+          "
+
+      - name: Verify no remote script loading
+        run: |
+          matches=$(grep -rn --include='*.html' --include='*.js' \
+            -E '(src|href)="https?://' . \
+            --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null \
+            | grep -v 'fonts.googleapis.com' \
+            | grep -v 'fonts.gstatic.com' \
+            | grep -v 'target="_blank"' \
+            | grep -v '\.addEventListener' \
+            | grep -v '// ' \
+            | grep -v 'href="https://console' \
+            | grep -v 'href="https://groq' \
+            | grep -v 'href="https://ollama' \
+            | grep -v 'href="https://github' \
+            | grep -v 'href="https://www.youtube' \
+            || true)
+          if [ -n "$matches" ]; then
+            echo "REVIEW: External resource references found:"
+            echo "$matches"
+          else
+            echo "OK: No unexpected remote script loading detected"
+          fi
+
+  # ─── 4. Build & Package ───
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [manifest-check, js-lint, security-audit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from manifest
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version: $VERSION"
+
+      - name: Create extension package
+        run: |
+          mkdir -p dist
+          zip -r "dist/youtube-ai-summarizer-v${{ steps.version.outputs.version }}.zip" \
+            manifest.json \
+            service-worker.js \
+            privacy-policy.html \
+            icons/ \
+            content/ \
+            popup/ \
+            welcome/ \
+            utils/ \
+            _locales/ \
+            -x "*.DS_Store" "*/.git/*"
+
+      - name: Verify package contents
+        run: |
+          echo "Package contents:"
+          unzip -l "dist/youtube-ai-summarizer-v${{ steps.version.outputs.version }}.zip" | tail -20
+          SIZE=$(du -sh "dist/youtube-ai-summarizer-v${{ steps.version.outputs.version }}.zip" | cut -f1)
+          echo ""
+          echo "Package size: $SIZE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-v${{ steps.version.outputs.version }}
+          path: dist/*.zip
+          retention-days: 30

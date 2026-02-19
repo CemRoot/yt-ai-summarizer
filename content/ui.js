@@ -33,13 +33,15 @@ const SummarizerUI = (() => {
   }
 
   /**
-   * Detect YouTube dark theme
+   * Detect dark theme from YouTube DOM attribute, computed styles,
+   * and OS-level preference (matchMedia).
    */
   function detectTheme() {
     const html = document.documentElement;
     isDarkTheme = html.hasAttribute('dark') ||
                   document.body?.style?.backgroundColor === 'rgb(15, 15, 15)' ||
-                  getComputedStyle(document.body).backgroundColor === 'rgb(15, 15, 15)';
+                  getComputedStyle(document.body).backgroundColor === 'rgb(15, 15, 15)' ||
+                  window.matchMedia?.('(prefers-color-scheme: dark)').matches;
     return isDarkTheme;
   }
 
@@ -83,10 +85,17 @@ const SummarizerUI = (() => {
     // Header
     const header = document.createElement('div');
     header.className = 'ytai-header';
+    const PANEL_TITLE = {
+      tr: 'AI Özetleyici', es: 'Resumen IA', fr: 'Résumeur IA',
+      de: 'KI-Zusammenfassung', pt: 'Resumo IA', ja: 'AI要約',
+      ko: 'AI 요약', zh: 'AI摘要', ar: 'ملخص AI', ru: 'ИИ-Резюме'
+    };
+    const panelTitle = PANEL_TITLE[(navigator.language || '').substring(0, 2)] || 'AI Summarizer';
+
     header.innerHTML = `
       <div class="ytai-header-title">
         ${ICONS.sparkle}
-        <span>AI Summarizer</span>
+        <span>${panelTitle}</span>
       </div>
     `;
 
@@ -100,10 +109,32 @@ const SummarizerUI = (() => {
     const tabs = document.createElement('div');
     tabs.className = 'ytai-tabs';
 
+    const TAB_LABELS = {
+      en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed Analysis' },
+      tr: { summary: 'Özet', keypoints: 'Önemli Noktalar', detailed: 'Detaylı Analiz' },
+      es: { summary: 'Resumen', keypoints: 'Puntos Clave', detailed: 'Análisis Detallado' },
+      fr: { summary: 'Résumé', keypoints: 'Points Clés', detailed: 'Analyse Détaillée' },
+      de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detailanalyse' },
+      pt: { summary: 'Resumo', keypoints: 'Pontos-Chave', detailed: 'Análise Detalhada' },
+      ja: { summary: '要約', keypoints: 'ポイント', detailed: '詳細分析' },
+      ko: { summary: '요약', keypoints: '핵심 포인트', detailed: '상세 분석' },
+      zh: { summary: '摘要', keypoints: '要点', detailed: '详细分析' },
+      ar: { summary: 'ملخص', keypoints: 'نقاط رئيسية', detailed: 'تحليل مفصل' },
+      ru: { summary: 'Резюме', keypoints: 'Ключевые моменты', detailed: 'Подробный анализ' }
+    };
+
+    function resolveUILang() {
+      const browserLang = (navigator.language || 'en').substring(0, 2);
+      return TAB_LABELS[browserLang] ? browserLang : 'en';
+    }
+
+    const uiLang = resolveUILang();
+    const labels = TAB_LABELS[uiLang] || TAB_LABELS.en;
+
     const tabData = [
-      { id: 'summary', label: chrome.i18n?.getMessage('summary') || 'Summary' },
-      { id: 'keypoints', label: chrome.i18n?.getMessage('keyPoints') || 'Key Points' },
-      { id: 'detailed', label: chrome.i18n?.getMessage('detailed') || 'Detailed' }
+      { id: 'summary',   label: labels.summary },
+      { id: 'keypoints', label: labels.keypoints },
+      { id: 'detailed',  label: labels.detailed }
     ];
 
     tabData.forEach((tab) => {
@@ -123,12 +154,14 @@ const SummarizerUI = (() => {
     const footer = document.createElement('div');
     footer.className = 'ytai-footer';
     footer.innerHTML = `
-      <span class="ytai-footer-info">Powered by Groq AI</span>
+      <span class="ytai-footer-info ytai-provider-label">Powered by AI</span>
       <div class="ytai-footer-actions">
         <button class="ytai-icon-btn ytai-copy-btn" title="Copy to clipboard">${ICONS.copy}</button>
         <button class="ytai-icon-btn ytai-refresh-btn" title="Regenerate">${ICONS.refresh}</button>
       </div>
     `;
+
+    updateProviderLabel();
 
     footer.querySelector('.ytai-copy-btn').addEventListener('click', copyResult);
     footer.querySelector('.ytai-refresh-btn').addEventListener('click', () => {
@@ -143,6 +176,40 @@ const SummarizerUI = (() => {
     panel.appendChild(footer);
 
     return panel;
+  }
+
+  /**
+   * Show a one-time onboarding tooltip next to the toggle button
+   */
+  function showOnboardingTooltip(toggleBtn) {
+    chrome.storage?.local?.get?.({ ytaiTooltipShown: false }, (r) => {
+      if (r.ytaiTooltipShown) return;
+
+      const tip = document.createElement('div');
+      tip.className = 'ytai-onboard-tip';
+      tip.innerHTML = `
+        <span class="ytai-tip-wave">👋</span>
+        <span class="ytai-tip-text">Hey! I'm here.<br>Click me to summarize!</span>
+      `;
+
+      tip.addEventListener('click', () => {
+        tip.classList.add('ytai-tip-hide');
+        setTimeout(() => tip.remove(), 400);
+        toggleBtn.click();
+      });
+
+      panelRoot.appendChild(tip);
+      requestAnimationFrame(() => tip.classList.add('ytai-tip-show'));
+
+      chrome.storage?.local?.set?.({ ytaiTooltipShown: true });
+
+      setTimeout(() => {
+        if (tip.parentNode) {
+          tip.classList.add('ytai-tip-hide');
+          setTimeout(() => tip.remove(), 400);
+        }
+      }, 8000);
+    });
   }
 
   /**
@@ -162,22 +229,26 @@ const SummarizerUI = (() => {
     root.appendChild(toggleBtn);
     root.appendChild(panelElement);
 
-    // Watch for theme changes
-    const themeObserver = new MutationObserver(() => {
+    showOnboardingTooltip(toggleBtn);
+
+    function applyThemeClass() {
       const wasDark = isDarkTheme;
       detectTheme();
       if (wasDark !== isDarkTheme) {
-        if (isDarkTheme) {
-          panelRoot.classList.add('ytai-dark');
-        } else {
-          panelRoot.classList.remove('ytai-dark');
-        }
+        panelRoot.classList.toggle('ytai-dark', isDarkTheme);
       }
-    });
+    }
+
+    // YouTube DOM attribute changes (dark attr toggled on <html>)
+    const themeObserver = new MutationObserver(applyThemeClass);
     themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['dark', 'style']
     });
+
+    // OS / browser-level color-scheme changes
+    window.matchMedia?.('(prefers-color-scheme: dark)')
+      .addEventListener('change', applyThemeClass);
   }
 
   /**
@@ -409,6 +480,18 @@ const SummarizerUI = (() => {
   function isPanelOpen() { return isOpen; }
   function getCurrentMode() { return currentMode; }
 
+  function updateProviderLabel(provider) {
+    const label = panelRoot?.querySelector('.ytai-provider-label');
+    if (!label) return;
+    if (provider) {
+      label.textContent = provider === 'ollama' ? 'Powered by Ollama Cloud' : 'Powered by Groq';
+      return;
+    }
+    chrome.storage?.local?.get?.({ provider: 'groq' }, (r) => {
+      if (label) label.textContent = r.provider === 'ollama' ? 'Powered by Ollama Cloud' : 'Powered by Groq';
+    });
+  }
+
   /**
    * Auto open panel without triggering onPanelOpen callback (prevents double summary)
    */
@@ -432,7 +515,8 @@ const SummarizerUI = (() => {
     showToast,
     isPanelOpen,
     getCurrentMode,
-    switchMode
+    switchMode,
+    updateProviderLabel
   };
 })();
 

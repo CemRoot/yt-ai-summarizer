@@ -103,6 +103,49 @@ const TranscriptExtractor = (() => {
     return null;
   }
 
+  // ─── Method 0: Innertube ANDROID client (most reliable) ───────────
+  //
+  // YouTube's WEB client returns timedtext URLs with `xowf=1` that now
+  // return empty responses (HTTP 200, 0 bytes).  The ANDROID client
+  // returns a different URL format that still works.  Because this
+  // runs on youtube.com the request is same-origin – no CORS issues.
+
+  async function getCaptionTracksViaInnertube() {
+    try {
+      const videoId = getVideoId();
+      if (!videoId) return null;
+
+      const resp = await fetch('/youtubei/v1/player?prettyPrint=false', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: {
+            client: {
+              clientName: 'ANDROID',
+              clientVersion: '19.29.37',
+              androidSdkVersion: 30,
+              hl: 'en',
+              gl: 'US'
+            }
+          },
+          videoId
+        })
+      });
+
+      if (!resp.ok) return null;
+
+      const data = await resp.json();
+      const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      if (tracks?.length) {
+        console.log(LOG, `Innertube ANDROID: ${tracks.length} tracks found`);
+        return tracks.map(mapRawTrack);
+      }
+    } catch (e) {
+      console.warn(LOG, 'Innertube ANDROID failed:', e);
+    }
+    return null;
+  }
+
   // ─── Method 1: Page bridge (MAIN world) ────────────────────────────
 
   async function getCaptionTracksFromPageBridge() {
@@ -200,6 +243,12 @@ const TranscriptExtractor = (() => {
   // ─── Orchestrator: get caption tracks ──────────────────────────────
 
   async function getCaptionTracks() {
+    // Innertube ANDROID client returns working timedtext URLs
+    const inntTracks = await getCaptionTracksViaInnertube();
+    if (inntTracks?.length) return inntTracks;
+
+    // Fallbacks (URLs may contain xowf=1 – still useful for track discovery,
+    // and the service-worker proxy will re-fetch via ANDROID if direct fails)
     const bridgeTracks = await getCaptionTracksFromPageBridge();
     if (bridgeTracks?.length) return bridgeTracks;
 

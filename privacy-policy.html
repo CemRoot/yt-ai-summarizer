@@ -3,156 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy - YouTube AI Summarizer</title>
+  <title>Privacy Policy — YouTube AI Summarizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --text-sec: #6e6e73;
+      --accent: #065fd4;
+      --green: #00a878;
+      --border: #e5e5ea;
+      --radius: 12px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f8f9fa;
-      color: #333;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 48px 24px;
-    }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #0f0f0f;
-      margin-bottom: 8px;
-    }
-    .last-updated {
-      font-size: 13px;
-      color: #888;
+    .container { max-width: 700px; margin: 0 auto; padding: 48px 24px 64px; }
+    header { text-align: center; margin-bottom: 40px; }
+    header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .last-updated { font-size: 13px; color: var(--text-sec); }
+
+    .summary-box {
+      background: #e6f9f1;
+      border-left: 4px solid var(--green);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius) var(--radius) 0;
       margin-bottom: 32px;
     }
-    h2 {
-      font-size: 19px;
-      font-weight: 600;
-      color: #0f0f0f;
-      margin: 28px 0 12px;
+    .summary-box p { margin: 0; font-size: 14px; font-weight: 500; color: #0d6b4f; }
+
+    .section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    p {
-      margin-bottom: 14px;
-      font-size: 15px;
+    .section h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    ul {
-      margin: 8px 0 14px 24px;
+    .section h2 .num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    li {
-      margin-bottom: 6px;
-      font-size: 15px;
+    .section p { font-size: 14px; margin-bottom: 10px; color: #444; }
+    .section ul { margin: 8px 0 4px 20px; }
+    .section li { font-size: 14px; margin-bottom: 6px; color: #444; }
+    .section strong { color: var(--text); }
+    .section code {
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'SF Mono', Consolas, monospace;
     }
-    strong {
-      color: #0f0f0f;
-    }
-    a {
-      color: #065fd4;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .highlight {
-      background: #e6f9ed;
-      border-left: 3px solid #0d7e3f;
-      padding: 12px 16px;
-      border-radius: 0 8px 8px 0;
-      margin: 16px 0;
-    }
-    .highlight p {
-      margin: 0;
-      font-size: 14px;
-      color: #0d7e3f;
-    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
     .footer {
       text-align: center;
-      margin-top: 48px;
-      padding-top: 24px;
-      border-top: 1px solid #e0e0e0;
-      font-size: 13px;
-      color: #999;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-sec);
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 32px 16px 48px; }
+      header h1 { font-size: 24px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Privacy Policy</h1>
-    <p class="last-updated">Last updated: February 15, 2026</p>
+    <header>
+      <h1>Privacy Policy</h1>
+      <p class="last-updated">Last updated: February 18, 2026</p>
+    </header>
 
-    <p>YouTube AI Summarizer ("the Extension") is committed to protecting your privacy. This policy explains what data the Extension accesses, how it is used, and your rights.</p>
-
-    <div class="highlight">
-      <p><strong>Summary:</strong> We do not collect, store, or sell any personal data. All processing happens locally in your browser or through the AI API you configure.</p>
+    <div class="summary-box">
+      <p><strong>In short:</strong> We do not collect, store, or sell any personal data. All processing happens locally in your browser or through the AI provider you choose (Groq or Ollama Cloud).</p>
     </div>
 
-    <h2>1. Data We Access</h2>
-    <p>The Extension accesses the following data solely for its functionality:</p>
-    <ul>
-      <li><strong>YouTube Video Transcripts:</strong> When you request a summary, the Extension extracts the video's publicly available caption/subtitle data from the YouTube page you are viewing.</li>
-      <li><strong>Your Groq API Key:</strong> You provide your own API key, which is stored locally in your browser's extension storage (<code>chrome.storage.local</code>).</li>
-      <li><strong>Extension Settings:</strong> Your preferences (language, model choice, auto-run preference) are stored locally in your browser.</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">1</span> Data We Access</h2>
+      <p>The Extension accesses the following data solely for its core functionality:</p>
+      <ul>
+        <li><strong>YouTube Video Transcripts:</strong> When you request a summary, the Extension extracts the video's publicly available captions/subtitles from the YouTube page you are viewing.</li>
+        <li><strong>Your API Key:</strong> Depending on the provider you choose (Groq or Ollama Cloud), you provide your own API key. It is stored locally in your browser's extension storage (<code>chrome.storage.local</code>) and never leaves your device except for API authentication.</li>
+        <li><strong>Extension Settings:</strong> Your preferences (provider choice, language, model, auto-run) are stored locally in your browser.</li>
+      </ul>
+    </div>
 
-    <h2>2. How Data Is Used</h2>
-    <ul>
-      <li><strong>Transcript text</strong> is sent to the Groq API (api.groq.com) solely for AI summarization. The text is processed by Groq's servers and the summary is returned to your browser.</li>
-      <li><strong>Your API key</strong> is sent to Groq API for authentication. It is never sent anywhere else.</li>
-      <li><strong>No personal information</strong> (name, email, browsing history, etc.) is ever collected or transmitted.</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">2</span> How Data Is Used</h2>
+      <ul>
+        <li><strong>Transcript text</strong> is sent to your chosen AI provider (Groq API or Ollama Cloud API) solely for summarization. The text is processed on the provider's servers and the result is returned to your browser.</li>
+        <li><strong>Your API key</strong> is sent only to the provider you selected for authentication. It is never sent anywhere else.</li>
+        <li><strong>No personal information</strong> (name, email, browsing history, IP address, etc.) is ever collected or transmitted by us.</li>
+      </ul>
+    </div>
 
-    <h2>3. Data Storage</h2>
-    <ul>
-      <li>All data is stored <strong>locally in your browser</strong> using Chrome's extension storage API.</li>
-      <li>Summary results may be temporarily cached in your browser session to avoid redundant API calls.</li>
-      <li>No data is stored on any external server controlled by us.</li>
-      <li>You can clear all stored data at any time from the Extension's settings.</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">3</span> Data Storage</h2>
+      <ul>
+        <li>All data is stored <strong>locally in your browser</strong> using Chrome's extension storage API.</li>
+        <li>Summary results are temporarily cached in your browser to avoid redundant API calls.</li>
+        <li>No data is stored on any external server controlled by us.</li>
+        <li>You can clear all stored data at any time from the Extension's settings ("Clear Cache").</li>
+      </ul>
+    </div>
 
-    <h2>4. Third-Party Services</h2>
-    <p>The Extension communicates with the following third-party service:</p>
-    <ul>
-      <li><strong>Groq API</strong> (<a href="https://groq.com" target="_blank" rel="noopener noreferrer">groq.com</a>): Used for AI-powered text summarization. Your transcript text is sent to Groq's servers for processing. Please review <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a> for details on how they handle data.</li>
-    </ul>
-    <p>We do not use any analytics, tracking, advertising, or data collection services.</p>
+    <div class="section">
+      <h2><span class="num">4</span> Third-Party Services</h2>
+      <p>The Extension communicates with these third-party AI services based on your choice:</p>
+      <ul>
+        <li><strong>Groq API</strong> (<a href="https://groq.com" target="_blank" rel="noopener noreferrer">groq.com</a>): Transcript text is sent to Groq's LPU-powered servers for summarization. See <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a>.</li>
+        <li><strong>Ollama Cloud API</strong> (<a href="https://ollama.com" target="_blank" rel="noopener noreferrer">ollama.com</a>): Transcript text is sent to Ollama's cloud infrastructure for summarization. Ollama states they do not log or train on prompts/responses. See <a href="https://ollama.com/terms" target="_blank" rel="noopener noreferrer">Ollama's Terms</a>.</li>
+      </ul>
+      <p>We do <strong>not</strong> use any analytics, tracking, advertising, or data collection services.</p>
+    </div>
 
-    <h2>5. Data Sharing</h2>
-    <p>We do <strong>not</strong>:</p>
-    <ul>
-      <li>Sell your data to anyone</li>
-      <li>Share your data with third parties (other than sending transcripts to Groq for summarization, as described above)</li>
-      <li>Use your data for advertising or profiling</li>
-      <li>Track your browsing activity</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">5</span> Data Sharing</h2>
+      <p>We do <strong>not</strong>:</p>
+      <ul>
+        <li>Sell your data to anyone</li>
+        <li>Share your data with third parties beyond the AI provider you chose</li>
+        <li>Use your data for advertising or profiling</li>
+        <li>Track your browsing activity</li>
+        <li>Collect telemetry or usage analytics</li>
+      </ul>
+    </div>
 
-    <h2>6. Permissions Explanation</h2>
-    <ul>
-      <li><strong>storage:</strong> To save your API key and preferences locally in your browser.</li>
-      <li><strong>activeTab:</strong> To interact with the YouTube page you're currently viewing and extract transcript data.</li>
-      <li><strong>Host permission (youtube.com):</strong> To run the Extension's content script on YouTube video pages.</li>
-      <li><strong>Host permission (api.groq.com):</strong> To send API requests for AI summarization.</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">6</span> Permissions Explained</h2>
+      <ul>
+        <li><strong>storage:</strong> Save your API key and preferences locally in your browser.</li>
+        <li><strong>activeTab:</strong> Interact with the YouTube page you're viewing to extract transcript data.</li>
+        <li><strong>Host permission — youtube.com:</strong> Run content scripts on YouTube video pages.</li>
+        <li><strong>Host permission — api.groq.com:</strong> Send summarization requests to the Groq API.</li>
+        <li><strong>Host permission — ollama.com:</strong> Send summarization requests to the Ollama Cloud API.</li>
+      </ul>
+    </div>
 
-    <h2>7. Your Rights</h2>
-    <ul>
-      <li>You can delete all Extension data by removing the Extension from Chrome.</li>
-      <li>You can clear cached data from the Extension's settings at any time.</li>
-      <li>You can revoke your Groq API key from <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a> at any time.</li>
-    </ul>
+    <div class="section">
+      <h2><span class="num">7</span> Your Rights</h2>
+      <ul>
+        <li>Delete all Extension data by removing the Extension from Chrome.</li>
+        <li>Clear cached data from the Extension's settings at any time.</li>
+        <li>Revoke your Groq API key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com</a>.</li>
+        <li>Revoke your Ollama API key at <a href="https://ollama.com/settings/keys" target="_blank" rel="noopener noreferrer">ollama.com/settings/keys</a>.</li>
+      </ul>
+    </div>
 
-    <h2>8. Children's Privacy</h2>
-    <p>The Extension is not directed at children under 13. We do not knowingly collect any personal information from children.</p>
+    <div class="section">
+      <h2><span class="num">8</span> Children's Privacy</h2>
+      <p>The Extension is not directed at children under 13. We do not knowingly collect any personal information from children.</p>
+    </div>
 
-    <h2>9. Changes to This Policy</h2>
-    <p>We may update this Privacy Policy from time to time. Any changes will be reflected in the "Last updated" date at the top of this page. Continued use of the Extension after changes constitutes acceptance of the updated policy.</p>
+    <div class="section">
+      <h2><span class="num">9</span> Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. Changes will be reflected in the "Last updated" date above. Continued use of the Extension constitutes acceptance of the updated policy.</p>
+    </div>
 
-    <h2>10. Contact</h2>
-    <p>If you have questions about this Privacy Policy, please open an issue on our GitHub repository or contact us through the Chrome Web Store listing.</p>
+    <div class="section">
+      <h2><span class="num">10</span> Contact</h2>
+      <p>If you have questions about this Privacy Policy, please open an issue on our <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub repository</a> or contact us through the Chrome Web Store listing.</p>
+    </div>
 
     <div class="footer">
-      <p>YouTube AI Summarizer · Privacy Policy</p>
+      YouTube AI Summarizer &middot; v1.2.0 &middot; Privacy Policy
     </div>
   </div>
 </body>

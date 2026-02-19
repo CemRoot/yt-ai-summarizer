@@ -8,22 +8,9 @@
   'use strict';
 
   let currentVideoId = null;
-  let summaryCache = {}; // In-memory cache for current session
+  let combinedCache = null; // { videoId, summary, keypoints, detailed }
   let isProcessing = false;
-  let initTimeout = null; // Debounce timer
-
-  const MAX_CACHE_ENTRIES = 30;
-
-  /**
-   * Add to in-memory cache with LRU limit
-   */
-  function addToMemCache(key, value) {
-    const keys = Object.keys(summaryCache);
-    if (keys.length >= MAX_CACHE_ENTRIES) {
-      delete summaryCache[keys[0]];
-    }
-    summaryCache[key] = value;
-  }
+  let initTimeout = null;
 
   /**
    * Initialize the extension on the current page
@@ -34,10 +21,9 @@
 
     if (videoId === currentVideoId) return;
 
-    // New video – wipe stale transcript / summary caches for previous video
     currentVideoId = videoId;
     isProcessing = false;
-    summaryCache = {};
+    combinedCache = null;
 
     SummarizerUI.init();
 
@@ -67,7 +53,9 @@
   }
 
   /**
-   * Request a summary for the current video
+   * Request a summary for the current video.
+   * Uses a single API call to generate all three modes (summary, keypoints,
+   * detailed) and caches them — switching tabs is then instant.
    */
   async function requestSummary(mode = 'summary', forceRefresh = false) {
     if (isProcessing) return;
@@ -75,25 +63,23 @@
     const videoId = TranscriptExtractor.getVideoId();
     if (!videoId) return;
 
-    // Check API key
     const hasKey = await StorageHelper.hasApiKey();
     if (!hasKey) {
       SummarizerUI.showApiKeyPrompt();
       return;
     }
 
-    // Check cache (unless force refresh)
+    // Serve from in-memory combined cache (instant tab switch)
+    if (!forceRefresh && combinedCache?.videoId === videoId && combinedCache[mode]) {
+      SummarizerUI.showResult(combinedCache[mode]);
+      return;
+    }
+
+    // Serve from persistent storage cache
     if (!forceRefresh) {
       const cached = await StorageHelper.getCachedSummary(videoId, mode);
-      if (cached && cached.content) {
+      if (cached?.content) {
         SummarizerUI.showResult(cached.content);
-        return;
-      }
-
-      // Also check in-memory cache
-      const memCacheKey = `${videoId}_${mode}`;
-      if (summaryCache[memCacheKey]) {
-        SummarizerUI.showResult(summaryCache[memCacheKey]);
         return;
       }
     }
@@ -102,32 +88,27 @@
     SummarizerUI.showLoading(null, 0);
 
     try {
-      // Step 1: Extract transcript
       SummarizerUI.showLoading('Extracting transcript...', 0.1);
       const transcript = await TranscriptExtractor.getTranscript();
 
-      if (!transcript || !transcript.fullText) {
+      if (!transcript?.fullText) {
         throw new Error('NO_TRANSCRIPT');
       }
 
-      SummarizerUI.showLoading('Sending to AI...', 0.3);
+      SummarizerUI.showLoading('Sending to AI...', 0.2);
 
-      // Step 2: Get settings
       const settings = await StorageHelper.getSettings();
 
-      // Step 3: Send to service worker for AI processing
+      // Single API call for all three modes
       const response = await chrome.runtime.sendMessage({
-        action: 'summarize',
+        action: 'summarizeAll',
         data: {
           transcript: transcript.fullText,
-          mode: mode,
-          model: settings.model || 'llama-3.3-70b-versatile',
           language: settings.language || 'auto',
-          videoId: videoId
+          videoId
         }
       });
 
-      // Guard against undefined response (service worker might be inactive)
       if (!response) {
         throw new Error('API_ERROR: No response from extension. Please reload the page.');
       }
@@ -136,16 +117,28 @@
         throw new Error(response.error);
       }
 
-      // Step 4: Show result
-      SummarizerUI.showResult(response.content);
+      combinedCache = {
+        videoId,
+        summary: response.summary,
+        keypoints: response.keypoints,
+        detailed: response.detailed
+      };
 
-      // Cache the result
-      const memCacheKey = `${videoId}_${mode}`;
-      addToMemCache(memCacheKey, response.content);
-      await StorageHelper.cacheSummary(videoId, mode, {
-        content: response.content,
-        model: response.model
-      });
+      if (response.provider) {
+        SummarizerUI.updateProviderLabel(response.provider);
+      }
+
+      // Persist each mode to storage
+      for (const m of ['summary', 'keypoints', 'detailed']) {
+        if (response[m]) {
+          StorageHelper.cacheSummary(videoId, m, {
+            content: response[m],
+            model: response.model
+          }).catch(() => {});
+        }
+      }
+
+      SummarizerUI.showResult(response[mode]);
 
     } catch (error) {
       handleError(error);
@@ -206,19 +199,18 @@
     const videoId = TranscriptExtractor.getVideoId();
     if (!videoId) return;
 
-    // If we already have a result cached, show it
-    const memCacheKey = `${videoId}_${SummarizerUI.getCurrentMode()}`;
-    if (summaryCache[memCacheKey]) {
-      SummarizerUI.showResult(summaryCache[memCacheKey]);
+    const mode = SummarizerUI.getCurrentMode();
+
+    if (combinedCache?.videoId === videoId && combinedCache[mode]) {
+      SummarizerUI.showResult(combinedCache[mode]);
       return;
     }
 
-    // Check if API key is set
     StorageHelper.hasApiKey().then((hasKey) => {
       if (!hasKey) {
         SummarizerUI.showApiKeyPrompt();
       } else {
-        requestSummary(SummarizerUI.getCurrentMode(), false);
+        requestSummary(mode, false);
       }
     });
   }

@@ -4,8 +4,8 @@
     "description": "Extension name shown in Chrome Web Store and browser"
   },
   "extDescription": {
-    "message": "Summarize any YouTube video instantly with AI. Get key points, summaries, and detailed analysis without watching the full video.",
-    "description": "Extension description for Chrome Web Store listing"
+    "message": "Your free AI for YouTube — summarize any video instantly. Key points, summaries & deep analysis in 20+ languages. No subscription.",
+    "description": "Extension description for Chrome Web Store listing (max 132 chars)"
   },
   "apiKeyRequired": {
     "message": "Please enter your Groq API key to get started.",

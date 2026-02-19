@@ -4,8 +4,8 @@
     "description": "Chrome Web Store ve tarayıcıda gösterilen uzantı adı"
   },
   "extDescription": {
-    "message": "Herhangi bir YouTube videosunu AI ile anında özetleyin. Videoyu izlemeden önemli noktaları, özetleri ve detaylı analizleri alın.",
-    "description": "Chrome Web Store listeleme açıklaması"
+    "message": "YouTube için ücretsiz AI'nız — videoları anında özetleyin. 20+ dilde özet, önemli noktalar ve detaylı analiz. Abonelik yok.",
+    "description": "Chrome Web Store listeleme açıklaması (max 132 karakter)"
   },
   "apiKeyRequired": {
     "message": "Başlamak için lütfen Groq API anahtarınızı girin.",

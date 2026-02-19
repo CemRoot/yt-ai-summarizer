@@ -6,8 +6,11 @@
 const StorageHelper = (() => {
   // Default settings
   const DEFAULTS = {
+    provider: 'groq',
     groqApiKey: '',
+    ollamaApiKey: '',
     model: 'llama-3.3-70b-versatile',
+    ollamaModel: 'qwen3-next:80b',
     defaultMode: 'summary',
     language: 'auto',
     autoRun: false,
@@ -102,21 +105,23 @@ const StorageHelper = (() => {
   }
 
   /**
-   * Get Groq API key
+   * Get API key for the active provider
    */
-  async function getApiKey() {
-    return get('groqApiKey');
+  async function getApiKey(providerOverride) {
+    const provider = providerOverride || await get('provider') || 'groq';
+    return provider === 'ollama' ? get('ollamaApiKey') : get('groqApiKey');
   }
 
   /**
-   * Save Groq API key
+   * Save API key for a specific provider
    */
-  async function saveApiKey(key) {
-    return set('groqApiKey', key);
+  async function saveApiKey(key, provider = 'groq') {
+    const storageKey = provider === 'ollama' ? 'ollamaApiKey' : 'groqApiKey';
+    return set(storageKey, key);
   }
 
   /**
-   * Check if API key is configured
+   * Check if API key is configured for the active provider
    */
   async function hasApiKey() {
     try {
