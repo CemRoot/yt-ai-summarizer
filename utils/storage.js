@@ -5,11 +5,11 @@
 
 const StorageHelper = (() => {
   const DEFAULTS = {
-    provider: 'groq',
+    provider: 'ollama',
     groqApiKey: '',
     ollamaApiKey: '',
     model: 'llama-3.3-70b-versatile',
-    ollamaModel: 'qwen3-next:80b',
+    ollamaModel: 'gemini-3-flash-preview',
     defaultMode: 'summary',
     language: 'auto',
     autoRun: false,

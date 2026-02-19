@@ -291,8 +291,83 @@ const SummarizerUI = (() => {
     }
   }
 
+  // Fun facts shown during loading — rotates every 5 seconds
+  const FUN_FACTS = [
+    "A pair of flies breeding only in April–May could cover the Earth in a 14-meter layer of flies if all eggs survived.",
+    "An ant can carry 50 times its own body weight.",
+    "The chance of dying by falling out of bed is 1 in 2 million.",
+    "Honey never spoils. Archaeologists found 3,000-year-old honey in Egyptian tombs — still edible.",
+    "Octopuses have three hearts and blue blood.",
+    "A group of flamingos is called a 'flamboyance'.",
+    "Bananas are radioactive — they contain potassium-40.",
+    "There are more possible chess games than atoms in the observable universe.",
+    "Cows have best friends and get stressed when separated.",
+    "The Eiffel Tower grows about 6 inches taller in summer due to heat expansion.",
+    "Sharks existed before trees. Sharks: ~400M years, trees: ~350M years.",
+    "A day on Venus is longer than a year on Venus.",
+    "Wombat poop is cube-shaped.",
+    "Scotland's national animal is the unicorn.",
+    "The world's oldest known joke is a fart joke from 1900 BC Sumeria.",
+    "You can't hum while holding your nose. (You just tried, didn't you?)",
+    "The inventor of the Pringles can is buried in one.",
+    "A jiffy is an actual unit of time: 1/100th of a second.",
+    "Nintendo was founded in 1889 as a playing card company.",
+    "Your brain uses 20% of your body's total energy.",
+    "The shortest war in history lasted 38 minutes (Britain vs. Zanzibar, 1896).",
+    "Astronauts grow up to 2 inches taller in space.",
+    "A cloud weighs about 1.1 million pounds on average.",
+    "Hot water freezes faster than cold water. It's called the Mpemba effect.",
+    "There are more bacteria in your mouth than people on Earth.",
+    "The dot over the letters 'i' and 'j' is called a 'tittle'.",
+    "A bolt of lightning is 5x hotter than the surface of the Sun.",
+    "Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid.",
+    "Humans share 60% of their DNA with bananas.",
+    "The average person walks the equivalent of 5 trips around Earth in a lifetime.",
+    "An octopus has no bones — it can squeeze through any gap larger than its beak.",
+    "The heart of a blue whale is so big a child could swim through its arteries.",
+    "The fingerprints of a koala are virtually indistinguishable from a human's.",
+    "There are more stars in the universe than grains of sand on all of Earth's beaches.",
+    "A teaspoon of a neutron star weighs about 6 billion tons.",
+    "Venus is the only planet that spins clockwise.",
+    "Elephants are the only animals that can't jump.",
+    "A single strand of spider silk is thinner than a human hair but 5x stronger than steel.",
+    "The total weight of all ants on Earth roughly equals the total weight of all humans.",
+    "Oxford University is older than the Aztec Empire.",
+    "Sea otters hold hands while sleeping to keep from drifting apart.",
+    "The Hawaiian alphabet has only 12 letters.",
+    "Light from the Sun takes 8 minutes and 20 seconds to reach Earth.",
+    "Your nose can remember 50,000 different scents.",
+    "A photon takes 40,000 years to travel from the Sun's core to its surface, then only 8 minutes to reach Earth.",
+    "If you could fold a piece of paper 42 times, it would reach the Moon.",
+    "The average cumulus cloud weighs about 500 tons — equivalent to 100 elephants.",
+    "Dolphins sleep with one eye open.",
+    "A cockroach can live for weeks without its head.",
+    "The longest hiccuping spree lasted 68 years."
+  ];
+
+  let _factInterval = null;
+
+  function startFactRotation() {
+    stopFactRotation();
+    const el = panelRoot?.querySelector('.ytai-fun-fact-text');
+    if (!el) return;
+    el.textContent = FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)];
+    _factInterval = setInterval(() => {
+      if (!el.parentNode) { stopFactRotation(); return; }
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.textContent = FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)];
+        el.style.opacity = '1';
+      }, 300);
+    }, 5000);
+  }
+
+  function stopFactRotation() {
+    if (_factInterval) { clearInterval(_factInterval); _factInterval = null; }
+  }
+
   /**
-   * Show loading state (XSS-safe)
+   * Show loading state (XSS-safe) with rotating fun facts
    */
   function showLoading(message, progress = -1) {
     const content = panelRoot?.querySelector('.ytai-content');
@@ -308,6 +383,7 @@ const SummarizerUI = (() => {
       }
     }
 
+    stopFactRotation();
     const safeMessage = escapeHtml(message || chrome.i18n?.getMessage('loading') || 'Analyzing video...');
 
     content.innerHTML = `
@@ -319,8 +395,14 @@ const SummarizerUI = (() => {
             <div class="ytai-progress-fill" style="width: ${Math.round(progress * 100)}%"></div>
           </div>
         ` : ''}
+        <div class="ytai-fun-fact">
+          <span class="ytai-fun-fact-label">💡 Did you know?</span>
+          <span class="ytai-fun-fact-text"></span>
+        </div>
       </div>
     `;
+
+    startFactRotation();
   }
 
   /**
@@ -393,6 +475,7 @@ const SummarizerUI = (() => {
    * Show error state (XSS-safe)
    */
   function showError(title, message, retryable = true) {
+    stopFactRotation();
     const content = panelRoot?.querySelector('.ytai-content');
     if (!content) return;
 
@@ -416,6 +499,7 @@ const SummarizerUI = (() => {
    * Show result
    */
   function showResult(markdownText) {
+    stopFactRotation();
     const content = panelRoot?.querySelector('.ytai-content');
     if (!content) return;
 

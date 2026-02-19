@@ -439,6 +439,33 @@
 
 .ytai-loading-text { font-size: 13px; color: var(--ytai-text-muted); font-weight: 500; }
 
+.ytai-fun-fact {
+  margin-top: 24px;
+  padding: 14px 18px;
+  background: var(--ytai-bg-sunken);
+  border-radius: 10px;
+  text-align: center;
+  max-width: 300px;
+  width: 100%;
+}
+
+.ytai-fun-fact-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ytai-accent);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.ytai-fun-fact-text {
+  display: block;
+  font-size: 12px;
+  color: var(--ytai-text-secondary);
+  line-height: 1.5;
+  transition: opacity 0.3s ease;
+}
+
 .ytai-progress-bar {
   width: 100%;
   max-width: 180px;

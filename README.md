@@ -5,7 +5,7 @@
 [![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
 ![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.2.3-orange)
+![Version](https://img.shields.io/badge/version-1.3.0-orange)
 
 ---
 
@@ -33,7 +33,8 @@ All three are generated in a **single API call** — no rate limit issues.
 | **First-Visit Tooltip** | Animated "Hey! I'm here" bubble guides new users to the button. |
 | **One-Click Copy** | Copy any analysis to clipboard instantly. |
 | **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
-| **Smart Caching** | In-memory + persistent storage — tab switching is instant, no re-fetching. |
+| **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
+| **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
 | **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
 | **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
 
@@ -61,8 +62,8 @@ Choose your provider:
 
 | Provider | Get Key | Free Tier |
 |----------|---------|-----------|
-| **Groq** (recommended) | [console.groq.com/keys](https://console.groq.com/keys) | 30 RPM, up to 500K tokens/day |
-| **Ollama Cloud** | [ollama.com/settings/keys](https://ollama.com/settings/keys) | Flexible limits, 10+ models |
+| **Ollama Cloud** (recommended) | [ollama.com/settings/keys](https://ollama.com/settings/keys) | Gemini 3 Flash, 10+ models, free tier |
+| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | 30 RPM, up to 500K tokens/day |
 
 ### 3. Configure & Go
 
@@ -101,10 +102,10 @@ YouTube Video → Extract Transcript → Send to AI Provider → Parse 3 Section
 
 | Model | Size | Best For |
 |-------|------|----------|
+| **Gemini 3 Flash** ⭐ | — | **Recommended** — Fast & high quality |
 | Qwen3-Next 80B | 80B | Reasoning & thinking |
 | DeepSeek V3.2 | 671B | Most powerful |
 | GPT-OSS 120B | 120B | General purpose |
-| Gemini 3 Flash | — | Fast responses |
 | Kimi K2.5 | — | Multimodal |
 | Devstral Small | 24B | Code-focused |
 
@@ -176,6 +177,14 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.3.0
+
+- **Fun Facts**: 50 rotating "Did you know?" facts displayed during AI processing to keep users entertained
+- **Default provider changed**: Ollama Cloud is now the recommended provider (was Groq)
+- **Recommended model**: Gemini 3 Flash set as default for Ollama Cloud
+- Welcome page, popup, and storage defaults all updated to reflect Ollama Cloud + Gemini 3 Flash
+- Facts rotate every 5 seconds with smooth fade animation
 
 ### v1.2.3
 

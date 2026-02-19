@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const steps       = [1, 2, 3];
   let currentStep   = 1;
-  let chosenProvider = 'groq';
+  let chosenProvider = 'ollama';
 
   const step1         = $('#step1');
   const step2         = $('#step2');

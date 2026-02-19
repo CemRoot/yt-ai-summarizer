@@ -308,7 +308,7 @@ async function callOllamaAPI(apiKey, model, messages, retryCount = 0, maxTokens 
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: model || 'qwen3-next:80b',
+        model: model || 'gemini-3-flash-preview',
         messages,
         stream: false,
         options: {
@@ -377,7 +377,7 @@ async function getProviderConfig() {
   const provider = settings.provider || 'groq';
   const apiKey = provider === 'ollama' ? settings.ollamaApiKey : settings.groqApiKey;
   const model = provider === 'ollama'
-    ? (settings.ollamaModel || 'qwen3-next:80b')
+    ? (settings.ollamaModel || 'gemini-3-flash-preview')
     : (settings.model || 'llama-3.3-70b-versatile');
   return { provider, apiKey, model };
 }
