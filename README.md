@@ -5,7 +5,7 @@
 [![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
 ![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.2.1-orange)
+![Version](https://img.shields.io/badge/version-1.2.2-orange)
 
 ---
 
@@ -176,6 +176,13 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.2.2
+
+- LRU cache algorithm: max 20 videos cached, oldest auto-evicted when limit is reached
+- Each video stores up to 4 keys (3 summaries + 1 transcript), max ~800 KB total
+- Cache reads update `lastAccessed` timestamp — frequently watched videos stay cached longer
+- `clearCache()` now also wipes the LRU index
 
 ### v1.2.1
 
