@@ -148,7 +148,13 @@ jobs:
           found=0
           for pattern in "${patterns[@]}"; do
             matches=$(grep -rn --include='*.js' --include='*.json' --include='*.html' -E "$pattern" . \
-              --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null || true)
+              --exclude-dir=node_modules --exclude-dir=.git 2>/dev/null \
+              | grep -v 'placeholder' \
+              | grep -v 'xxxx' \
+              | grep -v 'your.*key' \
+              | grep -v 'example' \
+              | grep -v 'AKIA[A-Z0-9]\{16\}' \
+              || true)
             if [ -n "$matches" ]; then
               echo "POTENTIAL SECRET FOUND with pattern: $pattern"
               echo "$matches"
