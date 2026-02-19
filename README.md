@@ -5,7 +5,7 @@
 [![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
 ![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.2.2-orange)
+![Version](https://img.shields.io/badge/version-1.2.3-orange)
 
 ---
 
@@ -176,6 +176,12 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.2.3
+
+- Performance: ~3x faster for long videos (chunk size 24K → 80K, parallel processing)
+- Most 1-hour videos now fit in a single chunk — no pre-summarization needed
+- Remaining chunks processed in parallel batches of 3 via `Promise.all()`
 
 ### v1.2.2
 

@@ -407,21 +407,32 @@ async function handleSummarizeAll(data, tabId) {
   sendProgress('Preparing AI request...', 0.2);
 
   const languageInstruction = buildLanguageInstruction(language);
-  const maxChars = 24000;
+  const maxChars = 80000;
   const chunks = chunkText(transcript, maxChars);
 
   let transcriptForAnalysis = transcript;
 
   if (chunks.length > 1) {
-    const chunkSummaries = [];
-    for (let i = 0; i < chunks.length; i++) {
-      sendProgress(`Processing section ${i + 1}/${chunks.length}...`, 0.2 + (i / chunks.length) * 0.3);
-      const chunkResult = await callAI(provider, apiKey, model, [
-        { role: 'system', content: `Summarize this part of a video transcript concisely, preserving all specific details (names, dates, locations, data, scientific terms).${languageInstruction}` },
-        { role: 'user', content: `Part ${i + 1}/${chunks.length}:\n\n${chunks[i]}` }
-      ]);
-      chunkSummaries.push(chunkResult.content);
+    sendProgress(`Processing ${chunks.length} sections in parallel...`, 0.25);
+
+    const MAX_PARALLEL = 3;
+    const chunkSummaries = new Array(chunks.length);
+
+    for (let batch = 0; batch < chunks.length; batch += MAX_PARALLEL) {
+      const batchSlice = chunks.slice(batch, batch + MAX_PARALLEL);
+      const promises = batchSlice.map((chunk, j) => {
+        const idx = batch + j;
+        return callAI(provider, apiKey, model, [
+          { role: 'system', content: `Summarize this part of a video transcript concisely, preserving all specific details (names, dates, locations, data, scientific terms).${languageInstruction}` },
+          { role: 'user', content: `Part ${idx + 1}/${chunks.length}:\n\n${chunk}` }
+        ]).then((r) => { chunkSummaries[idx] = r.content; });
+      });
+
+      await Promise.all(promises);
+      const done = Math.min(batch + MAX_PARALLEL, chunks.length);
+      sendProgress(`Processed ${done}/${chunks.length} sections...`, 0.2 + (done / chunks.length) * 0.3);
     }
+
     transcriptForAnalysis = chunkSummaries.map((s, i) => `--- Section ${i + 1} ---\n${s}`).join('\n\n');
   }
 
