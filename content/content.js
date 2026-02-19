@@ -35,7 +35,12 @@
     const settings = await StorageHelper.getSettings();
     if (settings.autoRun && hasKey) {
       SummarizerUI.autoOpen();
-      requestSummary(settings.defaultMode || 'summary', false);
+      const cached = await StorageHelper.getCachedSummary(videoId, settings.defaultMode || 'summary');
+      if (cached?.content) {
+        SummarizerUI.showResult(cached.content);
+      } else {
+        SummarizerUI.showReadyPrompt();
+      }
     }
   }
 
@@ -193,7 +198,7 @@
   }
 
   /**
-   * Handle panel open event
+   * Handle panel open event — show cached content or ready prompt (no auto-API call)
    */
   function onPanelOpen() {
     const videoId = TranscriptExtractor.getVideoId();
@@ -206,11 +211,17 @@
       return;
     }
 
-    StorageHelper.hasApiKey().then((hasKey) => {
+    StorageHelper.hasApiKey().then(async (hasKey) => {
       if (!hasKey) {
         SummarizerUI.showApiKeyPrompt();
+        return;
+      }
+
+      const cached = await StorageHelper.getCachedSummary(videoId, mode);
+      if (cached?.content) {
+        SummarizerUI.showResult(cached.content);
       } else {
-        requestSummary(mode, false);
+        SummarizerUI.showReadyPrompt();
       }
     });
   }

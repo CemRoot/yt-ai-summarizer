@@ -5,7 +5,7 @@
 [![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
 ![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.2.0-orange)
+![Version](https://img.shields.io/badge/version-1.2.1-orange)
 
 ---
 
@@ -176,6 +176,13 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.2.1
+
+- Fixed: Toggle button not appearing on SPA navigation (broadened content script matching)
+- Added: "Summarize this video?" start prompt — no API call until user clicks Start (saves credits)
+- Localized start prompt in 8 languages (EN, TR, ES, FR, DE, JA, KO, ZH)
+- Fixed: CI false positive on placeholder API keys
 
 ### v1.2.0
 

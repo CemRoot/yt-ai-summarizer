@@ -13,6 +13,7 @@ const SummarizerUI = (() => {
   // SVG Icons
   const ICONS = {
     brain: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
+    play: `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
     close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`,
     copy: `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`,
     refresh: `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
@@ -323,6 +324,48 @@ const SummarizerUI = (() => {
   }
 
   /**
+   * Show "ready to summarize" prompt — user must click Start to begin
+   */
+  function showReadyPrompt() {
+    const content = panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    const READY_TEXT = {
+      tr: { title: 'Bu videoyu özetleyelim mi?', desc: 'AI ile özet, önemli noktalar ve detaylı analiz alın.', btn: 'Özetlemeyi Başlat' },
+      es: { title: '¿Resumir este video?', desc: 'Obtén resumen, puntos clave y análisis detallado con IA.', btn: 'Iniciar Resumen' },
+      fr: { title: 'Résumer cette vidéo ?', desc: 'Obtenez un résumé, points clés et analyse détaillée par IA.', btn: 'Démarrer le résumé' },
+      de: { title: 'Dieses Video zusammenfassen?', desc: 'Erhalten Sie eine KI-Zusammenfassung, Kernpunkte und Detailanalyse.', btn: 'Zusammenfassung starten' },
+      ja: { title: 'この動画を要約しますか？', desc: 'AIで要約、ポイント、詳細分析を取得します。', btn: '要約を開始' },
+      ko: { title: '이 동영상을 요약할까요?', desc: 'AI로 요약, 핵심 포인트, 상세 분석을 받으세요.', btn: '요약 시작' },
+      zh: { title: '要总结这个视频吗？', desc: '通过AI获取摘要、要点和详细分析。', btn: '开始总结' },
+    };
+    const uiLang = (navigator.language || 'en').substring(0, 2);
+    const t = READY_TEXT[uiLang] || {
+      title: 'Summarize this video?',
+      desc: 'Get an AI-powered summary, key points, and detailed analysis.',
+      btn: 'Start Summarizing'
+    };
+
+    content.innerHTML = `
+      <div class="ytai-ready-prompt">
+        <div class="ytai-ready-icon">${ICONS.sparkle}</div>
+        <div class="ytai-ready-title">${escapeHtml(t.title)}</div>
+        <div class="ytai-ready-desc">${escapeHtml(t.desc)}</div>
+        <button class="ytai-btn ytai-btn-primary ytai-start-btn">
+          ${ICONS.play}
+          <span>${escapeHtml(t.btn)}</span>
+        </button>
+      </div>
+    `;
+
+    content.querySelector('.ytai-start-btn')?.addEventListener('click', () => {
+      if (typeof window._ytaiRequestSummary === 'function') {
+        window._ytaiRequestSummary(currentMode, false);
+      }
+    });
+  }
+
+  /**
    * Show API key prompt
    */
   function showApiKeyPrompt() {
@@ -509,6 +552,7 @@ const SummarizerUI = (() => {
     togglePanel,
     autoOpen,
     showLoading,
+    showReadyPrompt,
     showApiKeyPrompt,
     showError,
     showResult,

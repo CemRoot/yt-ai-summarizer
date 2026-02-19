@@ -243,6 +243,70 @@
 .ytai-content::-webkit-scrollbar-thumb { background: var(--ytai-scrollbar); border-radius: 3px; }
 .ytai-content::-webkit-scrollbar-thumb:hover { background: var(--ytai-scrollbar-hover); }
 
+/* ── Ready Prompt (Start Button) ── */
+.ytai-ready-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 12px;
+  height: 100%;
+  animation: ytaiFadeIn 0.3s ease;
+}
+
+.ytai-ready-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ytai-accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.ytai-ready-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--ytai-accent);
+}
+
+.ytai-ready-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ytai-text);
+  letter-spacing: -0.3px;
+}
+
+.ytai-ready-desc {
+  font-size: 13px;
+  color: var(--ytai-text-muted);
+  line-height: 1.5;
+  max-width: 260px;
+}
+
+.ytai-start-btn {
+  margin-top: 8px;
+  padding: 12px 28px !important;
+  font-size: 14px !important;
+  border-radius: 24px !important;
+  gap: 8px !important;
+  box-shadow: 0 2px 8px rgba(6,95,212,0.25);
+  transition: all 0.2s ease !important;
+}
+
+.ytai-start-btn:hover {
+  box-shadow: 0 4px 16px rgba(6,95,212,0.35);
+  transform: translateY(-1px);
+}
+
+.ytai-start-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
 /* ── API Key Prompt ── */
 .ytai-api-prompt {
   display: flex;

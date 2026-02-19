@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "default_locale": "en",
   "minimum_chrome_version": "111",
 
@@ -23,13 +23,13 @@
 
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch*"],
+      "matches": ["https://www.youtube.com/*"],
       "js": ["content/page-bridge.js"],
       "run_at": "document_idle",
       "world": "MAIN"
     },
     {
-      "matches": ["https://www.youtube.com/watch*"],
+      "matches": ["https://www.youtube.com/*"],
       "js": [
         "utils/storage.js",
         "content/transcript.js",
