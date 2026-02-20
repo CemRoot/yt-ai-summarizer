@@ -2,10 +2,10 @@
 
 > **Stop watching. Start reading.** Summarize any YouTube video for free with your own AI — no subscriptions, no hidden fees.
 
-[![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
-![Chrome Web Store](https://img.shields.io/badge/manifest-v3-blue)
+[![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
+![Manifest Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.manifest_version&label=manifest&prefix=v&color=blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.3.0-orange)
+![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.version&label=version&color=orange)
 
 ---
 
