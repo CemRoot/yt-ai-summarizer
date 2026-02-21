@@ -8,6 +8,7 @@ const StorageHelper = (() => {
     provider: 'ollama',
     groqApiKey: '',
     ollamaApiKey: '',
+    geminiApiKey: '',
     model: 'llama-3.3-70b-versatile',
     ollamaModel: 'gemini-3-flash-preview',
     defaultMode: 'summary',

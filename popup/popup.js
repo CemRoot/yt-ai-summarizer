@@ -12,10 +12,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ollamaSection     = $('#ollamaSettings');
   const groqKeyInput      = $('#groqApiKey');
   const ollamaKeyInput    = $('#ollamaApiKey');
+  const geminiKeyInput    = $('#geminiApiKey');
   const groqKeyStatus     = $('#groqApiKeyStatus');
   const ollamaKeyStatus   = $('#ollamaApiKeyStatus');
+  const geminiKeyStatus   = $('#geminiApiKeyStatus');
   const toggleGroqKey     = $('#toggleGroqKey');
   const toggleOllamaKey   = $('#toggleOllamaKey');
+  const toggleGeminiKey   = $('#toggleGeminiKey');
   const groqModelSelect   = $('#groqModel');
   const ollamaModelSelect = $('#ollamaModel');
   const defaultModeSelect = $('#defaultMode');
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Toggle Key Visibility ──
   toggleGroqKey.addEventListener('click', () => toggleKeyVis(groqKeyInput));
   toggleOllamaKey.addEventListener('click', () => toggleKeyVis(ollamaKeyInput));
+  toggleGeminiKey.addEventListener('click', () => toggleKeyVis(geminiKeyInput));
 
   function toggleKeyVis(input) {
     const isPw = input.type === 'password';
@@ -86,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         provider: 'groq',
         groqApiKey: '',
         ollamaApiKey: '',
+        geminiApiKey: '',
         model: 'llama-3.3-70b-versatile',
         ollamaModel: 'qwen3-next:80b',
         defaultMode: 'summary',
@@ -96,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       activeProvider = s.provider || 'groq';
       groqKeyInput.value = s.groqApiKey || '';
       ollamaKeyInput.value = s.ollamaApiKey || '';
+      geminiKeyInput.value = s.geminiApiKey || '';
       groqModelSelect.value = s.model;
       ollamaModelSelect.value = s.ollamaModel;
       defaultModeSelect.value = s.defaultMode;
@@ -108,6 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (s.groqApiKey) showStatus(groqKeyStatus, 'API key configured', 'success');
       if (s.ollamaApiKey) showStatus(ollamaKeyStatus, 'API key configured', 'success');
+      if (s.geminiApiKey) showStatus(geminiKeyStatus, 'API key configured', 'success');
     } catch (err) {
       console.warn('Failed to load settings:', err);
     }
@@ -116,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function saveSettings() {
     const groqKey = groqKeyInput.value.trim();
     const ollamaKey = ollamaKeyInput.value.trim();
+    const geminiKey = geminiKeyInput.value.trim();
 
     if (activeProvider === 'groq' && groqKey && !groqKey.startsWith('gsk_')) {
       showStatus(groqKeyStatus, 'Groq API keys start with "gsk_"', 'error');
@@ -126,6 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       provider: activeProvider,
       groqApiKey: groqKey,
       ollamaApiKey: ollamaKey,
+      geminiApiKey: geminiKey,
       model: groqModelSelect.value,
       ollamaModel: ollamaModelSelect.value,
       defaultMode: defaultModeSelect.value,

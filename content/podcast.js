@@ -1,209 +1,211 @@
 /**
- * YouTube AI Summarizer — Podcast Player Engine
- * Uses Web Speech API to play two-host podcast conversations.
+ * YouTube AI Summarizer — Podcast Audio Player
+ * Plays PCM audio from Gemini TTS via AudioContext.
  */
 
 const PodcastPlayer = (() => {
-  let dialogue = [];
-  let currentIndex = 0;
+  let audioContext = null;
+  let sourceNode = null;
+  let audioBuffer = null;
+  let startTime = 0;
+  let pauseOffset = 0;
   let isPlaying = false;
   let isPaused = false;
-  let currentUtterance = null;
   let playbackRate = 1.0;
-  let voiceA = null;
-  let voiceB = null;
+  let duration = 0;
   let onStateChange = null;
-  let voicesLoaded = false;
-
-  function loadVoices() {
-    return new Promise((resolve) => {
-      const voices = speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        voicesLoaded = true;
-        resolve(voices);
-        return;
-      }
-      speechSynthesis.onvoiceschanged = () => {
-        voicesLoaded = true;
-        resolve(speechSynthesis.getVoices());
-      };
-      setTimeout(() => resolve(speechSynthesis.getVoices()), 1000);
-    });
-  }
-
-  async function pickVoices(lang) {
-    const voices = await loadVoices();
-    if (voices.length === 0) return;
-
-    const langPrefix = (lang || navigator.language || 'en').substring(0, 2);
-
-    const langVoices = voices.filter(v => v.lang.startsWith(langPrefix));
-    const pool = langVoices.length >= 2 ? langVoices : voices.filter(v => v.lang.startsWith('en'));
-    const finalPool = pool.length >= 2 ? pool : voices;
-
-    // Try to pick one male-ish and one female-ish voice by name heuristics
-    const maleHints = /male|guy|david|james|daniel|mark|alex|tom|google uk english male/i;
-    const femaleHints = /female|woman|samantha|victoria|karen|zira|fiona|google uk english female/i;
-
-    const males = finalPool.filter(v => maleHints.test(v.name));
-    const females = finalPool.filter(v => femaleHints.test(v.name));
-
-    if (males.length > 0 && females.length > 0) {
-      voiceA = males[0];
-      voiceB = females[0];
-    } else if (finalPool.length >= 2) {
-      voiceA = finalPool[0];
-      voiceB = finalPool[1];
-    } else {
-      voiceA = finalPool[0] || null;
-      voiceB = finalPool[0] || null;
-    }
-  }
+  let progressInterval = null;
 
   function notifyState() {
     if (typeof onStateChange === 'function') {
+      const currentTime = isPlaying && !isPaused
+        ? (audioContext.currentTime - startTime) * playbackRate
+        : pauseOffset;
       onStateChange({
         isPlaying,
         isPaused,
-        currentIndex,
-        totalLines: dialogue.length,
-        currentLine: dialogue[currentIndex] || null,
+        currentTime: Math.min(currentTime, duration),
+        duration,
         rate: playbackRate
       });
     }
   }
 
-  function speakLine(index) {
-    if (index >= dialogue.length) {
-      isPlaying = false;
-      isPaused = false;
-      currentIndex = 0;
-      notifyState();
-      return;
-    }
-
-    currentIndex = index;
-    const line = dialogue[index];
-    const utterance = new SpeechSynthesisUtterance(line.text);
-
-    utterance.voice = line.speaker === 'A' ? voiceA : voiceB;
-    utterance.rate = playbackRate;
-    utterance.pitch = line.speaker === 'A' ? 1.0 : 1.15;
-
-    currentUtterance = utterance;
-    notifyState();
-
-    utterance.onend = () => {
-      if (!isPaused && isPlaying) {
-        speakLine(index + 1);
-      }
-    };
-
-    utterance.onerror = (e) => {
-      if (e.error === 'canceled' || e.error === 'interrupted') return;
-      console.warn('[Podcast] Speech error:', e.error);
-      if (isPlaying && !isPaused) {
-        speakLine(index + 1);
-      }
-    };
-
-    speechSynthesis.speak(utterance);
+  function startProgressPolling() {
+    stopProgressPolling();
+    progressInterval = setInterval(notifyState, 250);
   }
 
-  async function play(script, lang) {
-    if (script && Array.isArray(script)) {
-      dialogue = script;
-      currentIndex = 0;
+  function stopProgressPolling() {
+    if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+  }
+
+  async function loadAudio(base64Data) {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    if (dialogue.length === 0) return;
+    // Gemini TTS returns raw PCM s16le 24kHz mono
+    const raw = atob(base64Data);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
 
-    if (isPaused) {
-      isPaused = false;
-      isPlaying = true;
-      speechSynthesis.resume();
-      notifyState();
-      return;
+    const sampleRate = 24000;
+    const numSamples = bytes.length / 2;
+    audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+    const channelData = audioBuffer.getChannelData(0);
+
+    const view = new DataView(bytes.buffer);
+    for (let i = 0; i < numSamples; i++) {
+      channelData[i] = view.getInt16(i * 2, true) / 32768;
     }
 
-    await pickVoices(lang);
+    duration = audioBuffer.duration;
+    pauseOffset = 0;
+    notifyState();
+  }
 
-    speechSynthesis.cancel();
+  function play() {
+    if (!audioBuffer || !audioContext) return;
+
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+
+    if (sourceNode) {
+      try { sourceNode.stop(); } catch { /* ignore */ }
+    }
+
+    sourceNode = audioContext.createBufferSource();
+    sourceNode.buffer = audioBuffer;
+    sourceNode.playbackRate.value = playbackRate;
+    sourceNode.connect(audioContext.destination);
+
+    sourceNode.onended = () => {
+      if (isPlaying && !isPaused) {
+        isPlaying = false;
+        isPaused = false;
+        pauseOffset = 0;
+        stopProgressPolling();
+        notifyState();
+      }
+    };
+
+    sourceNode.start(0, pauseOffset);
+    startTime = audioContext.currentTime - (pauseOffset / playbackRate);
     isPlaying = true;
     isPaused = false;
-    speakLine(currentIndex);
+    startProgressPolling();
+    notifyState();
   }
 
   function pause() {
-    if (!isPlaying) return;
+    if (!isPlaying || isPaused) return;
+    pauseOffset = (audioContext.currentTime - startTime) * playbackRate;
+    try { sourceNode.stop(); } catch { /* ignore */ }
     isPaused = true;
-    speechSynthesis.pause();
+    stopProgressPolling();
     notifyState();
+  }
+
+  function togglePlayPause(base64Data) {
+    if (!audioBuffer && base64Data) {
+      loadAudio(base64Data).then(() => play());
+      return;
+    }
+    if (isPlaying && !isPaused) {
+      pause();
+    } else {
+      play();
+    }
   }
 
   function stop() {
-    speechSynthesis.cancel();
+    if (sourceNode) {
+      try { sourceNode.stop(); } catch { /* ignore */ }
+    }
     isPlaying = false;
     isPaused = false;
-    currentIndex = 0;
+    pauseOffset = 0;
+    stopProgressPolling();
     notifyState();
   }
 
-  function skipForward() {
-    if (!isPlaying || currentIndex >= dialogue.length - 1) return;
-    speechSynthesis.cancel();
-    isPaused = false;
-    speakLine(currentIndex + 1);
+  function seek(time) {
+    pauseOffset = Math.max(0, Math.min(time, duration));
+    if (isPlaying && !isPaused) {
+      play();
+    } else {
+      notifyState();
+    }
   }
 
-  function skipBackward() {
-    if (!isPlaying || currentIndex <= 0) return;
-    speechSynthesis.cancel();
-    isPaused = false;
-    speakLine(currentIndex - 1);
+  function skipForward(seconds = 10) {
+    const current = isPlaying && !isPaused
+      ? (audioContext.currentTime - startTime) * playbackRate
+      : pauseOffset;
+    seek(current + seconds);
+  }
+
+  function skipBackward(seconds = 10) {
+    const current = isPlaying && !isPaused
+      ? (audioContext.currentTime - startTime) * playbackRate
+      : pauseOffset;
+    seek(Math.max(0, current - seconds));
   }
 
   function setRate(rate) {
     playbackRate = Math.max(0.5, Math.min(2.0, rate));
-    if (isPlaying && !isPaused) {
-      const idx = currentIndex;
-      speechSynthesis.cancel();
-      isPaused = false;
-      speakLine(idx);
+    if (isPlaying && !isPaused && sourceNode) {
+      sourceNode.playbackRate.value = playbackRate;
     }
     notifyState();
   }
 
-  function setOnStateChange(cb) {
-    onStateChange = cb;
-  }
+  function setOnStateChange(cb) { onStateChange = cb; }
 
   function getState() {
+    const currentTime = isPlaying && !isPaused && audioContext
+      ? (audioContext.currentTime - startTime) * playbackRate
+      : pauseOffset;
     return {
       isPlaying,
       isPaused,
-      currentIndex,
-      totalLines: dialogue.length,
-      currentLine: dialogue[currentIndex] || null,
+      currentTime: Math.min(currentTime, duration),
+      duration,
       rate: playbackRate
     };
   }
 
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   function destroy() {
     stop();
-    dialogue = [];
+    if (audioContext) {
+      audioContext.close().catch(() => {});
+      audioContext = null;
+    }
+    audioBuffer = null;
     onStateChange = null;
   }
 
   return {
+    loadAudio,
     play,
     pause,
+    togglePlayPause,
     stop,
+    seek,
     skipForward,
     skipBackward,
     setRate,
     setOnStateChange,
     getState,
+    formatTime,
     destroy
   };
 })();

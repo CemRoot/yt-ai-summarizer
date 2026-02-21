@@ -35,7 +35,7 @@ All three are generated in a **single API call** — no rate limit issues.
 | **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
 | **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
 | **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
-| **🎙️ AI Podcast** | NotebookLM-style two-host podcast from your video summary. Powered by Web Speech API — completely free. |
+| **🎙️ AI Podcast** | NotebookLM-style two-host podcast from your video summary. Powered by Gemini TTS — natural voices, completely free. |
 | **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
 | **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
 
@@ -178,6 +178,18 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.5.0
+
+- **🎙️ Gemini TTS Podcast**: Replaced Web Speech API with Google Gemini 2.5 Flash TTS
+  - Near-human quality voices (Charon for Alex, Puck for Sam)
+  - Multi-speaker audio generated as a single audio file
+  - Real audio player: play/pause, seek bar, 10s skip, speed control (0.75x–1.5x)
+  - Audio duration displayed, progress bar click-to-seek
+- **Gemini API Key**: New settings field for free Gemini API key (no credit card needed)
+- **Guided setup**: Step-by-step instructions shown when Gemini key is missing
+- **Region restrictions**: Friendly "not available" messages for unsupported regions (China, Iran, Russia, North Korea) in their native languages
+- **Error handling**: Specific messages for GEMINI_REGION_BLOCKED, GEMINI_RATE_LIMITED, GEMINI_KEY_MISSING
 
 ### v1.4.0
 

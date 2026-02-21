@@ -162,16 +162,22 @@
     const videoId = TranscriptExtractor.getVideoId();
     if (!videoId) return;
 
+    // Check for Gemini API key first
+    const settings = await StorageHelper.getSettings();
+    if (!settings.geminiApiKey) {
+      SummarizerUI.showPodcastKeyPrompt();
+      return;
+    }
+
     // Serve from cache
     if (podcastCache?.videoId === videoId && podcastCache.dialogue) {
-      SummarizerUI.showPodcastPlayer(podcastCache.dialogue);
+      SummarizerUI.showPodcastPlayer(podcastCache);
       return;
     }
 
     // Need a summary first
     const summaryText = combinedCache?.summary;
     if (!summaryText) {
-      // Try persistent cache
       const cached = await StorageHelper.getCachedSummary(videoId, 'summary');
       if (cached?.content) {
         return generatePodcastFromText(cached.content, videoId);
@@ -201,17 +207,27 @@
       });
 
       if (!response) throw new Error('No response from extension.');
-      if (response.error) throw new Error(response.error);
+      if (response.error) {
+        if (response.error === 'GEMINI_KEY_MISSING') {
+          SummarizerUI.showPodcastKeyPrompt();
+          return;
+        }
+        if (response.error === 'GEMINI_REGION_BLOCKED') {
+          SummarizerUI.showError('Region Not Supported', 'Gemini TTS is not available in your region. This is a Google restriction.', false);
+          return;
+        }
+        if (response.error === 'GEMINI_RATE_LIMITED') {
+          SummarizerUI.showError('Rate Limited', 'Too many requests. Please wait a moment and try again.', true);
+          return;
+        }
+        throw new Error(response.error);
+      }
 
-      podcastCache = { videoId, dialogue: response.dialogue };
-      SummarizerUI.showPodcastPlayer(response.dialogue);
+      podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
+      SummarizerUI.showPodcastPlayer(podcastCache);
 
     } catch (error) {
-      SummarizerUI.showError(
-        'Podcast Error',
-        error?.message || 'Failed to generate podcast. Please try again.',
-        true
-      );
+      handleError(error);
     } finally {
       isProcessing = false;
     }

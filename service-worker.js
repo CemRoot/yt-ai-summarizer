@@ -8,6 +8,7 @@ importScripts('utils/storage.js');
 
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
+const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
 const MAX_RETRIES = 3;
 
 /**
@@ -474,6 +475,10 @@ async function handleGeneratePodcast(data, tabId) {
     throw new Error('No summary available to generate podcast.');
   }
 
+  const settings = await StorageHelper.getSettings();
+  const geminiKey = settings.geminiApiKey;
+  if (!geminiKey) throw new Error('GEMINI_KEY_MISSING');
+
   const { provider, apiKey, model } = await getProviderConfig();
   if (!apiKey) throw new Error('INVALID_API_KEY');
 
@@ -483,7 +488,8 @@ async function handleGeneratePodcast(data, tabId) {
     }
   }
 
-  sendProgress('Writing podcast script...', 0.3);
+  // Step 1: Generate podcast script via LLM
+  sendProgress('Writing podcast script...', 0.2);
 
   const languageInstruction = buildLanguageInstruction(language);
 
@@ -503,23 +509,19 @@ RULES:
 ${languageInstruction}
 
 You MUST respond with ONLY a valid JSON array. No markdown, no code fences, no explanation.
-Format: [{"speaker":"A","text":"..."},{"speaker":"B","text":"..."},...]`;
+Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
 
   const result = await callAI(provider, apiKey, model, [
     { role: 'system', content: podcastPrompt },
     { role: 'user', content: `Here is the video summary to convert into a podcast conversation:\n\n${summaryText}` }
   ], 0, 4096);
 
-  sendProgress('Preparing podcast...', 0.8);
-
   let dialogue;
   try {
     let raw = result.content.trim();
-    // Strip markdown code fences if the AI wrapped the JSON
     raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
     dialogue = JSON.parse(raw);
   } catch {
-    // Fallback: try to extract JSON array from response
     const match = result.content.match(/\[[\s\S]*\]/);
     if (match) {
       try { dialogue = JSON.parse(match[0]); } catch { /* ignore */ }
@@ -530,8 +532,61 @@ Format: [{"speaker":"A","text":"..."},{"speaker":"B","text":"..."},...]`;
     throw new Error('Failed to generate podcast script. Please try again.');
   }
 
+  // Step 2: Convert script to audio via Gemini TTS
+  sendProgress('Generating audio with Gemini TTS...', 0.5);
+
+  const ttsTranscript = dialogue.map(line => {
+    const name = line.speaker === 'A' ? 'Alex' : (line.speaker === 'B' ? 'Sam' : line.speaker);
+    return `${name}: ${line.text}`;
+  }).join('\n');
+
+  const ttsResponse = await fetch(`${GEMINI_TTS_BASE}?key=${geminiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: ttsTranscript }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          multiSpeakerVoiceConfig: {
+            speakerVoiceConfigs: [
+              {
+                speaker: 'Alex',
+                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } }
+              },
+              {
+                speaker: 'Sam',
+                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } }
+              }
+            ]
+          }
+        }
+      }
+    })
+  });
+
+  if (ttsResponse.status === 403) {
+    throw new Error('GEMINI_REGION_BLOCKED');
+  }
+
+  if (ttsResponse.status === 429) {
+    throw new Error('GEMINI_RATE_LIMITED');
+  }
+
+  if (!ttsResponse.ok) {
+    const errData = await ttsResponse.json().catch(() => ({}));
+    throw new Error(`GEMINI_TTS_ERROR: ${errData.error?.message || ttsResponse.status}`);
+  }
+
+  const ttsData = await ttsResponse.json();
+  const audioBase64 = ttsData.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+  if (!audioBase64) {
+    throw new Error('Gemini TTS returned no audio data.');
+  }
+
   sendProgress('Podcast ready!', 1);
-  return { dialogue, model: result.model, provider };
+  return { dialogue, audioBase64, model: result.model, provider };
 }
 
 /**
