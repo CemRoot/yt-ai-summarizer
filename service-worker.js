@@ -151,6 +151,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'generatePodcast') {
+    handleGeneratePodcast(message.data, sender.tab?.id)
+      .then(sendResponse)
+      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+    return true;
+  }
+
   if (message.action === 'openSettings') {
     chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') });
     sendResponse({ ok: true });
@@ -454,6 +461,77 @@ async function handleSummarizeAll(data, tabId) {
     model: result.model,
     provider
   };
+}
+
+/**
+ * Generate a NotebookLM-style two-host podcast script from summary text.
+ * Returns a JSON array of dialogue lines: [{ speaker: "A"|"B", text: "..." }, ...]
+ */
+async function handleGeneratePodcast(data, tabId) {
+  const { summaryText, language } = data;
+
+  if (!summaryText || summaryText.trim().length === 0) {
+    throw new Error('No summary available to generate podcast.');
+  }
+
+  const { provider, apiKey, model } = await getProviderConfig();
+  if (!apiKey) throw new Error('INVALID_API_KEY');
+
+  function sendProgress(text, progress) {
+    if (tabId) {
+      chrome.tabs.sendMessage(tabId, { action: 'podcastProgress', text, progress }).catch(() => {});
+    }
+  }
+
+  sendProgress('Writing podcast script...', 0.3);
+
+  const languageInstruction = buildLanguageInstruction(language);
+
+  const podcastPrompt = `You are a podcast script writer. Convert the following video summary into a natural, engaging conversation between TWO podcast hosts.
+
+HOST A ("Alex"): The knowledgeable host who explains the topic. Enthusiastic, clear, uses analogies.
+HOST B ("Sam"): The curious co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.
+
+RULES:
+- Write 12-20 dialogue turns total (6-10 per host).
+- Start with a warm intro: "Hey everyone, welcome back!" style.
+- End with a brief wrap-up and sign-off.
+- Keep it conversational and fun — use "wow", "that's wild", "wait, really?" naturally.
+- Each line should be 1-3 sentences (speakable in 5-15 seconds).
+- DO NOT use any markdown formatting. Plain text only.
+- Host B should occasionally summarize what Host A said in simpler terms.
+${languageInstruction}
+
+You MUST respond with ONLY a valid JSON array. No markdown, no code fences, no explanation.
+Format: [{"speaker":"A","text":"..."},{"speaker":"B","text":"..."},...]`;
+
+  const result = await callAI(provider, apiKey, model, [
+    { role: 'system', content: podcastPrompt },
+    { role: 'user', content: `Here is the video summary to convert into a podcast conversation:\n\n${summaryText}` }
+  ], 0, 4096);
+
+  sendProgress('Preparing podcast...', 0.8);
+
+  let dialogue;
+  try {
+    let raw = result.content.trim();
+    // Strip markdown code fences if the AI wrapped the JSON
+    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    dialogue = JSON.parse(raw);
+  } catch {
+    // Fallback: try to extract JSON array from response
+    const match = result.content.match(/\[[\s\S]*\]/);
+    if (match) {
+      try { dialogue = JSON.parse(match[0]); } catch { /* ignore */ }
+    }
+  }
+
+  if (!Array.isArray(dialogue) || dialogue.length < 4) {
+    throw new Error('Failed to generate podcast script. Please try again.');
+  }
+
+  sendProgress('Podcast ready!', 1);
+  return { dialogue, model: result.model, provider };
 }
 
 /**

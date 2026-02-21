@@ -35,6 +35,7 @@ All three are generated in a **single API call** — no rate limit issues.
 | **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
 | **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
 | **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
+| **🎙️ AI Podcast** | NotebookLM-style two-host podcast from your video summary. Powered by Web Speech API — completely free. |
 | **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
 | **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
 
@@ -177,6 +178,17 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.4.0
+
+- **🎙️ AI Podcast**: NotebookLM-style two-host podcast generated from video summaries
+  - AI writes a natural conversation script between two hosts (Alex & Sam)
+  - Web Speech API plays it with two distinct voices — completely free, no extra API needed
+  - Full podcast player: play/pause, skip forward/back, speed control (0.75x–1.5x)
+  - Live subtitles showing who's speaking and what they're saying
+  - Scrollable transcript with click-to-jump navigation
+  - Podcast tab added alongside Summary, Key Points, and Detailed Analysis
+- New `podcast.js` engine: voice selection, state management, sequential speech playback
 
 ### v1.3.0
 

@@ -111,17 +111,17 @@ const SummarizerUI = (() => {
     tabs.className = 'ytai-tabs';
 
     const TAB_LABELS = {
-      en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed Analysis' },
-      tr: { summary: 'Özet', keypoints: 'Önemli Noktalar', detailed: 'Detaylı Analiz' },
-      es: { summary: 'Resumen', keypoints: 'Puntos Clave', detailed: 'Análisis Detallado' },
-      fr: { summary: 'Résumé', keypoints: 'Points Clés', detailed: 'Analyse Détaillée' },
-      de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detailanalyse' },
-      pt: { summary: 'Resumo', keypoints: 'Pontos-Chave', detailed: 'Análise Detalhada' },
-      ja: { summary: '要約', keypoints: 'ポイント', detailed: '詳細分析' },
-      ko: { summary: '요약', keypoints: '핵심 포인트', detailed: '상세 분석' },
-      zh: { summary: '摘要', keypoints: '要点', detailed: '详细分析' },
-      ar: { summary: 'ملخص', keypoints: 'نقاط رئيسية', detailed: 'تحليل مفصل' },
-      ru: { summary: 'Резюме', keypoints: 'Ключевые моменты', detailed: 'Подробный анализ' }
+      en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed', podcast: '🎙️ Podcast' },
+      tr: { summary: 'Özet', keypoints: 'Önemli Noktalar', detailed: 'Detaylı', podcast: '🎙️ Podcast' },
+      es: { summary: 'Resumen', keypoints: 'Puntos Clave', detailed: 'Detallado', podcast: '🎙️ Podcast' },
+      fr: { summary: 'Résumé', keypoints: 'Points Clés', detailed: 'Détaillée', podcast: '🎙️ Podcast' },
+      de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detail', podcast: '🎙️ Podcast' },
+      pt: { summary: 'Resumo', keypoints: 'Pontos-Chave', detailed: 'Detalhada', podcast: '🎙️ Podcast' },
+      ja: { summary: '要約', keypoints: 'ポイント', detailed: '詳細分析', podcast: '🎙️ Podcast' },
+      ko: { summary: '요약', keypoints: '핵심', detailed: '상세', podcast: '🎙️ Podcast' },
+      zh: { summary: '摘要', keypoints: '要点', detailed: '详细', podcast: '🎙️ Podcast' },
+      ar: { summary: 'ملخص', keypoints: 'نقاط', detailed: 'تحليل', podcast: '🎙️ Podcast' },
+      ru: { summary: 'Резюме', keypoints: 'Ключевые', detailed: 'Подробный', podcast: '🎙️ Podcast' }
     };
 
     function resolveUILang() {
@@ -135,7 +135,8 @@ const SummarizerUI = (() => {
     const tabData = [
       { id: 'summary',   label: labels.summary },
       { id: 'keypoints', label: labels.keypoints },
-      { id: 'detailed',  label: labels.detailed }
+      { id: 'detailed',  label: labels.detailed },
+      { id: 'podcast',   label: labels.podcast }
     ];
 
     tabData.forEach((tab) => {
@@ -285,6 +286,18 @@ const SummarizerUI = (() => {
     tabs?.forEach((tab) => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
+
+    if (mode === 'podcast') {
+      if (typeof window._ytaiRequestPodcast === 'function') {
+        window._ytaiRequestPodcast();
+      }
+      return;
+    }
+
+    // Stop podcast when switching away
+    if (typeof window.PodcastPlayer !== 'undefined') {
+      window.PodcastPlayer.stop();
+    }
 
     if (typeof window._ytaiRequestSummary === 'function') {
       window._ytaiRequestSummary(mode, false);
@@ -496,6 +509,187 @@ const SummarizerUI = (() => {
   }
 
   /**
+   * Show podcast player UI
+   */
+  function showPodcastPlayer(dialogue) {
+    stopFactRotation();
+    const content = panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    const PODCAST_TEXT = {
+      tr: { title: 'AI Podcast', generating: 'Podcast hazırlanıyor...', listen: 'Dinle', noSummary: 'Önce bir özet oluşturun.' },
+      en: { title: 'AI Podcast', generating: 'Generating podcast...', listen: 'Listen', noSummary: 'Generate a summary first.' }
+    };
+    const uiLang = (navigator.language || 'en').substring(0, 2);
+    const pt = PODCAST_TEXT[uiLang] || PODCAST_TEXT.en;
+
+    if (!dialogue) {
+      content.innerHTML = `
+        <div class="ytai-podcast-empty">
+          <div class="ytai-podcast-icon">🎙️</div>
+          <div class="ytai-ready-title">${escapeHtml(pt.title)}</div>
+          <div class="ytai-ready-desc">${escapeHtml(pt.noSummary)}</div>
+        </div>
+      `;
+      return;
+    }
+
+    content.innerHTML = `
+      <div class="ytai-podcast-player">
+        <div class="ytai-podcast-header">
+          <div class="ytai-podcast-icon-large">🎙️</div>
+          <div class="ytai-podcast-title">${escapeHtml(pt.title)}</div>
+          <div class="ytai-podcast-meta">${dialogue.length} lines</div>
+        </div>
+
+        <div class="ytai-podcast-subtitle" id="ytaiPodcastSubtitle">
+          <span class="ytai-podcast-speaker"></span>
+          <span class="ytai-podcast-text">Press play to start</span>
+        </div>
+
+        <div class="ytai-podcast-progress-wrap">
+          <div class="ytai-podcast-progress">
+            <div class="ytai-podcast-progress-fill" id="ytaiPodcastProgressFill"></div>
+          </div>
+          <div class="ytai-podcast-progress-label">
+            <span id="ytaiPodcastCurrent">0</span> / <span id="ytaiPodcastTotal">${dialogue.length}</span>
+          </div>
+        </div>
+
+        <div class="ytai-podcast-controls">
+          <button class="ytai-podcast-ctrl" id="ytaiPodcastPrev" title="Previous">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          <button class="ytai-podcast-ctrl ytai-podcast-play" id="ytaiPodcastPlayPause" title="Play">
+            <svg viewBox="0 0 24 24" class="play-icon"><path d="M8 5v14l11-7z"/></svg>
+            <svg viewBox="0 0 24 24" class="pause-icon" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button class="ytai-podcast-ctrl" id="ytaiPodcastNext" title="Next">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+
+        <div class="ytai-podcast-rate">
+          <button class="ytai-rate-btn" data-rate="0.75">0.75x</button>
+          <button class="ytai-rate-btn active" data-rate="1">1x</button>
+          <button class="ytai-rate-btn" data-rate="1.25">1.25x</button>
+          <button class="ytai-rate-btn" data-rate="1.5">1.5x</button>
+        </div>
+
+        <div class="ytai-podcast-transcript" id="ytaiPodcastTranscript">
+          ${dialogue.map((line, i) => `
+            <div class="ytai-podcast-line" data-index="${i}">
+              <span class="ytai-line-speaker ${line.speaker === 'A' ? 'speaker-a' : 'speaker-b'}">${line.speaker === 'A' ? 'Alex' : 'Sam'}</span>
+              <span class="ytai-line-text">${escapeHtml(line.text)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Wire up controls
+    const playPauseBtn = content.querySelector('#ytaiPodcastPlayPause');
+    const prevBtn = content.querySelector('#ytaiPodcastPrev');
+    const nextBtn = content.querySelector('#ytaiPodcastNext');
+    const playIcon = playPauseBtn?.querySelector('.play-icon');
+    const pauseIcon = playPauseBtn?.querySelector('.pause-icon');
+
+    PodcastPlayer.setOnStateChange((state) => {
+      // Update play/pause icons
+      if (state.isPlaying && !state.isPaused) {
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+      } else {
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+      }
+
+      // Update progress
+      const progressFill = content.querySelector('#ytaiPodcastProgressFill');
+      const currentLabel = content.querySelector('#ytaiPodcastCurrent');
+      if (progressFill) progressFill.style.width = `${((state.currentIndex + 1) / state.totalLines) * 100}%`;
+      if (currentLabel) currentLabel.textContent = state.currentIndex + 1;
+
+      // Update subtitle
+      const subtitle = content.querySelector('#ytaiPodcastSubtitle');
+      if (subtitle && state.currentLine) {
+        const speakerEl = subtitle.querySelector('.ytai-podcast-speaker');
+        const textEl = subtitle.querySelector('.ytai-podcast-text');
+        if (speakerEl) {
+          speakerEl.textContent = state.currentLine.speaker === 'A' ? 'Alex' : 'Sam';
+          speakerEl.className = `ytai-podcast-speaker ${state.currentLine.speaker === 'A' ? 'speaker-a' : 'speaker-b'}`;
+        }
+        if (textEl) textEl.textContent = state.currentLine.text;
+      }
+
+      // Highlight active transcript line
+      const allLines = content.querySelectorAll('.ytai-podcast-line');
+      allLines.forEach((el, i) => {
+        el.classList.toggle('active', i === state.currentIndex);
+        if (i === state.currentIndex) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+
+    playPauseBtn?.addEventListener('click', () => {
+      const state = PodcastPlayer.getState();
+      if (state.isPlaying && !state.isPaused) {
+        PodcastPlayer.pause();
+      } else {
+        PodcastPlayer.play(dialogue);
+      }
+    });
+
+    prevBtn?.addEventListener('click', () => PodcastPlayer.skipBackward());
+    nextBtn?.addEventListener('click', () => PodcastPlayer.skipForward());
+
+    // Rate buttons
+    content.querySelectorAll('.ytai-rate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        content.querySelectorAll('.ytai-rate-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        PodcastPlayer.setRate(parseFloat(btn.dataset.rate));
+      });
+    });
+
+    // Click transcript lines to jump
+    content.querySelectorAll('.ytai-podcast-line').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.index, 10);
+        speechSynthesis.cancel();
+        PodcastPlayer.play(null);
+        setTimeout(() => {
+          PodcastPlayer.play(dialogue);
+          // We need to set the index and play from there
+          // The play function starts from currentIndex, so we manipulate via skip
+        }, 50);
+      });
+    });
+  }
+
+  /**
+   * Show podcast loading
+   */
+  function showPodcastLoading(message) {
+    const content = panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    content.innerHTML = `
+      <div class="ytai-loading">
+        <div class="ytai-podcast-icon-large" style="font-size:48px;margin-bottom:8px">🎙️</div>
+        <div class="ytai-spinner"></div>
+        <div class="ytai-loading-text">${escapeHtml(message || 'Generating podcast...')}</div>
+        <div class="ytai-fun-fact">
+          <span class="ytai-fun-fact-label">💡 Did you know?</span>
+          <span class="ytai-fun-fact-text"></span>
+        </div>
+      </div>
+    `;
+    startFactRotation();
+  }
+
+  /**
    * Show result
    */
   function showResult(markdownText) {
@@ -640,6 +834,8 @@ const SummarizerUI = (() => {
     showApiKeyPrompt,
     showError,
     showResult,
+    showPodcastPlayer,
+    showPodcastLoading,
     showToast,
     isPanelOpen,
     getCurrentMode,

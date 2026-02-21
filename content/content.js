@@ -9,6 +9,7 @@
 
   let currentVideoId = null;
   let combinedCache = null; // { videoId, summary, keypoints, detailed }
+  let podcastCache = null;  // { videoId, dialogue }
   let isProcessing = false;
   let initTimeout = null;
 
@@ -24,6 +25,8 @@
     currentVideoId = videoId;
     isProcessing = false;
     combinedCache = null;
+    podcastCache = null;
+    if (typeof PodcastPlayer !== 'undefined') PodcastPlayer.destroy();
 
     SummarizerUI.init();
 
@@ -153,6 +156,68 @@
   }
 
   /**
+   * Request podcast generation from existing summary
+   */
+  async function requestPodcast() {
+    const videoId = TranscriptExtractor.getVideoId();
+    if (!videoId) return;
+
+    // Serve from cache
+    if (podcastCache?.videoId === videoId && podcastCache.dialogue) {
+      SummarizerUI.showPodcastPlayer(podcastCache.dialogue);
+      return;
+    }
+
+    // Need a summary first
+    const summaryText = combinedCache?.summary;
+    if (!summaryText) {
+      // Try persistent cache
+      const cached = await StorageHelper.getCachedSummary(videoId, 'summary');
+      if (cached?.content) {
+        return generatePodcastFromText(cached.content, videoId);
+      }
+      SummarizerUI.showPodcastPlayer(null);
+      return;
+    }
+
+    return generatePodcastFromText(summaryText, videoId);
+  }
+
+  async function generatePodcastFromText(text, videoId) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    SummarizerUI.showPodcastLoading('Writing podcast script...');
+
+    try {
+      const settings = await StorageHelper.getSettings();
+
+      const response = await chrome.runtime.sendMessage({
+        action: 'generatePodcast',
+        data: {
+          summaryText: text,
+          language: settings.language || 'auto'
+        }
+      });
+
+      if (!response) throw new Error('No response from extension.');
+      if (response.error) throw new Error(response.error);
+
+      podcastCache = { videoId, dialogue: response.dialogue };
+      SummarizerUI.showPodcastPlayer(response.dialogue);
+
+    } catch (error) {
+      SummarizerUI.showError(
+        'Podcast Error',
+        error?.message || 'Failed to generate podcast. Please try again.',
+        true
+      );
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  /**
    * Handle errors with user-friendly messages
    */
   function handleError(error) {
@@ -228,6 +293,7 @@
 
   // Expose callbacks for UI module
   window._ytaiRequestSummary = requestSummary;
+  window._ytaiRequestPodcast = requestPodcast;
   window._ytaiOnPanelOpen = onPanelOpen;
 
   /**
@@ -275,6 +341,9 @@
       sendResponse({ ok: true });
     } else if (message.action === 'progress') {
       SummarizerUI.showLoading(message.text, message.progress);
+      sendResponse({ ok: true });
+    } else if (message.action === 'podcastProgress') {
+      SummarizerUI.showPodcastLoading(message.text);
       sendResponse({ ok: true });
     }
 
