@@ -215,4 +215,5 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 5000);
     }
   }
+
 });

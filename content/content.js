@@ -348,6 +348,8 @@
    * Listen for messages from service worker / popup
    */
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (sender.id !== chrome.runtime.id) return;
+
     if (message.action === 'settingsUpdated') {
       initialize().catch(console.warn);
       sendResponse({ ok: true });

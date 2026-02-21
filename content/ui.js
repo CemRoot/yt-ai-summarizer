@@ -657,7 +657,6 @@ const SummarizerUI = (() => {
 
     const uiLang = (navigator.language || 'en').substring(0, 2);
 
-    // Check for unsupported region
     const regionMsg = UNSUPPORTED_REGIONS[uiLang];
     if (regionMsg) {
       content.innerHTML = `
@@ -697,20 +696,65 @@ const SummarizerUI = (() => {
           </div>
           <div class="ytai-step">
             <span class="ytai-step-num">4</span>
-            <span>${isTR ? 'Anahtarı kopyalayıp uzantı ayarlarına yapıştırın' : 'Copy the key and paste it in extension settings'}</span>
+            <span>${isTR ? 'Anahtarı aşağıya yapıştırın' : 'Paste your key below'}</span>
           </div>
         </div>
 
-        <button class="ytai-btn ytai-btn-primary ytai-open-settings-btn">
-          ${ICONS.settings}
-          <span>${isTR ? 'Ayarları Aç' : 'Open Settings'}</span>
-        </button>
+        <div class="ytai-gemini-key-inline">
+          <div class="ytai-gemini-key-row">
+            <input type="password" class="ytai-gemini-key-input" placeholder="${isTR ? 'Gemini API anahtarınızı yapıştırın' : 'Paste your Gemini API key'}" spellcheck="false" autocomplete="off" />
+            <button class="ytai-gemini-key-toggle" title="${isTR ? 'Göster/Gizle' : 'Show/Hide'}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <button class="ytai-btn ytai-btn-primary ytai-gemini-save-btn" disabled>
+            <span>${isTR ? 'Kaydet & Podcast Oluştur' : 'Save & Generate Podcast'}</span>
+          </button>
+          <div class="ytai-gemini-key-error" style="display:none"></div>
+        </div>
       </div>
     `;
 
-    content.querySelector('.ytai-open-settings-btn')?.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ action: 'openSettings' }).catch(() => {});
+    const input = content.querySelector('.ytai-gemini-key-input');
+    const toggleBtn = content.querySelector('.ytai-gemini-key-toggle');
+    const saveBtn = content.querySelector('.ytai-gemini-save-btn');
+    const errorEl = content.querySelector('.ytai-gemini-key-error');
+
+    toggleBtn?.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
     });
+
+    input?.addEventListener('input', () => {
+      const val = input.value.trim();
+      saveBtn.disabled = val.length < 10;
+    });
+
+    saveBtn?.addEventListener('click', async () => {
+      const key = input.value.trim();
+      if (!key) return;
+
+      errorEl.style.display = 'none';
+
+      if (!key.startsWith('AIza')) {
+        errorEl.textContent = isTR
+          ? 'Geçersiz API anahtarı. Anahtar "AIza" ile başlamalıdır.'
+          : 'Invalid API key. Key should start with "AIza".';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        await chrome.storage.local.set({ geminiApiKey: key });
+        if (typeof window._ytaiRequestPodcast === 'function') {
+          window._ytaiRequestPodcast();
+        }
+      } catch (e) {
+        errorEl.textContent = isTR ? 'Kaydedilemedi. Tekrar deneyin.' : 'Failed to save. Try again.';
+        errorEl.style.display = 'block';
+      }
+    });
+
+    input?.focus();
   }
 
   /**

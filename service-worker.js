@@ -131,6 +131,8 @@ try {
  * Handle messages from content scripts and popup
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id !== chrome.runtime.id) return;
+
   if (message.action === 'summarizeAll') {
     handleSummarizeAll(message.data, sender.tab?.id)
       .then(sendResponse)
@@ -468,6 +470,27 @@ async function handleSummarizeAll(data, tabId) {
  * Generate a NotebookLM-style two-host podcast script from summary text.
  * Returns a JSON array of dialogue lines: [{ speaker: "A"|"B", text: "..." }, ...]
  */
+const VOICE_PAIRS = [
+  { a: { name: 'Charon',  gender: 'M' }, b: { name: 'Puck',    gender: 'M' } },
+  { a: { name: 'Kore',    gender: 'F' }, b: { name: 'Puck',    gender: 'M' } },
+  { a: { name: 'Charon',  gender: 'M' }, b: { name: 'Aoede',   gender: 'F' } },
+  { a: { name: 'Kore',    gender: 'F' }, b: { name: 'Aoede',   gender: 'F' } },
+  { a: { name: 'Fenrir',  gender: 'M' }, b: { name: 'Leda',    gender: 'F' } },
+  { a: { name: 'Leda',    gender: 'F' }, b: { name: 'Orus',    gender: 'M' } },
+  { a: { name: 'Orus',    gender: 'M' }, b: { name: 'Kore',    gender: 'F' } },
+  { a: { name: 'Zephyr',  gender: 'F' }, b: { name: 'Charon',  gender: 'M' } },
+  { a: { name: 'Fenrir',  gender: 'M' }, b: { name: 'Zephyr',  gender: 'F' } },
+  { a: { name: 'Aoede',   gender: 'F' }, b: { name: 'Fenrir',  gender: 'M' } },
+];
+
+function pickVoicePair() {
+  return VOICE_PAIRS[Math.floor(Math.random() * VOICE_PAIRS.length)];
+}
+
+function hostLabel(voice) {
+  return voice.gender === 'F' ? 'she' : 'he';
+}
+
 async function handleGeneratePodcast(data, tabId) {
   const { summaryText, language } = data;
 
@@ -478,9 +501,14 @@ async function handleGeneratePodcast(data, tabId) {
   const settings = await StorageHelper.getSettings();
   const geminiKey = settings.geminiApiKey;
   if (!geminiKey) throw new Error('GEMINI_KEY_MISSING');
+  if (typeof geminiKey !== 'string' || !/^AIza[A-Za-z0-9_-]{30,}$/.test(geminiKey)) {
+    throw new Error('GEMINI_KEY_MISSING');
+  }
 
   const { provider, apiKey, model } = await getProviderConfig();
   if (!apiKey) throw new Error('INVALID_API_KEY');
+
+  const voices = pickVoicePair();
 
   function sendProgress(text, progress) {
     if (tabId) {
@@ -488,15 +516,21 @@ async function handleGeneratePodcast(data, tabId) {
     }
   }
 
-  // Step 1: Generate podcast script via LLM
   sendProgress('Writing podcast script...', 0.2);
 
   const languageInstruction = buildLanguageInstruction(language);
 
+  const hostADesc = voices.a.gender === 'F'
+    ? 'HOST A ("Alex"): The knowledgeable female host who explains the topic. Enthusiastic, clear, uses analogies.'
+    : 'HOST A ("Alex"): The knowledgeable male host who explains the topic. Enthusiastic, clear, uses analogies.';
+  const hostBDesc = voices.b.gender === 'F'
+    ? 'HOST B ("Sam"): The curious female co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.'
+    : 'HOST B ("Sam"): The curious male co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.';
+
   const podcastPrompt = `You are a podcast script writer. Convert the following video summary into a natural, engaging conversation between TWO podcast hosts.
 
-HOST A ("Alex"): The knowledgeable host who explains the topic. Enthusiastic, clear, uses analogies.
-HOST B ("Sam"): The curious co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.
+${hostADesc}
+${hostBDesc}
 
 RULES:
 - Write 12-20 dialogue turns total (6-10 per host).
@@ -552,11 +586,11 @@ Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
             speakerVoiceConfigs: [
               {
                 speaker: 'Alex',
-                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } }
+                voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.a.name } }
               },
               {
                 speaker: 'Sam',
-                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } }
+                voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.b.name } }
               }
             ]
           }
@@ -586,7 +620,7 @@ Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
   }
 
   sendProgress('Podcast ready!', 1);
-  return { dialogue, audioBase64, model: result.model, provider };
+  return { dialogue, audioBase64, model: result.model, provider, voices };
 }
 
 /**

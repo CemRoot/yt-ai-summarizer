@@ -35,7 +35,8 @@ All three are generated in a **single API call** — no rate limit issues.
 | **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
 | **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
 | **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
-| **🎙️ AI Podcast** | NotebookLM-style two-host podcast from your video summary. Powered by Gemini TTS — natural voices, completely free. |
+| **🎙️ AI Podcast** | NotebookLM-style two-host podcast with randomly paired male & female voices. Powered by Gemini TTS — completely free. |
+| **🌍 Multi-Language Onboarding** | Welcome page auto-detects browser language with manual selector. 11 languages: EN, TR, ES, FR, DE, JA, KO, ZH, PT, AR, HI. |
 | **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
 | **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
 
@@ -178,6 +179,15 @@ See the full [Privacy Policy](privacy-policy.html).
 ---
 
 ## Changelog
+
+### v1.6.0
+
+- **🎭 Random Voice Pairs**: Podcast voices are no longer always male-male. 10 voice pair combinations with male-female, female-male, and female-female options randomly selected per video. Uses Gemini TTS voices: Charon, Kore, Puck, Aoede, Fenrir, Leda, Orus, Zephyr.
+- **🌍 Multi-Language Welcome Page**: Onboarding page now supports 11 languages (English, Türkçe, Español, Français, Deutsch, 日本語, 한국어, 中文, Português, العربية, हिन्दी). Auto-detects browser language with manual language selector. RTL support for Arabic.
+- **📋 Inline Gemini API Key**: Removed "Open Settings" redirect. Users can now enter their Gemini API key directly inside the podcast panel without leaving the page.
+- **🔒 Security Audit**: Comprehensive code review — no XSS vectors, API keys stored safely in chrome.storage.local, all user input sanitized with escapeHtml, CSP enforced, no eval/document.write usage.
+- **📄 Privacy Policy**: Updated to include Google Gemini TTS data flow and host permission documentation.
+- **Step 3 updated**: "How It Works" now mentions the Podcast mode alongside Summary, Key Points, and Detailed Analysis.
 
 ### v1.5.0
 

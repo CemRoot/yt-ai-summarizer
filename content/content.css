@@ -913,6 +913,72 @@
   font-weight: 700;
 }
 
+.ytai-gemini-key-inline {
+  margin-top: 14px;
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ytai-gemini-key-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ytai-gemini-key-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1.5px solid var(--ytai-border);
+  border-radius: 8px;
+  background: var(--ytai-surface);
+  color: var(--ytai-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ytai-gemini-key-input:focus {
+  border-color: var(--ytai-accent);
+}
+
+.ytai-gemini-key-toggle {
+  background: none;
+  border: 1.5px solid var(--ytai-border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--ytai-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ytai-gemini-key-toggle:hover {
+  border-color: var(--ytai-accent);
+  color: var(--ytai-accent);
+}
+
+.ytai-gemini-save-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ytai-gemini-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ytai-gemini-key-error {
+  color: var(--ytai-error, #e53935);
+  font-size: 12px;
+  text-align: center;
+}
+
 /* ═══════════════════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════════════════ */
