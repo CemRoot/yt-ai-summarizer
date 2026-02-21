@@ -606,13 +606,12 @@ const SummarizerUI = (() => {
       if (totalTimeEl) totalTimeEl.textContent = PodcastPlayer.formatTime(state.duration);
     });
 
-    // State change handler
     PodcastPlayer.setOnStateChange((state) => {
       const playIcon = content.querySelector('.play-icon');
       const pauseIcon = content.querySelector('.pause-icon');
       if (playIcon && pauseIcon) {
-        playIcon.style.display = (state.isPlaying && !state.isPaused) ? 'none' : 'block';
-        pauseIcon.style.display = (state.isPlaying && !state.isPaused) ? 'block' : 'none';
+        playIcon.style.display = state.isPlaying ? 'none' : 'block';
+        pauseIcon.style.display = state.isPlaying ? 'block' : 'none';
       }
 
       const progressFill = content.querySelector('#ytaiPodcastProgressFill');

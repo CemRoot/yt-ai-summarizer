@@ -91,11 +91,12 @@ function buildLanguageInstruction(language) {
 const COMBINED_PROMPT = `You are an expert video analyst. Analyze the given YouTube video transcript and produce THREE separate sections. You MUST use the EXACT delimiters shown below — they are required for parsing.
 
 [SECTION:SUMMARY]
-Write a thorough summary in 3-5 paragraphs.
-- Include specific evidence: names, dates, locations, statistics, scientific terms.
-- Preserve cause-effect relationships.
-- Bold key terms and proper nouns.
-- Do NOT generalize — be precise.
+Write a CONCISE overview — the goal is to save the reader time.
+- Maximum 2-3 short paragraphs (roughly 100-200 words total for a typical video).
+- Focus on: what is the video about, what are the main conclusions/takeaways, and why it matters.
+- Bold only the most important terms.
+- Do NOT include every detail — that belongs in the Detailed section.
+- Think of this as an executive summary: someone should understand the core message in under 30 seconds of reading.
 
 [SECTION:KEYPOINTS]
 Extract 5-10 key points as a numbered list.
@@ -109,12 +110,14 @@ Provide a comprehensive section-by-section analysis.
 - Include ALL technical details: names, dates, scientific terms, methodologies, experimental evidence.
 - Do NOT skip evidence-based claims.
 - End with a brief conclusion.
+- This section should be thorough and lengthy — it is where all the details belong.
 
 QUALITY RULES (apply to ALL sections):
 - Use markdown formatting throughout.
 - NEVER end multiple paragraphs with the same phrase or conclusion. Vary your sentence endings.
 - Use correct, natural spelling in the target language. Do NOT create hybrid words by mixing languages (e.g. do not attach Turkish suffixes to English roots).
-- ALL text — including section titles, bold headers, and body — must be in the SAME language. No English headers if the content is in another language.`;
+- ALL text — including section titles, bold headers, and body — must be in the SAME language. No English headers if the content is in another language.
+- IMPORTANT: The Summary section must be SIGNIFICANTLY shorter than the Detailed section. If the summary is longer than ~200 words, you are doing it wrong.`;
 
 /**
  * Enable session storage access for content scripts
