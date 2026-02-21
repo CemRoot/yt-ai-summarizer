@@ -215,12 +215,34 @@ jobs:
           m = json.load(open('manifest.json'))
           hosts = m.get('host_permissions', [])
           print(f'Host permissions ({len(hosts)}):')
-          allowed = ['youtube.com', 'groq.com', 'ollama.com']
+          allowed = ['youtube.com', 'groq.com', 'ollama.com', 'generativelanguage.googleapis.com']
           for h in hosts:
               is_known = any(a in h for a in allowed)
               status = 'OK' if is_known else 'REVIEW'
               print(f'  [{status}] {h}')
           "
+
+      - name: Verify API keys are obfuscated (not stored plaintext)
+        run: |
+          echo "Checking that API key storage uses obfuscation..."
+          if ! grep -q 'obfuscate\|_OBFK' utils/storage.js; then
+            echo "FAIL: utils/storage.js missing obfuscation functions"
+            exit 1
+          fi
+          echo "OK: API key obfuscation is in place"
+
+      - name: Verify message listener sender validation
+        run: |
+          echo "Checking that onMessage listeners validate sender.id..."
+          for f in service-worker.js content/content.js; do
+            if grep -q 'onMessage.addListener' "$f"; then
+              if ! grep -q 'sender.id.*chrome.runtime.id\|chrome.runtime.id.*sender.id' "$f"; then
+                echo "FAIL: $f has onMessage listener without sender.id validation"
+                exit 1
+              fi
+            fi
+          done
+          echo "OK: All message listeners validate sender identity"
 
       - name: Verify no remote script loading
         run: |
@@ -237,6 +259,8 @@ jobs:
             | grep -v 'href="https://ollama' \
             | grep -v 'href="https://github' \
             | grep -v 'href="https://www.youtube' \
+            | grep -v 'href="https://aistudio.google' \
+            | grep -v 'href="https://ai.google' \
             || true)
           if [ -n "$matches" ]; then
             echo "REVIEW: External resource references found:"
