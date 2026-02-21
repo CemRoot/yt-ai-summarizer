@@ -473,6 +473,14 @@ async function handleSummarizeAll(data, tabId) {
  * Generate a NotebookLM-style two-host podcast script from summary text.
  * Returns a JSON array of dialogue lines: [{ speaker: "A"|"B", text: "..." }, ...]
  */
+/*
+ * Verified voice list from Google Cloud official docs:
+ * https://cloud.google.com/text-to-speech/docs/gemini-tts
+ * https://github.com/GoogleCloudPlatform/generative-ai/blob/main/audio/speech/getting-started/get_started_with_gemini_tts_voices.ipynb
+ *
+ * Female: Achernar, Aoede, Autonoe, Callirrhoe, Despina, Erinome, Gacrux, Kore, Laomedeia, Leda, Pulcherrima, Sulafat, Vindemiatrix, Zephyr
+ * Male:   Achird, Algenib, Algieba, Alnilam, Charon, Enceladus, Fenrir, Iapetus, Orus, Puck, Rasalgethi, Sadachbia, Sadaltager, Schedar, Umbriel, Zubenelgenubi
+ */
 const VOICE_PAIRS = [
   { a: { name: 'Charon',  gender: 'M' }, b: { name: 'Puck',    gender: 'M' } },
   { a: { name: 'Kore',    gender: 'F' }, b: { name: 'Puck',    gender: 'M' } },
