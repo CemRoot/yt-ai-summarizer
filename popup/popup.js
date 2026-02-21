@@ -7,6 +7,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
+  const _K = 'ytai_2026';
+  function _obf(plain) {
+    if (!plain) return '';
+    let r = '';
+    for (let i = 0; i < plain.length; i++) r += String.fromCharCode(plain.charCodeAt(i) ^ _K.charCodeAt(i % _K.length));
+    return btoa(r);
+  }
+  function _deobf(enc) {
+    if (!enc) return '';
+    try {
+      const d = atob(enc);
+      let r = '';
+      for (let i = 0; i < d.length; i++) r += String.fromCharCode(d.charCodeAt(i) ^ _K.charCodeAt(i % _K.length));
+      return r;
+    } catch { return enc; }
+  }
+
   const providerBtns      = $$('.provider-btn');
   const groqSection       = $('#groqSettings');
   const ollamaSection     = $('#ollamaSettings');
@@ -28,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const clearCacheBtn     = $('#clearCacheBtn');
   const privacyLink       = $('#privacyLink');
 
-  let activeProvider = 'groq';
+  let activeProvider = 'ollama';
 
   await loadSettings();
 
@@ -87,21 +104,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadSettings() {
     try {
       const s = await chrome.storage.local.get({
-        provider: 'groq',
+        provider: 'ollama',
         groqApiKey: '',
         ollamaApiKey: '',
         geminiApiKey: '',
         model: 'llama-3.3-70b-versatile',
-        ollamaModel: 'qwen3-next:80b',
+        ollamaModel: 'gemini-3-flash-preview',
         defaultMode: 'summary',
         language: 'auto',
         autoRun: false
       });
 
-      activeProvider = s.provider || 'groq';
-      groqKeyInput.value = s.groqApiKey || '';
-      ollamaKeyInput.value = s.ollamaApiKey || '';
-      geminiKeyInput.value = s.geminiApiKey || '';
+      activeProvider = s.provider || 'ollama';
+      groqKeyInput.value = _deobf(s.groqApiKey);
+      ollamaKeyInput.value = _deobf(s.ollamaApiKey);
+      geminiKeyInput.value = _deobf(s.geminiApiKey);
       groqModelSelect.value = s.model;
       ollamaModelSelect.value = s.ollamaModel;
       defaultModeSelect.value = s.defaultMode;
@@ -132,9 +149,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const settings = {
       provider: activeProvider,
-      groqApiKey: groqKey,
-      ollamaApiKey: ollamaKey,
-      geminiApiKey: geminiKey,
+      groqApiKey: _obf(groqKey),
+      ollamaApiKey: _obf(ollamaKey),
+      geminiApiKey: _obf(geminiKey),
       model: groqModelSelect.value,
       ollamaModel: ollamaModelSelect.value,
       defaultMode: defaultModeSelect.value,

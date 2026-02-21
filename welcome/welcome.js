@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
 
+  const _K = 'ytai_2026';
+  function _obf(plain) {
+    if (!plain) return '';
+    let r = '';
+    for (let i = 0; i < plain.length; i++) r += String.fromCharCode(plain.charCodeAt(i) ^ _K.charCodeAt(i % _K.length));
+    return btoa(r);
+  }
+
   // ── i18n strings ──
   const I18N = {
     en: {
@@ -494,9 +502,9 @@ document.addEventListener('DOMContentLoaded', () => {
           onboardingComplete: true
         };
         if (chosenProvider === 'ollama') {
-          storageData.ollamaApiKey = key;
+          storageData.ollamaApiKey = _obf(key);
         } else {
-          storageData.groqApiKey = key;
+          storageData.groqApiKey = _obf(key);
         }
         await chrome.storage.local.set(storageData);
 

@@ -20,6 +20,42 @@ const StorageHelper = (() => {
 
   const MAX_CACHED_VIDEOS = 20;
   const CACHE_INDEX_KEY = '_cacheIndex';
+  const _OBFK = 'ytai_2026';
+
+  function obfuscate(plaintext) {
+    if (!plaintext) return '';
+    const key = _OBFK;
+    let result = '';
+    for (let i = 0; i < plaintext.length; i++) {
+      result += String.fromCharCode(plaintext.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(result);
+  }
+
+  function deobfuscate(encoded) {
+    if (!encoded) return '';
+    try {
+      const decoded = atob(encoded);
+      const key = _OBFK;
+      let result = '';
+      for (let i = 0; i < decoded.length; i++) {
+        result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return result;
+    } catch {
+      return encoded;
+    }
+  }
+
+  function isObfuscated(value) {
+    if (!value || typeof value !== 'string') return false;
+    try {
+      const decoded = atob(value);
+      return decoded.length > 0 && !/^(gsk_|AIza)/.test(value);
+    } catch {
+      return false;
+    }
+  }
 
   let _sessionAccessible = null;
 
@@ -77,6 +113,8 @@ const StorageHelper = (() => {
     });
   }
 
+  const KEY_FIELDS = ['groqApiKey', 'ollamaApiKey', 'geminiApiKey'];
+
   async function getSettings() {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get(DEFAULTS, (result) => {
@@ -84,25 +122,40 @@ const StorageHelper = (() => {
           reject(new Error(chrome.runtime.lastError.message));
           return;
         }
-        resolve({ ...DEFAULTS, ...result });
+        const merged = { ...DEFAULTS, ...result };
+        for (const field of KEY_FIELDS) {
+          if (merged[field] && isObfuscated(merged[field])) {
+            merged[field] = deobfuscate(merged[field]);
+          }
+        }
+        resolve(merged);
       });
     });
   }
 
   async function saveSettings(settings) {
-    return set(settings);
+    const toSave = { ...settings };
+    for (const field of KEY_FIELDS) {
+      if (toSave[field] && !isObfuscated(toSave[field])) {
+        toSave[field] = obfuscate(toSave[field]);
+      }
+    }
+    return set(toSave);
   }
 
   // ─── API Key management ───
 
   async function getApiKey(providerOverride) {
-    const provider = providerOverride || await get('provider') || 'groq';
-    return provider === 'ollama' ? get('ollamaApiKey') : get('groqApiKey');
+    const provider = providerOverride || await get('provider') || 'ollama';
+    const field = provider === 'ollama' ? 'ollamaApiKey' : 'groqApiKey';
+    const raw = await get(field);
+    if (raw && isObfuscated(raw)) return deobfuscate(raw);
+    return raw;
   }
 
   async function saveApiKey(key, provider = 'groq') {
     const storageKey = provider === 'ollama' ? 'ollamaApiKey' : 'groqApiKey';
-    return set(storageKey, key);
+    return set(storageKey, obfuscate(key));
   }
 
   async function hasApiKey() {
