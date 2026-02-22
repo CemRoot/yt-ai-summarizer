@@ -821,6 +821,8 @@ async function validateKey(apiKey, provider = 'groq') {
  * Service worker fetch avoids CORS / redirect issues that content scripts hit.
  */
 async function proxyFetchTranscript(trackUrl) {
+  if (!trackUrl || typeof trackUrl !== 'string') return { entries: null };
+
   const fetchOpts = { credentials: 'include' };
 
   // Try JSON3
@@ -829,17 +831,20 @@ async function proxyFetchTranscript(trackUrl) {
     url.searchParams.set('fmt', 'json3');
     const resp = await fetch(url.toString(), fetchOpts);
     if (resp.ok) {
-      const data = await resp.json();
-      if (data?.events) {
-        const entries = data.events
-          .filter((ev) => ev.segs)
-          .map((ev) => {
-            const startMs = ev.tStartMs || 0;
-            const text = ev.segs.map((s) => s.utf8).join('').replace(/\n/g, ' ').trim();
-            return { start: startMs / 1000, text };
-          })
-          .filter((e) => e.text.length > 0);
-        if (entries.length > 0) return { entries };
+      const body = await resp.text();
+      if (body && body.length > 2) {
+        const data = JSON.parse(body);
+        if (data?.events) {
+          const entries = data.events
+            .filter((ev) => ev.segs)
+            .map((ev) => {
+              const startMs = ev.tStartMs || 0;
+              const text = ev.segs.map((s) => s.utf8).join('').replace(/\n/g, ' ').trim();
+              return { start: startMs / 1000, text };
+            })
+            .filter((e) => e.text.length > 0);
+          if (entries.length > 0) return { entries };
+        }
       }
     }
   } catch { /* fall through to XML */ }
@@ -849,6 +854,7 @@ async function proxyFetchTranscript(trackUrl) {
     const resp = await fetch(trackUrl, fetchOpts);
     if (!resp.ok) return { entries: null };
     const text = await resp.text();
+    if (!text || text.length < 10) return { entries: null };
     const entries = [];
     const re = /<text[^>]+start="([\d.]+)"[^>]*>([\s\S]*?)<\/text>/g;
     let m;

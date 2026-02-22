@@ -274,6 +274,8 @@ const TranscriptExtractor = (() => {
   }
 
   async function fetchTranscriptDirect(trackUrl) {
+    if (!trackUrl || typeof trackUrl !== 'string') return null;
+
     const fetchOpts = { credentials: 'include' };
 
     // JSON3
@@ -282,10 +284,13 @@ const TranscriptExtractor = (() => {
       url.searchParams.set('fmt', 'json3');
       const resp = await fetch(url.toString(), fetchOpts);
       if (resp.ok) {
-        const entries = parseJSON3Events(await resp.json());
-        if (entries) {
-          console.log(LOG, `Direct JSON3: ${entries.length} entries`);
-          return entries;
+        const body = await resp.text();
+        if (body && body.length > 2) {
+          const entries = parseJSON3Events(JSON.parse(body));
+          if (entries) {
+            console.log(LOG, `Direct JSON3: ${entries.length} entries`);
+            return entries;
+          }
         }
       }
     } catch (e) {
@@ -297,6 +302,7 @@ const TranscriptExtractor = (() => {
       const resp = await fetch(trackUrl, fetchOpts);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const xmlText = await resp.text();
+      if (!xmlText || xmlText.length < 10) throw new Error('Empty XML response');
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
       const textNodes = xmlDoc.querySelectorAll('text');
