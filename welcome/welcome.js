@@ -489,25 +489,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateStep2ForProvider() {
     const step2Title = $('#step2Title');
     const step2Desc  = $('#step2Desc');
-    const provLink   = $('#providerLink');
     const keyInput   = $('#apiKeyInput');
 
     if (chosenProvider === 'ollama') {
       step2Title.textContent = t('step2titleOllama');
       step2Desc.textContent = t('step2descOllama');
-      provLink.href = 'https://ollama.com/settings/keys';
       $('#inst1Text').innerHTML = t('inst1Ollama');
       keyInput.placeholder = t('placeholderOllama');
     } else {
       step2Title.textContent = t('step2titleGroq');
       step2Desc.textContent = t('step2descGroq');
-      provLink.href = 'https://console.groq.com/keys';
       $('#inst1Text').innerHTML = t('inst1Groq');
       keyInput.placeholder = t('placeholderGroq');
     }
     $('#inst2Text').innerHTML = t('inst2');
     $('#inst3Text').innerHTML = t('inst3');
     $('#inst4Text').textContent = t('inst4');
+    $('#validateBtnText').textContent = t('validateSave');
   }
 
   // ── Toggle key visibility ──

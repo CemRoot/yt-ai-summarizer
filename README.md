@@ -182,12 +182,13 @@ See the full [Privacy Policy](privacy-policy.html).
 
 ### v1.6.1
 
-- **🎛️ Yeni Dil Seçici**: Welcome sayfasında aramalı, iki sütunlu, bayraklı dil menüsü ve modern “pill” tetikleyici.
-- **💾 Önbellek Kontrolü**: Genel ayarlara “Cache summaries” ve “Cache transcripts” anahtarları eklendi; transkript önbelleği varsayılan kapalı, RAM/disk tüketimi düşer.
-- **🔐 API Key Obfuscation**: Anahtarlar chrome.storage’da XOR+base64 ile saklanıyor (gizleme düzeyi).
-- **🔧 Varsayılanlar Hizalı**: Provider ve model varsayılanları Ollama + Gemini 3 Flash ile uyumlu.
-- **🗑️ Hızlı Temizlik**: Panel başlığında tek tıkla cache silme ikonu.
-- **🔒 CI Güvenlik Adımları**: Obfuscation ve sender ID doğrulama kontrolleri CI pipeline’a eklendi.
+- **🎛️ New Language Selector**: Searchable, two-column language menu with flags and modern "pill" trigger on the welcome page.
+- **💾 Cache Controls**: Added "Cache summaries" and "Cache transcripts" toggles to settings; transcript caching disabled by default, reducing RAM/disk usage.
+- **🔐 API Key Obfuscation**: Keys stored with XOR + Base64 encoding in chrome.storage instead of plaintext.
+- **🔧 Aligned Defaults**: Provider and model defaults now match across all entry points — Ollama + Gemini 3 Flash.
+- **🗑️ Quick Cache Clear**: One-click trash icon in the panel header to clear cached data.
+- **🔒 CI Security Checks**: Obfuscation and sender.id validation checks added to the CI pipeline.
+- **🌍 Welcome Page i18n Fix**: Fixed a bug where instruction steps, Validate button, and footer stayed in English when switching languages.
 
 ### v1.6.0
 
