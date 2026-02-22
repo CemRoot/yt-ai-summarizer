@@ -180,6 +180,16 @@ See the full [Privacy Policy](privacy-policy.html).
 
 ## Changelog
 
+### v1.6.1
+
+- **🔐 API Key Obfuscation**: Keys stored with XOR + base64 encoding instead of plaintext in chrome.storage.local
+- **🐛 Podcast Player Fix**: Completely rewrote audio engine — play/pause, 10s skip, seek bar all working correctly
+- **📝 Summary Length Fix**: Summary section now enforced to 100-200 words (executive summary style), no longer same length as Detailed
+- **🔧 Provider Defaults Aligned**: popup.js defaults matched to storage.js (Ollama + Gemini 3 Flash) — prevents INVALID_API_KEY on first use
+- **🗑️ Quick Cache Clear**: Trash icon added to panel header for one-click cache clearing
+- **🔒 CI Security Checks**: Added obfuscation verification and sender validation checks to CI pipeline
+- **📖 Voice Documentation**: All 8 TTS voices verified against official Google Cloud docs with source references
+
 ### v1.6.0
 
 - **🎭 Random Voice Pairs**: Podcast voices are no longer always male-male. 10 voice pair combinations with male-female, female-male, and female-female options randomly selected per video. Uses Gemini TTS voices: Charon, Kore, Puck, Aoede, Fenrir, Leda, Orus, Zephyr.
