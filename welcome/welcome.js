@@ -350,7 +350,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const step2         = $('#step2');
   const step3         = $('#step3');
   const progressFill  = $('#progressFill');
-  const langSelect    = $('#langSelect');
+  const langToggle    = $('#langToggle');
+  const langMenu      = $('#langMenu');
+  const langGrid      = $('#langGrid');
+  const langSearch    = $('#langSearch');
+  const langPicker    = $('#langPicker');
+  const langFlagEl    = $('#langCurrentFlag');
+  const langLabelEl   = $('#langCurrentLabel');
 
   function applyTranslations() {
     const isRTL = currentLang === 'ar';
@@ -399,22 +405,70 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#privacyLink').textContent = t('privacyPolicy');
 
     $('#validateBtnText').textContent = t('validateSave');
+    langToggle.setAttribute('aria-label', t('langLabel'));
     $('#langLabel').textContent = t('langLabel');
+    langSearch.placeholder = t('langLabel');
   }
 
   // ── Language selector ──
-  LANG_OPTIONS.forEach(opt => {
-    const option = document.createElement('option');
-    option.value = opt.code;
-    option.textContent = `${opt.flag} ${opt.label}`;
-    if (opt.code === currentLang) option.selected = true;
-    langSelect.appendChild(option);
+  function setLanguage(code) {
+    const opt = LANG_OPTIONS.find(o => o.code === code) || LANG_OPTIONS[0];
+    currentLang = opt.code;
+    langFlagEl.textContent = opt.flag;
+    langLabelEl.textContent = opt.label;
+    applyTranslations();
+    closeLangMenu();
+  }
+
+  function renderLanguageGrid(filter = '') {
+    langGrid.innerHTML = '';
+    const needle = filter.trim().toLowerCase();
+    LANG_OPTIONS
+      .filter(opt => !needle || opt.label.toLowerCase().includes(needle) || opt.code.includes(needle))
+      .forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `lang-option${opt.code === currentLang ? ' active' : ''}`;
+        btn.innerHTML = `
+          <span>${opt.flag}</span>
+          <span>${opt.label}</span>
+          <span class="code">${opt.code.toUpperCase()}</span>
+        `;
+        btn.addEventListener('click', () => setLanguage(opt.code));
+        langGrid.appendChild(btn);
+      });
+  }
+
+  function openLangMenu() {
+    langMenu.hidden = false;
+    langToggle.setAttribute('aria-expanded', 'true');
+    langSearch.focus();
+    renderLanguageGrid(langSearch.value);
+  }
+
+  function closeLangMenu() {
+    langMenu.hidden = true;
+    langToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  langToggle.addEventListener('click', () => {
+    const willOpen = langMenu.hidden;
+    if (willOpen) openLangMenu(); else closeLangMenu();
   });
 
-  langSelect.addEventListener('change', () => {
-    currentLang = langSelect.value;
-    applyTranslations();
+  langSearch.addEventListener('input', () => renderLanguageGrid(langSearch.value));
+
+  document.addEventListener('click', (e) => {
+    if (!langPicker.contains(e.target)) closeLangMenu();
   });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLangMenu();
+  });
+
+  // initial render
+  setLanguage(currentLang);
+  renderLanguageGrid();
 
   // ── Provider selection ──
   const providerCards = $$('.provider-card');

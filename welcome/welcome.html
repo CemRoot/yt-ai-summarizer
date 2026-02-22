@@ -14,8 +14,23 @@
 
     <!-- Language Selector -->
     <div class="lang-bar">
-      <label id="langLabel" for="langSelect">Language</label>
-      <select id="langSelect" class="lang-select"></select>
+      <div class="lang-picker" id="langPicker">
+        <button class="lang-pill" id="langToggle" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="lang-flag" id="langCurrentFlag">🌍</span>
+          <span class="lang-text">
+            <span class="lang-label" id="langLabel">Language</span>
+            <span class="lang-current" id="langCurrentLabel">Auto-detect</span>
+          </span>
+          <svg class="lang-chevron" viewBox="0 0 24 24" width="16" height="16"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="lang-menu" id="langMenu" hidden>
+          <div class="lang-search">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5L20.5 19l-5-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="search" id="langSearch" placeholder="Search language..." autocomplete="off">
+          </div>
+          <div class="lang-grid" id="langGrid"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Progress Bar -->

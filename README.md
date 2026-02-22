@@ -182,13 +182,12 @@ See the full [Privacy Policy](privacy-policy.html).
 
 ### v1.6.1
 
-- **🔐 API Key Obfuscation**: Keys stored with XOR + base64 encoding instead of plaintext in chrome.storage.local
-- **🐛 Podcast Player Fix**: Completely rewrote audio engine — play/pause, 10s skip, seek bar all working correctly
-- **📝 Summary Length Fix**: Summary section now enforced to 100-200 words (executive summary style), no longer same length as Detailed
-- **🔧 Provider Defaults Aligned**: popup.js defaults matched to storage.js (Ollama + Gemini 3 Flash) — prevents INVALID_API_KEY on first use
-- **🗑️ Quick Cache Clear**: Trash icon added to panel header for one-click cache clearing
-- **🔒 CI Security Checks**: Added obfuscation verification and sender validation checks to CI pipeline
-- **📖 Voice Documentation**: All 8 TTS voices verified against official Google Cloud docs with source references
+- **🎛️ Yeni Dil Seçici**: Welcome sayfasında aramalı, iki sütunlu, bayraklı dil menüsü ve modern “pill” tetikleyici.
+- **💾 Önbellek Kontrolü**: Genel ayarlara “Cache summaries” ve “Cache transcripts” anahtarları eklendi; transkript önbelleği varsayılan kapalı, RAM/disk tüketimi düşer.
+- **🔐 API Key Obfuscation**: Anahtarlar chrome.storage’da XOR+base64 ile saklanıyor (gizleme düzeyi).
+- **🔧 Varsayılanlar Hizalı**: Provider ve model varsayılanları Ollama + Gemini 3 Flash ile uyumlu.
+- **🗑️ Hızlı Temizlik**: Panel başlığında tek tıkla cache silme ikonu.
+- **🔒 CI Güvenlik Adımları**: Obfuscation ve sender ID doğrulama kontrolleri CI pipeline’a eklendi.
 
 ### v1.6.0
 
