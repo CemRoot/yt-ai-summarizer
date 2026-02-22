@@ -14,6 +14,8 @@ const StorageHelper = (() => {
     defaultMode: 'summary',
     language: 'auto',
     autoRun: false,
+    cacheSummaries: true,
+    cacheTranscripts: false,
     theme: 'auto',
     onboardingComplete: false
   };
@@ -287,6 +289,8 @@ const StorageHelper = (() => {
   }
 
   async function cacheSummary(videoId, mode, data) {
+    const enabled = (await get('cacheSummaries')) !== false;
+    if (!enabled) return;
     const cacheKey = `cache_${videoId}_${mode}`;
     const cacheData = { ...data, timestamp: Date.now() };
     try {
@@ -324,6 +328,8 @@ const StorageHelper = (() => {
   }
 
   async function cacheTranscript(videoId, transcript) {
+    const enabled = (await get('cacheTranscripts')) === true;
+    if (!enabled) return;
     const cacheKey = `transcript_${videoId}`;
     try {
       const useSession = await isSessionAccessible();

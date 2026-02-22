@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const defaultModeSelect = $('#defaultMode');
   const languageSelect    = $('#language');
   const autoRunToggle     = $('#autoRun');
+  const cacheSummariesToggle  = $('#cacheSummaries');
+  const cacheTranscriptsToggle = $('#cacheTranscripts');
   const saveBtn           = $('#saveBtn');
   const clearCacheBtn     = $('#clearCacheBtn');
   const privacyLink       = $('#privacyLink');
@@ -108,12 +110,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         groqApiKey: '',
         ollamaApiKey: '',
         geminiApiKey: '',
-        model: 'llama-3.3-70b-versatile',
-        ollamaModel: 'gemini-3-flash-preview',
-        defaultMode: 'summary',
-        language: 'auto',
-        autoRun: false
-      });
+      model: 'llama-3.3-70b-versatile',
+      ollamaModel: 'gemini-3-flash-preview',
+      defaultMode: 'summary',
+      language: 'auto',
+      autoRun: false,
+      cacheSummaries: true,
+      cacheTranscripts: false
+    });
 
       activeProvider = s.provider || 'ollama';
       groqKeyInput.value = _deobf(s.groqApiKey);
@@ -124,6 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       defaultModeSelect.value = s.defaultMode;
       languageSelect.value = s.language;
       autoRunToggle.checked = s.autoRun;
+      cacheSummariesToggle.checked = s.cacheSummaries !== false;
+      cacheTranscriptsToggle.checked = s.cacheTranscripts === true;
 
       providerBtns.forEach((b) => b.classList.toggle('active', b.dataset.provider === activeProvider));
       groqSection.classList.toggle('hidden', activeProvider !== 'groq');
@@ -156,7 +162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       ollamaModel: ollamaModelSelect.value,
       defaultMode: defaultModeSelect.value,
       language: languageSelect.value,
-      autoRun: autoRunToggle.checked
+      autoRun: autoRunToggle.checked,
+      cacheSummaries: cacheSummariesToggle.checked,
+      cacheTranscripts: cacheTranscriptsToggle.checked
     };
 
     saveBtn.classList.add('saving');
