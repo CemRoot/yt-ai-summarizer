@@ -2,9 +2,11 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "default_locale": "en",
   "minimum_chrome_version": "111",
+
+  "uninstall_url": "https://github.com/CemRoot/yt-ai-summarizer/wiki/Uninstall-Feedback",
 
   "permissions": [
     "storage",

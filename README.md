@@ -178,7 +178,37 @@ See the full [Privacy Policy](privacy-policy.html).
 
 ---
 
+## Troubleshooting
+
+### "This extension is not trusted by Enhanced Safe Browsing"
+
+This warning appears for **all new extensions** on the Chrome Web Store. It is **not** a security issue — it simply means the developer account hasn't yet built a long enough compliance history with Google. The warning disappears automatically after a few months. You can safely click **"Continue to install"** to proceed.
+
+### CRX_FILE_NOT_READABLE on reinstall
+
+If you uninstall the extension and immediately try to reinstall from the Chrome Web Store, Chrome may show a `CRX_FILE_NOT_READABLE` error. This is caused by Chrome's internal download cache holding a stale reference.
+
+**Fix:** Close Chrome completely, reopen it, then install the extension again from the Web Store. This clears Chrome's session cache and allows a fresh download.
+
+### Extension not appearing on YouTube
+
+- Make sure you're on `youtube.com` (not an embedded player)
+- Check that the extension is enabled at `chrome://extensions/`
+- Try refreshing the YouTube page (Ctrl+R / Cmd+R)
+- If you just installed, wait a moment and navigate to a new video
+
+---
+
 ## Changelog
+
+### v1.6.3
+
+- **Uninstall URL**: Added `uninstall_url` to manifest for post-uninstall feedback and reinstall guidance.
+- **Troubleshooting Guide**: Added FAQ section to README covering Enhanced Safe Browsing warning, CRX_FILE_NOT_READABLE reinstall issue, and common setup questions.
+
+### v1.6.2
+
+- **Version Bump**: Force Chrome Web Store CRX regeneration to resolve CDN caching issues.
 
 ### v1.6.1
 
