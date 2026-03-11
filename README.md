@@ -148,14 +148,22 @@ yt-ai-summarizer/
 
 ## CI/CD Pipeline
 
-Every push to `main` triggers 4 automated checks:
+Every push to `main` triggers 5 automated checks:
 
 | Job | What It Does |
 |-----|-------------|
 | **Manifest Check** | Validates JSON, required fields, manifest_version 3, referenced file existence |
 | **JS Lint** | Syntax checks on all `.js` files, JSON validation, HTML structure checks |
 | **Security Audit** | Scans for hardcoded API keys, `eval()`, `document.write()`, CSP validation, host permission audit |
+| **Version Consistency** | Ensures version numbers match across manifest.json, privacy-policy.html, and README.md |
 | **Build & Package** | Creates versioned `.zip` artifact for Chrome Web Store submission |
+
+### Automated Maintenance
+
+| Workflow | Schedule | What It Does |
+|----------|----------|-------------|
+| **YouTube Version Monitor** | Mon & Thu 09:00 UTC | Compares ANDROID client version against NewPipeExtractor, auto-creates PR if outdated |
+| **Transcript Health Check** | Daily 06:00 UTC | Tests InnerTube caption extraction against a known video, opens GitHub Issue on failure |
 
 ---
 
@@ -204,6 +212,10 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 ### v1.6.3
 
 - **Fix Empty Transcript**: Updated YouTube InnerTube ANDROID client from v19.29.37 to v21.03.36 (SDK 35, Android 15). YouTube was rejecting the outdated client version and returning empty captions.
+- **Dynamic Client Version**: Extension now auto-extracts YouTube's current WEB client version at runtime as a fallback when the ANDROID client fails. No more manual version updates for WEB client changes.
+- **YouTube Version Monitor**: New GitHub Actions workflow checks NewPipeExtractor twice a week and auto-creates PRs when the ANDROID client version is outdated.
+- **Transcript Health Check**: Daily automated probe tests InnerTube caption extraction and opens a GitHub Issue if transcript fetching is broken.
+- **Version Consistency CI**: New CI job ensures version numbers stay in sync across manifest.json, privacy-policy.html, and README.md.
 - **Uninstall URL**: Added `uninstall_url` to manifest for post-uninstall feedback and reinstall guidance.
 - **Troubleshooting Guide**: Added FAQ section to README covering Enhanced Safe Browsing warning, CRX_FILE_NOT_READABLE reinstall issue, and common setup questions.
 

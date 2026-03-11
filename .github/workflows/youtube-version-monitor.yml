@@ -1,0 +1,116 @@
+name: YouTube Version Monitor
+
+on:
+  schedule:
+    - cron: '0 9 * * 1,4'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-version:
+    name: Check ANDROID Client Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch latest ANDROID_CLIENT_VERSION from NewPipe
+        id: newpipe
+        run: |
+          URL="https://raw.githubusercontent.com/TeamNewPipe/NewPipeExtractor/dev/extractor/src/main/java/org/schabi/newpipe/extractor/services/youtube/ClientsConstants.java"
+          CONTENT=$(curl -fsSL "$URL" 2>/dev/null || echo "")
+          if [ -z "$CONTENT" ]; then
+            echo "ERROR: Could not fetch ClientsConstants.java"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NP_VERSION=$(echo "$CONTENT" | grep 'ANDROID_CLIENT_VERSION' | grep -oP '"([^"]+)"' | tr -d '"')
+          if [ -z "$NP_VERSION" ]; then
+            echo "ERROR: Could not parse ANDROID_CLIENT_VERSION"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "NewPipe ANDROID version: $NP_VERSION"
+          echo "version=$NP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Read current version from our code
+        if: steps.newpipe.outputs.skip != 'true'
+        id: current
+        run: |
+          OUR_VERSION=$(grep -oP "clientVersion:\s*'([^']+)'" content/transcript.js | head -1 | grep -oP "'[^']+'" | tr -d "'")
+          if [ -z "$OUR_VERSION" ]; then
+            OUR_VERSION=$(grep -oP 'clientVersion:\s*"([^"]+)"' content/transcript.js | head -1 | grep -oP '"[^"]+"' | tr -d '"')
+          fi
+          echo "Our ANDROID version: $OUR_VERSION"
+          echo "version=$OUR_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Compare versions
+        if: steps.newpipe.outputs.skip != 'true'
+        id: compare
+        run: |
+          NP="${{ steps.newpipe.outputs.version }}"
+          OURS="${{ steps.current.outputs.version }}"
+          echo "NewPipe: $NP  |  Ours: $OURS"
+          if [ "$NP" = "$OURS" ]; then
+            echo "Versions match — no update needed."
+            echo "needs_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version mismatch — update required!"
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update source files
+        if: steps.compare.outputs.needs_update == 'true'
+        run: |
+          NP="${{ steps.newpipe.outputs.version }}"
+          OURS="${{ steps.current.outputs.version }}"
+
+          echo "Updating $OURS → $NP in transcript.js and service-worker.js"
+
+          sed -i "s/clientVersion: '$OURS'/clientVersion: '$NP'/g" content/transcript.js
+          sed -i "s/clientVersion: '$OURS'/clientVersion: '$NP'/g" service-worker.js
+          sed -i "s/clientVersion: \"$OURS\"/clientVersion: \"$NP\"/g" content/transcript.js
+          sed -i "s/clientVersion: \"$OURS\"/clientVersion: \"$NP\"/g" service-worker.js
+
+          echo "Verifying changes:"
+          grep -n "clientVersion" content/transcript.js | head -5
+          grep -n "clientVersion" service-worker.js | head -5
+
+      - name: Create PR
+        if: steps.compare.outputs.needs_update == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NP="${{ steps.newpipe.outputs.version }}"
+          BRANCH="auto/android-client-${NP}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add content/transcript.js service-worker.js
+          git commit -m "chore: update ANDROID client version to $NP"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "chore: update YouTube ANDROID client to $NP" \
+            --body "$(cat <<'EOF'
+          ## Automated Version Update
+
+          The YouTube ANDROID InnerTube client version has been updated by NewPipeExtractor.
+
+          - **Old version:** ${{ steps.current.outputs.version }}
+          - **New version:** ${{ steps.newpipe.outputs.version }}
+          - **Source:** [NewPipeExtractor ClientsConstants.java](https://github.com/TeamNewPipe/NewPipeExtractor/blob/dev/extractor/src/main/java/org/schabi/newpipe/extractor/services/youtube/ClientsConstants.java)
+
+          This PR was created automatically by the YouTube Version Monitor workflow.
+          Please review, test transcript extraction, and merge.
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH"

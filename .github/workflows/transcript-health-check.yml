@@ -1,0 +1,171 @@
+name: Transcript Health Check
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  health-check:
+    name: YouTube Transcript Probe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read ANDROID client config from source
+        id: config
+        run: |
+          VER=$(grep -oP "clientVersion:\s*'([^']+)'" content/transcript.js | head -1 | grep -oP "'[^']+'" | tr -d "'")
+          SDK=$(grep -oP "androidSdkVersion:\s*(\d+)" content/transcript.js | head -1 | grep -oP '\d+$')
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "sdk=${SDK:-35}" >> "$GITHUB_OUTPUT"
+          echo "Using ANDROID client $VER (SDK $SDK)"
+
+      - name: Test InnerTube caption extraction
+        id: probe
+        run: |
+          TEST_VIDEO="dQw4w9WgXcQ"
+          CLIENT_VER="${{ steps.config.outputs.version }}"
+          SDK="${{ steps.config.outputs.sdk }}"
+
+          RESPONSE=$(curl -sS -X POST \
+            'https://www.youtube.com/youtubei/v1/player?prettyPrint=false' \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"context\": {
+                \"client\": {
+                  \"clientName\": \"ANDROID\",
+                  \"clientVersion\": \"$CLIENT_VER\",
+                  \"androidSdkVersion\": $SDK,
+                  \"osVersion\": \"15\",
+                  \"hl\": \"en\",
+                  \"gl\": \"US\",
+                  \"platform\": \"MOBILE\"
+                }
+              },
+              \"videoId\": \"$TEST_VIDEO\"
+            }" 2>/dev/null)
+
+          TRACK_COUNT=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          try:
+              d = json.load(sys.stdin)
+              tracks = d.get('captions', {}).get('playerCaptionsTracklistRenderer', {}).get('captionTracks', [])
+              print(len(tracks))
+          except:
+              print(0)
+          " 2>/dev/null)
+
+          PLAYABILITY=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          try:
+              d = json.load(sys.stdin)
+              print(d.get('playabilityStatus', {}).get('status', 'UNKNOWN'))
+          except:
+              print('PARSE_ERROR')
+          " 2>/dev/null)
+
+          echo "Tracks found: $TRACK_COUNT"
+          echo "Playability: $PLAYABILITY"
+          echo "track_count=$TRACK_COUNT" >> "$GITHUB_OUTPUT"
+          echo "playability=$PLAYABILITY" >> "$GITHUB_OUTPUT"
+
+          if [ "$TRACK_COUNT" -gt 0 ] 2>/dev/null; then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test timedtext fetch
+        if: steps.probe.outputs.status == 'ok'
+        id: timedtext
+        run: |
+          TEST_VIDEO="dQw4w9WgXcQ"
+          CLIENT_VER="${{ steps.config.outputs.version }}"
+          SDK="${{ steps.config.outputs.sdk }}"
+
+          BASE_URL=$(curl -sS -X POST \
+            'https://www.youtube.com/youtubei/v1/player?prettyPrint=false' \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"context\": {
+                \"client\": {
+                  \"clientName\": \"ANDROID\",
+                  \"clientVersion\": \"$CLIENT_VER\",
+                  \"androidSdkVersion\": $SDK,
+                  \"osVersion\": \"15\",
+                  \"hl\": \"en\",
+                  \"gl\": \"US\",
+                  \"platform\": \"MOBILE\"
+                }
+              },
+              \"videoId\": \"$TEST_VIDEO\"
+            }" 2>/dev/null | python3 -c "
+          import sys, json
+          try:
+              d = json.load(sys.stdin)
+              tracks = d['captions']['playerCaptionsTracklistRenderer']['captionTracks']
+              print(tracks[0]['baseUrl'])
+          except:
+              print('')
+          " 2>/dev/null)
+
+          if [ -z "$BASE_URL" ]; then
+            echo "Could not extract baseUrl"
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CONTENT_LEN=$(curl -sS "${BASE_URL}&fmt=json3" 2>/dev/null | wc -c)
+          echo "Timedtext response size: $CONTENT_LEN bytes"
+
+          if [ "$CONTENT_LEN" -gt 100 ]; then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open issue on failure
+        if: steps.probe.outputs.status == 'fail' || steps.timedtext.outputs.status == 'fail'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --label "transcript-alert" --state open --limit 1 --json number -q '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "Alert issue #$EXISTING already open — adding comment"
+            gh issue comment "$EXISTING" --body "Health check still failing. Tracks: ${{ steps.probe.outputs.track_count }}, Playability: ${{ steps.probe.outputs.playability }}, Timedtext: ${{ steps.timedtext.outputs.status || 'skipped' }}"
+            exit 0
+          fi
+
+          gh label create "transcript-alert" --color "d93f0b" --description "Automated transcript health check failure" --force
+
+          gh issue create \
+            --title "ALERT: YouTube transcript extraction may be broken" \
+            --label "transcript-alert" \
+            --body "$(cat <<EOF
+          ## Transcript Health Check Failed
+
+          The daily automated probe detected a problem with YouTube transcript extraction.
+
+          | Metric | Value |
+          |--------|-------|
+          | **ANDROID client version** | ${{ steps.config.outputs.version }} |
+          | **Caption tracks found** | ${{ steps.probe.outputs.track_count }} |
+          | **Playability status** | ${{ steps.probe.outputs.playability }} |
+          | **Timedtext fetch** | ${{ steps.timedtext.outputs.status || 'skipped' }} |
+          | **Test video** | [dQw4w9WgXcQ](https://www.youtube.com/watch?v=dQw4w9WgXcQ) |
+
+          ### Possible causes
+          - YouTube blocked the current ANDROID client version
+          - Timedtext endpoint format changed
+          - YouTube added new authentication requirements
+
+          ### Suggested actions
+          1. Check [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) for client version updates
+          2. Run the YouTube Version Monitor workflow manually
+          3. Test transcript extraction locally
+          EOF
+          )"

@@ -103,47 +103,76 @@ const TranscriptExtractor = (() => {
     return null;
   }
 
-  // ─── Method 0: Innertube ANDROID client (most reliable) ───────────
+  // ─── YouTube client version management ──────────────────────────────
   //
-  // YouTube's WEB client returns timedtext URLs with `xowf=1` that now
-  // return empty responses (HTTP 200, 0 bytes).  The ANDROID client
-  // returns a different URL format that still works.  Because this
-  // runs on youtube.com the request is same-origin – no CORS issues.
+  // ANDROID hardcoded version is kept up to date by GitHub Actions
+  // (youtube-version-monitor.yml).  At runtime we also try to extract
+  // the current WEB version from the page as a self-healing fallback.
+
+  const ANDROID_DEFAULTS = {
+    clientName: 'ANDROID',
+    clientVersion: '21.03.36',
+    androidSdkVersion: 35,
+    osVersion: '15',
+    platform: 'MOBILE'
+  };
+
+  let _cachedWebVersion = null;
+
+  function extractWebClientVersion() {
+    if (_cachedWebVersion) return _cachedWebVersion;
+    try {
+      const scripts = document.querySelectorAll('script');
+      for (const s of scripts) {
+        const t = s.textContent;
+        if (!t || !t.includes('INNERTUBE_CLIENT_VERSION')) continue;
+        const m = t.match(/INNERTUBE_CLIENT_VERSION["']\s*:\s*["']([^"']+)/);
+        if (m) { _cachedWebVersion = m[1]; return m[1]; }
+      }
+    } catch {}
+    return null;
+  }
+
+  async function innertubePlayerRequest(videoId, clientConfig) {
+    const resp = await fetch('/youtubei/v1/player?prettyPrint=false', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: { client: { hl: 'en', gl: 'US', ...clientConfig } },
+        videoId
+      })
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null;
+  }
+
+  // ─── Method 0: Innertube client (ANDROID primary, WEB fallback) ────
 
   async function getCaptionTracksViaInnertube() {
     try {
       const videoId = getVideoId();
       if (!videoId) return null;
 
-      const resp = await fetch('/youtubei/v1/player?prettyPrint=false', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context: {
-            client: {
-              clientName: 'ANDROID',
-              clientVersion: '21.03.36',
-              androidSdkVersion: 35,
-              osVersion: '15',
-              hl: 'en',
-              gl: 'US',
-              platform: 'MOBILE'
-            }
-          },
-          videoId
-        })
-      });
-
-      if (!resp.ok) return null;
-
-      const data = await resp.json();
-      const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      const tracks = await innertubePlayerRequest(videoId, ANDROID_DEFAULTS);
       if (tracks?.length) {
         console.log(LOG, `Innertube ANDROID: ${tracks.length} tracks found`);
         return tracks.map(mapRawTrack);
       }
+
+      const webVer = extractWebClientVersion();
+      if (webVer) {
+        console.log(LOG, `ANDROID failed, trying WEB ${webVer}…`);
+        const webTracks = await innertubePlayerRequest(videoId, {
+          clientName: 'WEB', clientVersion: webVer, platform: 'DESKTOP'
+        });
+        if (webTracks?.length) {
+          console.log(LOG, `Innertube WEB: ${webTracks.length} tracks found`);
+          return webTracks.map(mapRawTrack);
+        }
+      }
     } catch (e) {
-      console.warn(LOG, 'Innertube ANDROID failed:', e);
+      console.warn(LOG, 'Innertube failed:', e);
     }
     return null;
   }
