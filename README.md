@@ -209,6 +209,13 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ## Changelog
 
+### v1.6.4
+
+- **Gemini TTS Stable Upgrade**: Migrated from `gemini-2.5-flash-preview-tts` (preview) to `gemini-2.5-flash-tts` (stable GA). Preview models can be removed by Google without notice; stable GA ensures long-term reliability.
+- **Auto-Merge Pipeline**: Version Monitor PRs now auto-merge via squash after all CI checks pass — zero manual intervention needed.
+- **Branch Protection**: All PRs require 5 CI checks before merging (Manifest, Lint, Security, Version Consistency, Build).
+- **CODEOWNERS**: Critical files auto-assign @CemRoot as reviewer on PRs.
+
 ### v1.6.3
 
 - **Fix Empty Transcript**: Updated YouTube InnerTube ANDROID client from v19.29.37 to v21.03.36 (SDK 35, Android 15). YouTube was rejecting the outdated client version and returning empty captions.
