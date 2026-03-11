@@ -97,9 +97,9 @@ jobs:
           git commit -m "chore: update ANDROID client version to $NP"
           git push origin "$BRANCH"
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "chore: update YouTube ANDROID client to $NP" \
-            --body "$(cat <<'EOF'
+            --body "$(cat <<BODY
           ## Automated Version Update
 
           The YouTube ANDROID InnerTube client version has been updated by NewPipeExtractor.
@@ -109,8 +109,13 @@ jobs:
           - **Source:** [NewPipeExtractor ClientsConstants.java](https://github.com/TeamNewPipe/NewPipeExtractor/blob/dev/extractor/src/main/java/org/schabi/newpipe/extractor/services/youtube/ClientsConstants.java)
 
           This PR was created automatically by the YouTube Version Monitor workflow.
-          Please review, test transcript extraction, and merge.
-          EOF
+          Auto-merge is enabled — it will merge once all CI checks pass.
+          BODY
           )" \
             --base main \
-            --head "$BRANCH"
+            --head "$BRANCH")
+
+          echo "PR created: $PR_URL"
+
+          echo "Enabling auto-merge…"
+          gh pr merge "$PR_URL" --auto --squash || echo "Auto-merge enable failed (branch protection may not be fully configured yet)"

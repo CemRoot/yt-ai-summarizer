@@ -1,0 +1,13 @@
+# Default owner for everything
+* @CemRoot
+
+# Transcript extraction — critical for core functionality
+content/transcript.js @CemRoot
+service-worker.js @CemRoot
+
+# Security-sensitive files
+utils/storage.js @CemRoot
+manifest.json @CemRoot
+
+# CI/CD pipeline
+.github/workflows/ @CemRoot
