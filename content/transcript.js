@@ -122,10 +122,12 @@ const TranscriptExtractor = (() => {
           context: {
             client: {
               clientName: 'ANDROID',
-              clientVersion: '19.29.37',
-              androidSdkVersion: 30,
+              clientVersion: '21.03.36',
+              androidSdkVersion: 35,
+              osVersion: '15',
               hl: 'en',
-              gl: 'US'
+              gl: 'US',
+              platform: 'MOBILE'
             }
           },
           videoId

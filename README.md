@@ -203,6 +203,7 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ### v1.6.3
 
+- **Fix Empty Transcript**: Updated YouTube InnerTube ANDROID client from v19.29.37 to v21.03.36 (SDK 35, Android 15). YouTube was rejecting the outdated client version and returning empty captions.
 - **Uninstall URL**: Added `uninstall_url` to manifest for post-uninstall feedback and reinstall guidance.
 - **Troubleshooting Guide**: Added FAQ section to README covering Enhanced Safe Browsing warning, CRX_FILE_NOT_READABLE reinstall issue, and common setup questions.
 
