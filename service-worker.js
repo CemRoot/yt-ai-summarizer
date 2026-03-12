@@ -993,13 +993,26 @@ function extractBalancedJSONSW(text, startIdx) {
 }
 
 /**
- * Handle extension install/update - show onboarding
+ * Handle extension install/update — show onboarding or "What's New" page
  */
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.tabs.create({
       url: chrome.runtime.getURL('welcome/welcome.html')
     });
+  }
+
+  if (details.reason === 'update') {
+    const currentVersion = chrome.runtime.getManifest().version;
+    const previousVersion = details.previousVersion;
+
+    if (currentVersion !== previousVersion) {
+      chrome.storage.local.set({ lastUpdateVersion: currentVersion });
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('update/update.html'),
+        active: false
+      });
+    }
   }
 
   // Enable session storage for content scripts

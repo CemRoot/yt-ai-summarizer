@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="update.css">
+  <title>What's New — YouTube AI Summarizer</title>
+</head>
+<body>
+  <div class="update-container">
+
+    <!-- Hero -->
+    <header class="hero">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>
+      </div>
+      <div class="version-pill" id="versionPill">v1.6.4</div>
+      <h1 id="heroTitle">What's New</h1>
+      <p class="hero-sub" id="heroSub">YouTube AI Summarizer has been updated with new features and improvements.</p>
+    </header>
+
+    <!-- Current Version Changelog -->
+    <section class="changelog-section" id="changelogSection">
+      <div class="changelog-card current" id="currentChangelog">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- Previous Versions (collapsible) -->
+    <section class="history-section" id="historySection">
+      <button class="history-toggle" id="historyToggle" type="button">
+        <span id="historyToggleText">Previous Versions</span>
+        <svg class="history-chevron" viewBox="0 0 24 24" width="20" height="20"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <div class="history-list" id="historyList" hidden>
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg" id="ctaBtn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+        <span id="ctaText">Continue to YouTube</span>
+      </a>
+      <button class="btn btn-ghost" id="settingsBtn" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span id="settingsText">Open Settings</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="update-footer">
+      <span id="footerPowered">Powered by</span> <a href="https://groq.com" target="_blank" rel="noopener noreferrer">Groq</a> &amp; <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a>
+    </footer>
+  </div>
+
+  <script src="update.js"></script>
+</body>
+</html>
