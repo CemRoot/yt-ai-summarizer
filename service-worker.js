@@ -164,6 +164,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'chatWithVideo') {
+    handleChatWithVideo(message.data)
+      .then(sendResponse)
+      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+    return true;
+  }
+
   if (message.action === 'openSettings') {
     chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') });
     sendResponse({ ok: true });
@@ -632,6 +639,63 @@ Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
 
   sendProgress('Podcast ready!', 1);
   return { dialogue, audioBase64, model: result.model, provider, voices };
+}
+
+/**
+ * Handle chat with video using the transcript as context
+ */
+async function handleChatWithVideo(data) {
+  const { transcript, language, question, history } = data;
+
+  if (!transcript || transcript.trim().length === 0) {
+    throw new Error('EMPTY_TRANSCRIPT');
+  }
+
+  const { provider, apiKey, model } = await getProviderConfig();
+  if (!apiKey) {
+    throw new Error('INVALID_API_KEY');
+  }
+
+  const languageInstruction = buildLanguageInstruction(language);
+  
+  // Restrict transcript context if it's too large to leave room for output and history
+  const maxChars = 80000;
+  let contextTranscript = transcript;
+  if (transcript.length > maxChars) {
+    contextTranscript = transcript.substring(0, maxChars) + '\n... [Transcript truncated]';
+  }
+
+  const systemPrompt = `You are a helpful AI assistant specialized in analyzing a YouTube video. 
+You are provided with the video's transcript below.
+You must answer the user's questions based strictly on the provided transcript.
+If the answer is not in the transcript, politely say that you don't know or the video does not mention it.
+Do your best to provide detailed and accurate information.
+Use markdown formatting where appropriate (e.g., bold for keywords, lists for points).
+${languageInstruction}
+
+--- VIDEO TRANSCRIPT ---
+${contextTranscript}
+------------------------`;
+
+  // Construct message history
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  if (history && history.length > 0) {
+    // Keep only last 10 messages to avoid context window overflows
+    const recentHistory = history.slice(-10);
+    for (const msg of recentHistory) {
+      if (msg.role === 'user' || msg.role === 'ai') {
+        messages.push({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text });
+      }
+    }
+  }
+
+  messages.push({ role: 'user', content: question });
+
+  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  return { answer: result.content, model: result.model, provider };
 }
 
 /**

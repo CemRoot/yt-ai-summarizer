@@ -16,6 +16,7 @@ Turn any YouTube video into a concise, actionable summary in seconds. Bring your
 - **Summary** — Full picture in 3–5 clean paragraphs
 - **Key Points** — 5–10 evidence-backed takeaways as a numbered list
 - **Detailed Analysis** — Section-by-section breakdown with names, dates, data preserved
+- **💬 Chat** — Ask follow-up questions about the video and get AI answers grounded in the transcript
 
 All three are generated in a **single API call** — no rate limit issues.
 
@@ -36,6 +37,8 @@ All three are generated in a **single API call** — no rate limit issues.
 | **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
 | **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
 | **🎙️ AI Podcast** | NotebookLM-style two-host podcast with randomly paired male & female voices. Powered by Gemini TTS — completely free. |
+| **💬 Video Chat** | Ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history. |
+| **🖥️ Fullscreen-Aware** | Extension UI auto-hides in fullscreen mode for distraction-free viewing. |
 | **🌍 Multi-Language Onboarding** | Welcome page auto-detects browser language with manual selector. 11 languages: EN, TR, ES, FR, DE, JA, KO, ZH, PT, AR, HI. |
 | **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
 | **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
@@ -80,12 +83,14 @@ Choose your provider:
 
 ```
 YouTube Video → Extract Transcript → Send to AI Provider → Parse 3 Sections → Display
+                                   ↳ Chat Mode → Transcript + Question + History → AI Answer
 ```
 
 1. **Transcript Extraction** — Pulls caption data directly from YouTube using Android client context (no external APIs).
 2. **Combined AI Call** — A single prompt generates Summary + Key Points + Detailed Analysis simultaneously.
 3. **Robust Parsing** — 4-layer parser: exact delimiters → regex variants → heuristic headings → smart split.
 4. **Instant Display** — Results shown in a native-feeling side panel. Switch tabs instantly from cache.
+5. **Conversational Chat** — Chat tab sends questions alongside the transcript and conversation history for context-aware answers.
 
 ---
 
@@ -120,10 +125,11 @@ yt-ai-summarizer/
 ├── manifest.json              # Extension manifest (V3)
 ├── service-worker.js          # Background: AI calls, routing, parsing
 ├── content/
-│   ├── content.js             # Main controller (cache, SPA nav)
-│   ├── content.css            # Panel styles + dark/light theme
+│   ├── content.js             # Main controller (cache, SPA nav, chat)
+│   ├── content.css            # Panel styles + dark/light theme + chat UI
 │   ├── transcript.js          # YouTube transcript extraction
-│   ├── ui.js                  # Panel UI, tabs, onboarding tooltip
+│   ├── ui.js                  # Panel UI, tabs, chat interface, onboarding tooltip
+│   ├── podcast.js             # Podcast audio player
 │   └── page-bridge.js         # MAIN world bridge for YT data
 ├── popup/
 │   ├── popup.html             # Settings panel (dual provider)
@@ -208,6 +214,14 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 ---
 
 ## Changelog
+
+### v1.7.0
+
+- **💬 Interactive Video Chat**: New "Chat" tab lets you ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history (last 10 messages). Works with all providers (Groq, Ollama, Gemini).
+- **🖥️ Fullscreen Auto-Hide**: Extension toggle button and panel automatically hide when YouTube enters fullscreen mode — no more UI clutter during cinema viewing.
+- **🧹 Pre-Release Cleanup**: Removed all `console.log`/`console.warn` debug statements from production code (`transcript.js`, `content.js`, `popup.js`).
+- **🐛 Podcast Rate Bug Fix**: Fixed a race condition in `podcast.js` where changing playback speed caused a small seek jump. Position is now captured before the rate changes.
+- **📏 Chat Context Alignment**: Chat transcript context window set to 80K characters, matching the summary pipeline.
 
 ### v1.6.4
 
