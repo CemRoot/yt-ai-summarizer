@@ -164,9 +164,9 @@ const PodcastPlayer = (() => {
   }
 
   function setRate(rate) {
+    const currentPos = getCurrentTime(); // read position BEFORE changing rate
     playbackRate = Math.max(0.5, Math.min(2.0, rate));
     if (isPlaying && sourceNode) {
-      const currentPos = getCurrentTime();
       sourceNode.playbackRate.value = playbackRate;
       startTime = audioContext.currentTime - (currentPos / playbackRate);
     }

@@ -10,6 +10,7 @@
   let currentVideoId = null;
   let combinedCache = null; // { videoId, summary, keypoints, detailed }
   let podcastCache = null;  // { videoId, dialogue }
+  let chatCache = null;     // { videoId, messages: [] }
   let isProcessing = false;
   let initTimeout = null;
 
@@ -26,6 +27,7 @@
     isProcessing = false;
     combinedCache = null;
     podcastCache = null;
+    chatCache = null;
     if (typeof PodcastPlayer !== 'undefined') PodcastPlayer.destroy();
 
     SummarizerUI.init();
@@ -54,9 +56,7 @@
     clearTimeout(initTimeout);
     initTimeout = setTimeout(() => {
       currentVideoId = null; // force re-init even if URL polled same ID briefly
-      initialize().catch((err) => {
-        console.warn('[YT-AI-Summarizer] Init error:', err);
-      });
+      initialize().catch(() => {});
     }, 800);
   }
 
@@ -234,6 +234,77 @@
   }
 
   /**
+   * Request to initialize current chat session
+   */
+  function requestChat() {
+    const videoId = TranscriptExtractor.getVideoId();
+    if (!videoId) return;
+
+    if (!chatCache || chatCache.videoId !== videoId) {
+      chatCache = { videoId, messages: [] };
+    }
+
+    SummarizerUI.showChatUI(chatCache.messages);
+  }
+
+  /**
+   * Send a newly written message to the AI
+   */
+  async function sendChatMessage(text) {
+    if (isProcessing) return;
+    const videoId = TranscriptExtractor.getVideoId();
+    if (!videoId) return;
+
+    const hasKey = await StorageHelper.hasApiKey();
+    if (!hasKey) {
+      SummarizerUI.showApiKeyPrompt();
+      return;
+    }
+
+    if (!chatCache || chatCache.videoId !== videoId) {
+      chatCache = { videoId, messages: [] };
+    }
+
+    chatCache.messages.push({ role: 'user', text });
+    SummarizerUI.addChatMessage('user', text);
+
+    isProcessing = true;
+    SummarizerUI.addChatMessage('loading', '');
+
+    try {
+      const transcript = await TranscriptExtractor.getTranscript();
+      if (!transcript?.fullText) throw new Error('NO_TRANSCRIPT');
+
+      const settings = await StorageHelper.getSettings();
+
+      const response = await chrome.runtime.sendMessage({
+        action: 'chatWithVideo',
+        data: {
+          transcript: transcript.fullText,
+          language: settings.language || 'auto',
+          videoId,
+          question: text,
+          history: chatCache.messages.slice(0, -1) // pass history without the current question
+        }
+      });
+
+      if (!response) throw new Error('API_ERROR: No response from extension. Please reload.');
+      if (response.error) throw new Error(response.error);
+
+      chatCache.messages.push({ role: 'ai', text: response.answer });
+      SummarizerUI.addChatMessage('ai', response.answer);
+
+    } catch (error) {
+      let msg = error?.message || 'Failed to get answer.';
+      if (msg.startsWith('API_ERROR: ')) msg = msg.replace('API_ERROR: ', '');
+      chatCache.messages.push({ role: 'error', text: msg });
+      SummarizerUI.addChatMessage('error', msg);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  /**
    * Handle errors with user-friendly messages
    */
   function handleError(error) {
@@ -310,6 +381,8 @@
   // Expose callbacks for UI module
   window._ytaiRequestSummary = requestSummary;
   window._ytaiRequestPodcast = requestPodcast;
+  window._ytaiRequestChat = requestChat;
+  window._ytaiSendChatMessage = sendChatMessage;
   window._ytaiOnPanelOpen = onPanelOpen;
 
   /**
@@ -351,7 +424,7 @@
     if (sender.id !== chrome.runtime.id) return;
 
     if (message.action === 'settingsUpdated') {
-      initialize().catch(console.warn);
+      initialize().catch(() => {});
       sendResponse({ ok: true });
     } else if (message.action === 'triggerSummary') {
       SummarizerUI.autoOpen();
@@ -370,7 +443,5 @@
 
   // --- Initialization ---
   setupNavigationListener();
-  initialize().catch((err) => {
-    console.warn('[YT-AI-Summarizer] Init error:', err);
-  });
+  initialize().catch(() => {});
 })();

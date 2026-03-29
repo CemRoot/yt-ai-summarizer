@@ -20,7 +20,8 @@ const SummarizerUI = (() => {
     settings: `<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`,
     key: `<svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>`,
     error: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
-    sparkle: `<svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>`
+    sparkle: `<svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>`,
+    send: `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`
   };
 
   /**
@@ -124,17 +125,17 @@ const SummarizerUI = (() => {
     tabs.className = 'ytai-tabs';
 
     const TAB_LABELS = {
-      en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed', podcast: '🎙️ Podcast' },
-      tr: { summary: 'Özet', keypoints: 'Önemli Noktalar', detailed: 'Detaylı', podcast: '🎙️ Podcast' },
-      es: { summary: 'Resumen', keypoints: 'Puntos Clave', detailed: 'Detallado', podcast: '🎙️ Podcast' },
-      fr: { summary: 'Résumé', keypoints: 'Points Clés', detailed: 'Détaillée', podcast: '🎙️ Podcast' },
-      de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detail', podcast: '🎙️ Podcast' },
-      pt: { summary: 'Resumo', keypoints: 'Pontos-Chave', detailed: 'Detalhada', podcast: '🎙️ Podcast' },
-      ja: { summary: '要約', keypoints: 'ポイント', detailed: '詳細分析', podcast: '🎙️ Podcast' },
-      ko: { summary: '요약', keypoints: '핵심', detailed: '상세', podcast: '🎙️ Podcast' },
-      zh: { summary: '摘要', keypoints: '要点', detailed: '详细', podcast: '🎙️ Podcast' },
-      ar: { summary: 'ملخص', keypoints: 'نقاط', detailed: 'تحليل', podcast: '🎙️ Podcast' },
-      ru: { summary: 'Резюме', keypoints: 'Ключевые', detailed: 'Подробный', podcast: '🎙️ Podcast' }
+      en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed', podcast: '🎙️ Podcast', chat: '💬 Chat' },
+      tr: { summary: 'Özet', keypoints: 'Önemli Noktalar', detailed: 'Detaylı', podcast: '🎙️ Podcast', chat: '💬 Sohbet' },
+      es: { summary: 'Resumen', keypoints: 'Puntos Clave', detailed: 'Detallado', podcast: '🎙️ Podcast', chat: '💬 Chat' },
+      fr: { summary: 'Résumé', keypoints: 'Points Clés', detailed: 'Détaillée', podcast: '🎙️ Podcast', chat: '💬 Chat' },
+      de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detail', podcast: '🎙️ Podcast', chat: '💬 Chat' },
+      pt: { summary: 'Resumo', keypoints: 'Pontos-Chave', detailed: 'Detalhada', podcast: '🎙️ Podcast', chat: '💬 Chat' },
+      ja: { summary: '要約', keypoints: 'ポイント', detailed: '詳細分析', podcast: '🎙️ Podcast', chat: '💬 チャット' },
+      ko: { summary: '요약', keypoints: '핵심', detailed: '상세', podcast: '🎙️ Podcast', chat: '💬 채팅' },
+      zh: { summary: '摘要', keypoints: '要点', detailed: '详细', podcast: '🎙️ Podcast', chat: '💬 聊天' },
+      ar: { summary: 'ملخص', keypoints: 'نقاط', detailed: 'تحليل', podcast: '🎙️ Podcast', chat: '💬 دردشة' },
+      ru: { summary: 'Резюме', keypoints: 'Ключевые', detailed: 'Подробный', podcast: '🎙️ Podcast', chat: '💬 Чат' }
     };
 
     function resolveUILang() {
@@ -149,7 +150,8 @@ const SummarizerUI = (() => {
       { id: 'summary',   label: labels.summary },
       { id: 'keypoints', label: labels.keypoints },
       { id: 'detailed',  label: labels.detailed },
-      { id: 'podcast',   label: labels.podcast }
+      { id: 'podcast',   label: labels.podcast },
+      { id: 'chat',      label: labels.chat }
     ];
 
     tabData.forEach((tab) => {
@@ -264,6 +266,14 @@ const SummarizerUI = (() => {
     // OS / browser-level color-scheme changes
     window.matchMedia?.('(prefers-color-scheme: dark)')
       .addEventListener('change', applyThemeClass);
+
+    // Fullscreen detection to hide the extension UI
+    document.addEventListener('fullscreenchange', () => {
+      const isFs = !!document.fullscreenElement;
+      if (panelRoot) {
+        panelRoot.classList.toggle('ytai-is-fullscreen', isFs);
+      }
+    });
   }
 
   /**
@@ -299,6 +309,16 @@ const SummarizerUI = (() => {
     tabs?.forEach((tab) => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
+
+    if (mode === 'chat') {
+      if (typeof window.PodcastPlayer !== 'undefined') {
+        window.PodcastPlayer.stop();
+      }
+      if (typeof window._ytaiRequestChat === 'function') {
+        window._ytaiRequestChat();
+      }
+      return;
+    }
 
     if (mode === 'podcast') {
       if (typeof window._ytaiRequestPodcast === 'function') {
@@ -793,6 +813,134 @@ const SummarizerUI = (() => {
   }
 
   /**
+   * Show Chat UI with message history
+   */
+  function showChatUI(messages) {
+    stopFactRotation();
+    const content = panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    let html = `
+      <div class="ytai-chat-container">
+        <div class="ytai-chat-messages" id="ytaiChatMessages">
+    `;
+
+    if (!messages || messages.length === 0) {
+      const uiLang = (navigator.language || 'en').substring(0, 2);
+      const isTR = uiLang === 'tr';
+      html += `
+        <div class="ytai-chat-empty">
+          <div class="ytai-chat-icon">💬</div>
+          <div class="ytai-ready-title">${isTR ? 'Videoya Dair Sorularınızı Sorun' : 'Ask Questions About This Video'}</div>
+          <div class="ytai-ready-desc">${isTR ? 'Yapay zeka asistanı, videonun metnini inceleyerek cevaplayacaktır.' : 'The AI assistant will answer based on the video transcript.'}</div>
+        </div>
+      `;
+    } else {
+      messages.forEach(msg => {
+        const isUser = msg.role === 'user';
+        html += `
+          <div class="ytai-chat-msg ${isUser ? 'user' : 'ai'}">
+            <div class="ytai-chat-avatar">${isUser ? '👤' : '🤖'}</div>
+            <div class="ytai-chat-bubble">${isUser ? escapeHtml(msg.text) : markdownToHtml(msg.text)}</div>
+          </div>
+        `;
+      });
+    }
+
+    html += `
+        </div>
+        <div class="ytai-chat-input-area">
+          <textarea id="ytaiChatInput" placeholder="Ask a question..." rows="1"></textarea>
+          <button id="ytaiChatSendBtn" title="Send">${ICONS.send}</button>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = html;
+
+    const messagesEl = content.querySelector('#ytaiChatMessages');
+    const inputEl = content.querySelector('#ytaiChatInput');
+    const sendBtn = content.querySelector('#ytaiChatSendBtn');
+
+    if (messages && messages.length > 0) {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    const uiLang = (navigator.language || 'en').substring(0, 2);
+    inputEl.placeholder = uiLang === 'tr' ? 'Bir soru sorun...' : 'Ask a question...';
+
+    inputEl.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight < 100 ? this.scrollHeight : 100) + 'px';
+      sendBtn.disabled = this.value.trim().length === 0;
+    });
+
+    sendBtn.disabled = true;
+
+    function triggerSend() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      sendBtn.disabled = true;
+      if (typeof window._ytaiSendChatMessage === 'function') {
+        window._ytaiSendChatMessage(text);
+      }
+    }
+
+    sendBtn.addEventListener('click', triggerSend);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        triggerSend();
+      }
+    });
+
+    setTimeout(() => {
+      inputEl.focus();
+    }, 100);
+  }
+
+  /**
+   * Add a single message to the active chat UI
+   */
+  function addChatMessage(role, text) {
+    const messagesEl = panelRoot?.querySelector('#ytaiChatMessages');
+    if (!messagesEl) return;
+    
+    const emptyState = messagesEl.querySelector('.ytai-chat-empty');
+    if (emptyState) emptyState.remove();
+    
+    if (role === 'ai' || role === 'error') {
+      const loading = messagesEl.querySelector('.ytai-chat-loading');
+      if (loading) loading.remove();
+    }
+
+    if (role === 'loading') {
+      messagesEl.insertAdjacentHTML('beforeend', `
+        <div class="ytai-chat-msg ai ytai-chat-loading">
+          <div class="ytai-chat-avatar">🤖</div>
+          <div class="ytai-chat-bubble">
+            <span class="ytai-typing"></span><span class="ytai-typing"></span><span class="ytai-typing"></span>
+          </div>
+        </div>
+      `);
+    } else {
+      const isUser = role === 'user';
+      const isError = role === 'error';
+      messagesEl.insertAdjacentHTML('beforeend', `
+        <div class="ytai-chat-msg ${isUser ? 'user' : 'ai'} ${isError ? 'error' : ''}">
+          <div class="ytai-chat-avatar">${isUser ? '👤' : (isError ? '⚠️' : '🤖')}</div>
+          <div class="ytai-chat-bubble">${isUser ? escapeHtml(text) : markdownToHtml(text)}</div>
+        </div>
+      `);
+    }
+    
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+
+  /**
    * Show result
    */
   function showResult(markdownText) {
@@ -940,6 +1088,8 @@ const SummarizerUI = (() => {
     showPodcastPlayer,
     showPodcastKeyPrompt,
     showPodcastLoading,
+    showChatUI,
+    addChatMessage,
     showToast,
     isPanelOpen,
     getCurrentMode,

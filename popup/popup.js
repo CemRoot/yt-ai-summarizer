@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (s.groqApiKey) showStatus(groqKeyStatus, 'API key configured', 'success');
       if (s.ollamaApiKey) showStatus(ollamaKeyStatus, 'API key configured', 'success');
       if (s.geminiApiKey) showStatus(geminiKeyStatus, 'API key configured', 'success');
-    } catch (err) {
-      console.warn('Failed to load settings:', err);
+    } catch {
+      // settings failed to load, continue with defaults
     }
   }
 
