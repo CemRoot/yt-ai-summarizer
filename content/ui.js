@@ -291,6 +291,8 @@ const SummarizerUI = (() => {
     }
     if (toggleBtn) {
       toggleBtn.classList.toggle('active', isOpen);
+      // Hide toggle button when panel is open so it doesn't overlap chat input
+      toggleBtn.style.display = isOpen ? 'none' : '';
     }
 
     // Trigger summary on first open
@@ -820,19 +822,20 @@ const SummarizerUI = (() => {
     const content = panelRoot?.querySelector('.ytai-content');
     if (!content) return;
 
+    const uiLang = (navigator.language || 'en').substring(0, 2);
+    const isTR = uiLang === 'tr';
+
     let html = `
       <div class="ytai-chat-container">
         <div class="ytai-chat-messages" id="ytaiChatMessages">
     `;
 
     if (!messages || messages.length === 0) {
-      const uiLang = (navigator.language || 'en').substring(0, 2);
-      const isTR = uiLang === 'tr';
       html += `
         <div class="ytai-chat-empty">
-          <div class="ytai-chat-icon">💬</div>
-          <div class="ytai-ready-title">${isTR ? 'Videoya Dair Sorularınızı Sorun' : 'Ask Questions About This Video'}</div>
-          <div class="ytai-ready-desc">${isTR ? 'Yapay zeka asistanı, videonun metnini inceleyerek cevaplayacaktır.' : 'The AI assistant will answer based on the video transcript.'}</div>
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="var(--ytai-text-faint)"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+          <div class="ytai-chat-empty-title">${isTR ? 'Videoya dair sorularınızı sorun' : 'Ask questions about this video'}</div>
+          <div class="ytai-chat-empty-desc">${isTR ? 'Yapay zeka asistanı, videonun transkriptine dayanarak yanıt verecektir.' : 'The AI assistant will answer based on the video transcript.'}</div>
         </div>
       `;
     } else {
@@ -840,7 +843,6 @@ const SummarizerUI = (() => {
         const isUser = msg.role === 'user';
         html += `
           <div class="ytai-chat-msg ${isUser ? 'user' : 'ai'}">
-            <div class="ytai-chat-avatar">${isUser ? '👤' : '🤖'}</div>
             <div class="ytai-chat-bubble">${isUser ? escapeHtml(msg.text) : markdownToHtml(msg.text)}</div>
           </div>
         `;
@@ -850,8 +852,10 @@ const SummarizerUI = (() => {
     html += `
         </div>
         <div class="ytai-chat-input-area">
-          <textarea id="ytaiChatInput" placeholder="Ask a question..." rows="1"></textarea>
-          <button id="ytaiChatSendBtn" title="Send">${ICONS.send}</button>
+          <div class="ytai-chat-input-wrap">
+            <textarea id="ytaiChatInput" placeholder="${isTR ? 'Bir soru sorun...' : 'Ask a question...'}" rows="1"></textarea>
+            <button id="ytaiChatSendBtn" title="${isTR ? 'Gönder' : 'Send'}" disabled>${ICONS.send}</button>
+          </div>
         </div>
       </div>
     `;
@@ -866,16 +870,11 @@ const SummarizerUI = (() => {
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    const uiLang = (navigator.language || 'en').substring(0, 2);
-    inputEl.placeholder = uiLang === 'tr' ? 'Bir soru sorun...' : 'Ask a question...';
-
     inputEl.addEventListener('input', function() {
       this.style.height = 'auto';
-      this.style.height = (this.scrollHeight < 100 ? this.scrollHeight : 100) + 'px';
+      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
       sendBtn.disabled = this.value.trim().length === 0;
     });
-
-    sendBtn.disabled = true;
 
     function triggerSend() {
       const text = inputEl.value.trim();
@@ -896,9 +895,7 @@ const SummarizerUI = (() => {
       }
     });
 
-    setTimeout(() => {
-      inputEl.focus();
-    }, 100);
+    setTimeout(() => inputEl.focus(), 100);
   }
 
   /**
@@ -919,7 +916,6 @@ const SummarizerUI = (() => {
     if (role === 'loading') {
       messagesEl.insertAdjacentHTML('beforeend', `
         <div class="ytai-chat-msg ai ytai-chat-loading">
-          <div class="ytai-chat-avatar">🤖</div>
           <div class="ytai-chat-bubble">
             <span class="ytai-typing"></span><span class="ytai-typing"></span><span class="ytai-typing"></span>
           </div>
@@ -930,7 +926,6 @@ const SummarizerUI = (() => {
       const isError = role === 'error';
       messagesEl.insertAdjacentHTML('beforeend', `
         <div class="ytai-chat-msg ${isUser ? 'user' : 'ai'} ${isError ? 'error' : ''}">
-          <div class="ytai-chat-avatar">${isUser ? '👤' : (isError ? '⚠️' : '🤖')}</div>
           <div class="ytai-chat-bubble">${isUser ? escapeHtml(text) : markdownToHtml(text)}</div>
         </div>
       `);
