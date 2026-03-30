@@ -257,6 +257,13 @@
   overflow-y: auto;
   padding: 20px;
   scroll-behavior: smooth;
+  min-height: 0; /* critical for flex children overflow */
+}
+
+/* When chat is active, content should not scroll or pad — chat manages its own layout */
+.ytai-content:has(.ytai-chat-container) {
+  overflow: hidden;
+  padding: 0;
 }
 
 .ytai-content::-webkit-scrollbar { width: 5px; }

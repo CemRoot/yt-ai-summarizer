@@ -312,6 +312,12 @@ const SummarizerUI = (() => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
 
+    // Hide footer (copy/refresh) in chat and podcast modes — they have their own controls
+    const footer = panelRoot?.querySelector('.ytai-footer');
+    if (footer) {
+      footer.style.display = (mode === 'chat' || mode === 'podcast') ? 'none' : '';
+    }
+
     if (mode === 'chat') {
       if (typeof window.PodcastPlayer !== 'undefined') {
         window.PodcastPlayer.stop();
@@ -1077,7 +1083,11 @@ const SummarizerUI = (() => {
     if (!isOpen) {
       isOpen = true;
       panelRoot?.querySelector('.ytai-panel')?.classList.add('open');
-      panelRoot?.querySelector('.ytai-toggle-btn')?.classList.add('active');
+      const toggleBtn = panelRoot?.querySelector('.ytai-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.classList.add('active');
+        toggleBtn.style.display = 'none';
+      }
     }
   }
 
