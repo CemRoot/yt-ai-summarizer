@@ -6,8 +6,9 @@
 // Import utilities (only storage.js needed — API calls are handled locally in this file)
 importScripts('utils/storage.js');
 
-// Served from repo docs/uninstall.html via .github/workflows/github-pages.yml
-// If your GitHub username or repo name differs, change this URL to match Pages.
+// Served from repo `docs/` via .github/workflows/github-pages.yml (project site:
+// https://<user>.github.io/<repo>/). If you add a custom domain + docs/CNAME, set
+// this URL to the full https://…/uninstall.html path and redeploy the extension.
 const UNINSTALL_FEEDBACK_URL = 'https://cemroot.github.io/yt-ai-summarizer/uninstall.html';
 chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
@@ -56,37 +57,88 @@ RULES:
 };
 
 /**
- * Build language instruction based on user preference
+ * Sample start/middle/end of transcript — avoids timestamp-heavy prefixes skewing counts.
+ * Returns { arabic, latin, cjk } tallies over merged sample.
  */
-function buildLanguageInstruction(language) {
+function countScriptRuns(text) {
+  const t = text || '';
+  if (t.length < 20) return { arabic: 0, latin: 0, cjk: 0, total: 0 };
+  const L = 4000;
+  const chunks = [
+    t.slice(0, L),
+    t.slice(Math.max(0, Math.floor(t.length / 2) - L / 2), Math.floor(t.length / 2) + L / 2),
+    t.slice(Math.max(0, t.length - L))
+  ];
+  const slice = chunks.join('\n');
+  let arabic = 0;
+  let latin = 0;
+  let cjk = 0;
+  for (let i = 0; i < slice.length; i++) {
+    const c = slice.charCodeAt(i);
+    if (c >= 0x0600 && c <= 0x06FF) arabic++;
+    else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) latin++;
+    else if (c >= 0x4E00 && c <= 0x9FFF) cjk++;
+  }
+  return { arabic, latin, cjk, total: arabic + latin + cjk };
+}
+
+/**
+ * Auto mode: infer dominant script so we can lock output (fixes models defaulting to Arabic on English video).
+ */
+function inferAutoScript(transcriptSample) {
+  const { arabic, latin, cjk, total } = countScriptRuns(transcriptSample);
+  if (total < 12) return 'unknown';
+  if (arabic >= latin && arabic >= cjk && arabic >= total * 0.04) return 'arabic';
+  if (cjk >= latin * 0.9 && cjk >= total * 0.08) return 'cjk';
+  if (latin >= arabic * 1.2 && latin >= 25) return 'latin';
+  if (latin > arabic * 2 && latin > total * 0.06) return 'latin';
+  return 'unknown';
+}
+
+/**
+ * Build language instruction based on user preference
+ * @param {string} language - setting from storage (e.g. 'auto', 'Turkish', 'English')
+ * @param {string} [transcriptSample] - optional text for auto-mode script detection
+ */
+function buildLanguageInstruction(language, transcriptSample) {
   if (!language || language === 'auto') {
-    return '\n\nLANGUAGE RULE: Detect the language of the transcript below. You MUST write your ENTIRE response — including all headers, section titles, bold text, and body — in that same language. If the transcript is in Turkish, everything must be in Turkish. Never use English words for section headings or key terms when a native equivalent exists. Never mix languages. Never fall back to English unless the transcript itself is in English.';
+    const script = inferAutoScript(transcriptSample || '');
+    if (script === 'latin') {
+      return '\n\nLANGUAGE RULE (MANDATORY): The transcript sample uses Latin letters, not Arabic. Write your COMPLETE response in the same spoken language as the transcript (e.g. English for English audio). Do NOT use Arabic script or RTL. Never default to Arabic for Latin-script content. Match headings and body to the transcript language.';
+    }
+    if (script === 'arabic') {
+      return '\n\nLANGUAGE RULE (MANDATORY): The transcript is Arabic script. Write your ENTIRE response in Arabic. Match the register of the transcript.';
+    }
+    if (script === 'cjk') {
+      return '\n\nLANGUAGE RULE (MANDATORY): The transcript is mostly Chinese characters. Write your ENTIRE response in Chinese unless the content is clearly Japanese.';
+    }
+    return '\n\nLANGUAGE RULE (MANDATORY): Detect the transcript\'s language from the text. Respond ENTIRELY in that language. Do not switch to Arabic unless the transcript is Arabic script.';
   }
 
   const langMap = {
-    'English': 'You MUST respond entirely in English.',
-    'Turkish': 'You MUST respond entirely in Turkish (Türkçe).',
-    'Spanish': 'You MUST respond entirely in Spanish (Español).',
-    'French': 'You MUST respond entirely in French (Français).',
-    'German': 'You MUST respond entirely in German (Deutsch).',
-    'Portuguese': 'You MUST respond entirely in Portuguese (Português).',
-    'Japanese': 'You MUST respond entirely in Japanese (日本語).',
-    'Korean': 'You MUST respond entirely in Korean (한국어).',
-    'Chinese': 'You MUST respond entirely in Chinese (中文).',
-    'Arabic': 'You MUST respond entirely in Arabic (العربية).',
-    'Russian': 'You MUST respond entirely in Russian (Русский).',
-    'Hindi': 'You MUST respond entirely in Hindi (हिन्दी).',
-    'Italian': 'You MUST respond entirely in Italian (Italiano).',
-    'Dutch': 'You MUST respond entirely in Dutch (Nederlands).',
-    'Polish': 'You MUST respond entirely in Polish (Polski).',
-    'Swedish': 'You MUST respond entirely in Swedish (Svenska).',
-    'Indonesian': 'You MUST respond entirely in Indonesian (Bahasa Indonesia).',
-    'Vietnamese': 'You MUST respond entirely in Vietnamese (Tiếng Việt).',
-    'Thai': 'You MUST respond entirely in Thai (ภาษาไทย).',
-    'Ukrainian': 'You MUST respond entirely in Ukrainian (Українська).'
+    'English':    'Respond ENTIRELY in English. Every title, header, and sentence must be in English.',
+    'Turkish':    'Yanıtın TAMAMEN Türkçe olmalı. Her başlık, her cümle Türkçe olmalıdır. Respond ENTIRELY in Turkish (Türkçe).',
+    'Spanish':    'Responde COMPLETAMENTE en español. Respond ENTIRELY in Spanish (Español).',
+    'French':     'Répondez ENTIÈREMENT en français. Respond ENTIRELY in French (Français).',
+    'German':     'Antworten Sie VOLLSTÄNDIG auf Deutsch. Respond ENTIRELY in German (Deutsch).',
+    'Portuguese': 'Responda INTEIRAMENTE em português. Respond ENTIRELY in Portuguese (Português).',
+    'Japanese':   '回答は全て日本語で。Respond ENTIRELY in Japanese (日本語).',
+    'Korean':     '모든 응답을 한국어로. Respond ENTIRELY in Korean (한국어).',
+    'Chinese':    '请全部用中文回答。Respond ENTIRELY in Chinese (中文).',
+    'Arabic':     'أجب بالكامل بالعربية. Respond ENTIRELY in Arabic (العربية).',
+    'Russian':    'Отвечайте полностью на русском. Respond ENTIRELY in Russian (Русский).',
+    'Hindi':      'पूरा उत्तर हिन्दी में दें। Respond ENTIRELY in Hindi (हिन्दी).',
+    'Italian':    'Rispondi INTERAMENTE in italiano. Respond ENTIRELY in Italian (Italiano).',
+    'Dutch':      'Antwoord VOLLEDIG in het Nederlands. Respond ENTIRELY in Dutch (Nederlands).',
+    'Polish':     'Odpowiedz CAŁKOWICIE po polsku. Respond ENTIRELY in Polish (Polski).',
+    'Swedish':    'Svara HELT på svenska. Respond ENTIRELY in Swedish (Svenska).',
+    'Indonesian': 'Jawab SELURUHNYA dalam Bahasa Indonesia. Respond ENTIRELY in Indonesian.',
+    'Vietnamese': 'Trả lời HOÀN TOÀN bằng tiếng Việt. Respond ENTIRELY in Vietnamese.',
+    'Thai':       'ตอบทั้งหมดเป็นภาษาไทย Respond ENTIRELY in Thai (ภาษาไทย).',
+    'Ukrainian':  'Відповідайте ПОВНІСТЮ українською. Respond ENTIRELY in Ukrainian (Українська).'
   };
 
-  return '\n\nLANGUAGE RULE: ' + (langMap[language] || `You MUST respond entirely in ${language}.`);
+  return '\n\nLANGUAGE RULE (MANDATORY): ' + (langMap[language] || `You MUST respond ENTIRELY in ${language}. Every title, header, and sentence must be in ${language}.`);
 }
 
 /**
@@ -223,7 +275,7 @@ async function handleSummarize(data, tabId) {
   sendProgress('Preparing AI request...', 0.3);
 
   const systemPrompt = SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.summary;
-  const languageInstruction = buildLanguageInstruction(language);
+  const languageInstruction = buildLanguageInstruction(language, transcript);
   const maxChars = 24000;
   const chunks = chunkText(transcript, maxChars);
 
@@ -431,7 +483,7 @@ async function handleSummarizeAll(data, tabId) {
 
   sendProgress('Preparing AI request...', 0.2);
 
-  const languageInstruction = buildLanguageInstruction(language);
+  const languageInstruction = buildLanguageInstruction(language, transcript);
   const maxChars = 80000;
   const chunks = chunkText(transcript, maxChars);
 
@@ -542,7 +594,7 @@ async function handleGeneratePodcast(data, tabId) {
 
   sendProgress('Writing podcast script...', 0.2);
 
-  const languageInstruction = buildLanguageInstruction(language);
+  const languageInstruction = buildLanguageInstruction(language, summaryText);
 
   const hostADesc = voices.a.gender === 'F'
     ? 'HOST A ("Alex"): The knowledgeable female host who explains the topic. Enthusiastic, clear, uses analogies.'
@@ -662,8 +714,8 @@ async function handleChatWithVideo(data) {
     throw new Error('INVALID_API_KEY');
   }
 
-  const languageInstruction = buildLanguageInstruction(language);
-  
+  const languageInstruction = buildLanguageInstruction(language, transcript);
+
   // Restrict transcript context if it's too large to leave room for output and history
   const maxChars = 80000;
   let contextTranscript = transcript;

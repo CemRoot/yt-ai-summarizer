@@ -12,7 +12,6 @@
 try {
   document.documentElement.setAttribute('data-ytai-extension', 'loading');
 } catch (e) { /* ignore */ }
-console.warn('[YTAI] content.js start', location.hostname, location.pathname);
 
 // Singleton instances (must NOT use class names — those are already declared in other files' global scope)
 const ui = globalThis.SummarizerUI;
@@ -290,7 +289,7 @@ class SummarizerController {
     }
 
     if (this.#podcastCache?.videoId === videoId && this.#podcastCache.dialogue) {
-      ui.showplayer(this.#podcastCache);
+      ui.showPodcastPlayer(this.#podcastCache);
       return;
     }
 
@@ -300,7 +299,7 @@ class SummarizerController {
       if (cached?.content) {
         return this.#generatePodcastFromText(cached.content, videoId);
       }
-      ui.showplayer(null);
+      ui.showPodcastPlayer(null);
       return;
     }
 
@@ -334,7 +333,7 @@ class SummarizerController {
       }
 
       this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
-      ui.showplayer(this.#podcastCache);
+      ui.showPodcastPlayer(this.#podcastCache);
 
     } catch (error) {
       this.#handleError(error);
@@ -457,7 +456,6 @@ if (ui && storage && tx && player) {
   try {
     document.documentElement.setAttribute('data-ytai-extension', chrome.runtime.id);
   } catch (e) { /* ignore */ }
-  console.warn('[YTAI] boot OK — floating button should appear on video pages');
 } else {
   console.error('[YTAI] Boot aborted: content script globals not available');
 }

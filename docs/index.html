@@ -3,9 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="YouTube AI Summarizer — extension documentation and uninstall feedback.">
+  <meta name="theme-color" content="#0f0f0f">
   <title>YouTube AI Summarizer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FF0000' d='M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z'/%3E%3Cpath fill='%23fff' d='M10 15.5l5.5-3.5L10 8.5v7z'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --border: rgba(255,255,255,0.1);
+      --text: #f1f1f1;
+      --muted: #aaa;
+      --accent: #ff0000;
+      --link: #8ab4f8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    .card {
+      max-width: 420px;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 26px;
+      text-align: center;
+    }
+    .logo {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      border-radius: 12px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo svg { width: 28px; height: 28px; }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    a {
+      display: inline-block;
+      color: var(--link);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      margin: 6px 10px;
+    }
+    a:hover { text-decoration: underline; }
+    .links { margin-top: 4px; }
+  </style>
 </head>
 <body>
-  <p><a href="uninstall.html">Uninstall feedback</a></p>
+  <div class="card">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28"><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+    </div>
+    <h1>YouTube AI Summarizer</h1>
+    <p>Hosted pages for this Chrome extension (GitHub Pages).</p>
+    <div class="links">
+      <a href="uninstall.html">Uninstall feedback</a>
+      <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </div>
 </body>
 </html>

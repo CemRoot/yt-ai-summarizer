@@ -105,16 +105,16 @@
   bottom: 80px;
   right: 20px;
   z-index: 2147483647;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: var(--ytai-accent);
+  background: #ff0000;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 12px rgba(255,0,0,0.3), 0 1px 4px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   padding: 0;
   -webkit-appearance: none;
@@ -125,12 +125,12 @@
 
 .ytai-toggle-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 20px rgba(255,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .ytai-toggle-btn:active { transform: scale(0.95); }
 .ytai-toggle-btn svg { width: 22px; height: 22px; fill: white; }
-.ytai-toggle-btn.active { background: var(--ytai-accent-hover); }
+.ytai-toggle-btn.active { background: #cc0000; }
 
 /* ═══════════════════════════════════════════════════════
    SIDE PANEL — seamlessly integrated with YouTube
@@ -141,7 +141,7 @@
   top: 56px;
   right: 0;
   z-index: 2147483646;
-  width: 380px;
+  width: 390px;
   max-width: 100vw;
   height: calc(100vh - 56px);
   background: var(--ytai-bg);
@@ -149,8 +149,9 @@
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
   overflow: hidden;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.08);
 }
 
 .ytai-panel.open { transform: translateX(0); }
@@ -160,29 +161,56 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--ytai-border);
   background: var(--ytai-bg);
   min-height: 48px;
   flex-shrink: 0;
 }
 
-.ytai-header-title {
+.ytai-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ytai-header-logo {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ytai-header-logo svg {
+  width: 28px;
+  height: 20px;
+}
+
+.ytai-header-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--ytai-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ytai-header-title svg { width: 18px; height: 18px; fill: var(--ytai-accent); }
+.ytai-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
 
 .ytai-clear-cache-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
+  padding: 6px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -211,56 +239,51 @@
 .ytai-close-btn:hover { background: var(--ytai-bg-hover); color: var(--ytai-text); }
 .ytai-close-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-/* ── Mode Tabs — modern underline style ── */
+/* ── Mode Tabs — YouTube chip style ── */
 .ytai-tabs {
   display: flex;
-  padding: 0 16px;
+  padding: 8px 14px 8px 14px;
   border-bottom: 1px solid var(--ytai-border);
   flex-shrink: 0;
   background: var(--ytai-bg);
-  gap: 0;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-padding-inline: 14px;
 }
+.ytai-tabs::-webkit-scrollbar { display: none; }
 
 .ytai-tab {
-  flex: 1;
-  padding: 10px 4px;
+  padding: 6px 11px;
   border: none;
-  background: none;
+  background: var(--ytai-bg-sunken);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--ytai-text-muted);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
   text-align: center;
   position: relative;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 
-.ytai-tab::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  right: 20%;
-  height: 2px;
-  background: transparent;
-  border-radius: 2px 2px 0 0;
-  transition: background 0.2s ease, left 0.2s ease, right 0.2s ease;
-}
+.ytai-tab::after { display: none; }
 
-.ytai-tab:hover { color: var(--ytai-text); }
+.ytai-tab:hover {
+  color: var(--ytai-text);
+  background: var(--ytai-bg-hover);
+}
 
 .ytai-tab.active {
-  color: var(--ytai-accent);
+  color: var(--ytai-accent-on);
+  background: var(--ytai-text);
   font-weight: 600;
 }
 
-.ytai-tab.active::after {
-  background: var(--ytai-accent);
-  left: 10%;
-  right: 10%;
-}
+.ytai-tab.active::after { display: none; }
 
 /* ── Content Area ── */
 .ytai-content {
@@ -296,10 +319,10 @@
 }
 
 .ytai-ready-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--ytai-accent-soft);
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--ytai-bg-sunken);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,9 +330,8 @@
 }
 
 .ytai-ready-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: var(--ytai-accent);
+  width: 32px;
+  height: 22px;
 }
 
 .ytai-ready-title {
@@ -332,12 +354,15 @@
   font-size: 14px !important;
   border-radius: 24px !important;
   gap: 8px !important;
-  box-shadow: 0 2px 8px rgba(6,95,212,0.25);
+  background: #ff0000 !important;
+  color: #fff !important;
+  box-shadow: 0 2px 10px rgba(255,0,0,0.25);
   transition: all 0.2s ease !important;
 }
 
 .ytai-start-btn:hover {
-  box-shadow: 0 4px 16px rgba(6,95,212,0.35);
+  background: #cc0000 !important;
+  box-shadow: 0 4px 18px rgba(255,0,0,0.35);
   transform: translateY(-1px);
 }
 
@@ -542,21 +567,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-top: 1px solid var(--ytai-border);
   background: var(--ytai-bg);
   flex-shrink: 0;
 }
 
-.ytai-footer-info { font-size: 11px; color: var(--ytai-text-faint); font-weight: 500; }
+.ytai-footer-info {
+  font-size: 11px;
+  color: var(--ytai-text-faint);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-.ytai-footer-actions { display: flex; gap: 2px; }
+.ytai-footer-actions { display: flex; align-items: center; gap: 6px; }
 
 .ytai-icon-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 7px;
   border-radius: 50%;
   display: flex;
   align-items: center;

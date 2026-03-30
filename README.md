@@ -145,8 +145,14 @@ yt-ai-summarizer/
 ├── _locales/
 │   ├── en/messages.json       # English strings
 │   └── tr/messages.json       # Turkish strings
-├── privacy-policy.html        # Privacy policy (Groq + Ollama)
-├── .github/workflows/ci.yml   # CI/CD pipeline
+├── privacy-policy.html        # Privacy policy (bundled with extension)
+├── privacy-policy.js          # TOC highlight script for privacy page
+├── docs/                      # GitHub Pages (uninstall feedback, etc.)
+│   ├── index.html
+│   └── uninstall.html
+├── .github/workflows/
+│   ├── ci.yml                 # CI/CD pipeline
+│   └── github-pages.yml       # Deploy docs/ to GitHub Pages
 └── README.md
 ```
 
@@ -176,12 +182,22 @@ Every push to `main` triggers 5 automated checks:
 ## Privacy
 
 - **Zero data collection** — no analytics, no tracking, no telemetry
-- **Local storage only** — API keys and settings never leave your browser
-- **Direct API calls** — transcripts go straight to your chosen AI provider
-- **Minimal permissions** — only `storage` and `activeTab`
+- **Local storage only** — API keys and settings stay in `chrome.storage.local` on your device
+- **Direct API calls** — transcripts and chat prompts go only to the AI hosts you enabled (Groq, Ollama Cloud, Gemini TTS)
+- **Permissions** — `storage`, `activeTab`, plus declared host access for YouTube and those providers (see `manifest.json`)
 - **Open source** — inspect every line of code
 
 See the full [Privacy Policy](privacy-policy.html).
+
+### GitHub Pages (uninstall URL)
+
+The `docs/` folder is published by [`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml). The live uninstall feedback page is:
+
+**https://cemroot.github.io/yt-ai-summarizer/uninstall.html**
+
+That URL is set in `service-worker.js` as `UNINSTALL_FEEDBACK_URL` (Chrome requires `https://` for `setUninstallURL`).
+
+**Custom domain (optional):** GitHub Student Pack improves account limits; it does **not** include a free custom DNS name by default. You can keep the `github.io` URL above at no cost, or buy any domain from a registrar, add it under **Repo → Settings → Pages → Custom domain**, add a `docs/CNAME` file with the hostname, point DNS (usually CNAME to `<user>.github.io`), then update `UNINSTALL_FEEDBACK_URL` to match and ship a new extension build.
 
 ---
 
@@ -189,6 +205,15 @@ See the full [Privacy Policy](privacy-policy.html).
 
 - Chrome 111 or later
 - A free API key from [Groq](https://console.groq.com/keys) or [Ollama](https://ollama.com/settings/keys)
+
+---
+
+## Pre-release checklist (maintainers)
+
+- **Security:** CI runs secret-pattern grep, CSP check, and manifest file references — keep `host_permissions` minimal.
+- **Debug noise:** No `console.log` / `console.warn` / `debugger` in shipping paths; `console.error` is only used for serious failures (e.g. missing content-script dependencies).
+- **Architecture:** Prefer ES classes and shared helpers (`StorageHelper`, controllers, UI modules) — avoid duplicating secrets or API base URLs outside `utils/storage.js` / `service-worker.js`.
+- **Versions:** `manifest.json`, `privacy-policy.html`, and the top README changelog entry must stay aligned (enforced by the **Version Consistency** CI job).
 
 ---
 
@@ -215,11 +240,18 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ## Changelog
 
+### v1.7.1
+
+- **📄 Privacy policy**: Redesigned layout and copy (Chat, Gemini TTS, storage, permissions). Last updated date refreshed.
+- **🌐 GitHub Pages**: `docs/index.html` landing polish; uninstall page uses an inline SVG favicon (no missing `favicon.png` on Pages).
+- **📖 README**: Project structure, Pages/uninstall URL, optional custom-domain notes, maintainer pre-release checklist.
+- **🔧 Version sync**: Patch bump so store/build artifacts match the updated bundled `privacy-policy.html`.
+
 ### v1.7.0
 
 - **💬 Interactive Video Chat**: New "Chat" tab lets you ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history (last 10 messages). Works with all providers (Groq, Ollama, Gemini).
 - **🖥️ Fullscreen Auto-Hide**: Extension toggle button and panel automatically hide when YouTube enters fullscreen mode — no more UI clutter during cinema viewing.
-- **🧹 Pre-Release Cleanup**: Removed all `console.log`/`console.warn` debug statements from production code (`transcript.js`, `content.js`, `popup.js`).
+- **🧹 Pre-Release Cleanup**: Removed routine `console.log` / `console.warn` debugging from production paths; `console.error` remains only for serious failures (e.g. missing dependencies).
 - **🐛 Podcast Rate Bug Fix**: Fixed a race condition in `podcast.js` where changing playback speed caused a small seek jump. Position is now captured before the rate changes.
 - **📏 Chat Context Alignment**: Chat transcript context window set to 80K characters, matching the summary pipeline.
 

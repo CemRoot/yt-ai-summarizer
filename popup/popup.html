@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,18 +13,32 @@
 
     <!-- Header -->
     <header class="popup-header">
-      <div class="popup-logo">
-        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>
-        <span>AI Summarizer</span>
+      <div class="popup-brand">
+        <div class="popup-logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" focusable="false"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        </div>
+        <div class="popup-brand-text">
+          <span class="popup-title">YouTube AI Summarizer</span>
+          <span class="popup-subtitle">Extension settings</span>
+        </div>
       </div>
-      <span class="popup-version">v1.7.0</span>
+      <span class="popup-version" title="Extension version">v1.7.1</span>
     </header>
+
+    <nav class="popup-tabs" role="tablist" aria-label="Settings sections">
+      <button type="button" class="popup-tab active" role="tab" aria-selected="true" aria-controls="panel-setup" id="tab-btn-setup" data-tab="setup">Setup</button>
+      <button type="button" class="popup-tab" role="tab" aria-selected="false" aria-controls="panel-options" id="tab-btn-options" data-tab="options">Options</button>
+      <button type="button" class="popup-tab" role="tab" aria-selected="false" aria-controls="panel-help" id="tab-btn-help" data-tab="help">Help</button>
+    </nav>
+
+    <main class="popup-body">
+    <div class="popup-tab-panel active" id="panel-setup" role="tabpanel" aria-labelledby="tab-btn-setup" data-tab-panel="setup">
 
     <!-- Provider Selector -->
     <div class="popup-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
-        AI Provider
+        AI provider
       </div>
       <div class="provider-toggle" id="providerToggle">
         <button class="provider-btn" data-provider="groq">
@@ -34,7 +47,7 @@
         </button>
         <button class="provider-btn active" data-provider="ollama">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-1.01 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-          Ollama Cloud ✦
+          Ollama Cloud
         </button>
       </div>
     </div>
@@ -43,7 +56,7 @@
     <div class="popup-card hidden" id="groqSettings">
       <div class="card-title">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-        Groq API Key
+        Groq API key
       </div>
       <div class="input-group">
         <input type="password" id="groqApiKey" placeholder="gsk_xxxxxxxxxxxxxxxx" spellcheck="false" autocomplete="off">
@@ -56,7 +69,7 @@
 
       <div class="card-title mt-16">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-        AI Model
+        AI model
       </div>
       <select id="groqModel">
         <option value="llama-3.3-70b-versatile">Llama 3.3 70B — Balanced (Best quality)</option>
@@ -70,7 +83,7 @@
     <div class="popup-card" id="ollamaSettings">
       <div class="card-title">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-        Ollama API Key
+        Ollama API key
       </div>
       <div class="input-group">
         <input type="password" id="ollamaApiKey" placeholder="Enter your Ollama API key" spellcheck="false" autocomplete="off">
@@ -83,10 +96,10 @@
 
       <div class="card-title mt-16">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-        Cloud Model
+        Cloud model
       </div>
       <select id="ollamaModel">
-        <option value="gemini-3-flash-preview">⭐ Gemini 3 Flash — Fast &amp; Recommended</option>
+        <option value="gemini-3-flash-preview">Gemini 3 Flash — fast, recommended</option>
         <option value="qwen3-next:80b">Qwen3-Next 80B — Reasoning &amp; Thinking</option>
         <option value="deepseek-v3.2">DeepSeek V3.2 671B — Most Powerful</option>
         <option value="gpt-oss:120b">GPT-OSS 120B — General Purpose</option>
@@ -97,48 +110,56 @@
       </select>
     </div>
 
+    </div>
+
+    <div class="popup-tab-panel" id="panel-options" role="tabpanel" aria-labelledby="tab-btn-options" data-tab-panel="options">
+
     <!-- Language Selection — prominent card -->
     <div class="popup-card language-card">
       <div class="card-title">
-        <span class="lang-globe">🌍</span>
-        Output Language
+        <span class="card-title-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93h9v7.93zM11 4.08c3.45.5 6.15 2.97 6.86 6H11V4.08zM4 12c0-2.72 1.64-5.06 4-6.08V18.1c-2.36-1.02-4-3.36-4-6.1zm9 7.93V13h6.86c-.7 3.03-3.41 5.5-6.86 6v-.07z"/></svg>
+        </span>
+        Output language
       </div>
       <p class="card-hint">AI will generate summaries in the selected language, regardless of the video's language.</p>
       <select id="language" class="language-select">
-        <option value="auto">🔄 Auto-detect (same as transcript)</option>
-        <option value="English">🇬🇧 English</option>
-        <option value="Turkish">🇹🇷 Türkçe</option>
-        <option value="Spanish">🇪🇸 Español</option>
-        <option value="French">🇫🇷 Français</option>
-        <option value="German">🇩🇪 Deutsch</option>
-        <option value="Portuguese">🇧🇷 Português</option>
-        <option value="Italian">🇮🇹 Italiano</option>
-        <option value="Dutch">🇳🇱 Nederlands</option>
-        <option value="Polish">🇵🇱 Polski</option>
-        <option value="Swedish">🇸🇪 Svenska</option>
-        <option value="Japanese">🇯🇵 日本語</option>
-        <option value="Korean">🇰🇷 한국어</option>
-        <option value="Chinese">🇨🇳 中文</option>
-        <option value="Arabic">🇸🇦 العربية</option>
-        <option value="Russian">🇷🇺 Русский</option>
-        <option value="Hindi">🇮🇳 हिन्दी</option>
-        <option value="Indonesian">🇮🇩 Bahasa Indonesia</option>
-        <option value="Vietnamese">🇻🇳 Tiếng Việt</option>
-        <option value="Thai">🇹🇭 ภาษาไทย</option>
-        <option value="Ukrainian">🇺🇦 Українська</option>
+        <option value="auto">Auto — match transcript / player</option>
+        <option value="English">English</option>
+        <option value="Turkish">Türkçe</option>
+        <option value="Spanish">Español</option>
+        <option value="French">Français</option>
+        <option value="German">Deutsch</option>
+        <option value="Portuguese">Português</option>
+        <option value="Italian">Italiano</option>
+        <option value="Dutch">Nederlands</option>
+        <option value="Polish">Polski</option>
+        <option value="Swedish">Svenska</option>
+        <option value="Japanese">日本語</option>
+        <option value="Korean">한국어</option>
+        <option value="Chinese">中文</option>
+        <option value="Arabic">العربية</option>
+        <option value="Russian">Русский</option>
+        <option value="Hindi">हिन्दी</option>
+        <option value="Indonesian">Bahasa Indonesia</option>
+        <option value="Vietnamese">Tiếng Việt</option>
+        <option value="Thai">ภาษาไทย</option>
+        <option value="Ukrainian">Українська</option>
       </select>
     </div>
 
     <!-- Podcast (Gemini TTS) -->
     <div class="popup-card podcast-card">
       <div class="card-title">
-        <span style="font-size:16px">🎙️</span>
-        AI Podcast (Gemini TTS)
+        <span class="card-title-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3.41 3.38 6.01 6.91 6.36V21h-2c-.55 0-1 .45-1 1s.45 1 1 1h6c.55 0 1-.45 1-1s-.45-1-1-1h-2v-3.5c3.53-.35 6.42-2.95 6.91-6.36.1-.6-.39-1.14-1-1.14z"/></svg>
+        </span>
+        AI podcast (Gemini TTS)
       </div>
-      <p class="card-hint">Enable NotebookLM-style podcast with natural AI voices. Free — no credit card needed.</p>
-      <div class="card-title mt-16" style="font-size:12px">
+      <p class="card-hint">NotebookLM-style dialogue with natural voices. No card required on Google AI Studio.</p>
+      <div class="card-title card-title--subsection mt-16">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-        Gemini API Key
+        Gemini API key
       </div>
       <div class="input-group">
         <input type="password" id="geminiApiKey" placeholder="Paste your Gemini API key" spellcheck="false" autocomplete="off">
@@ -147,17 +168,17 @@
         </button>
       </div>
       <div id="geminiApiKeyStatus" class="status-msg hidden"></div>
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="help-link">🔑 Get a free Gemini API key (no credit card) &rarr;</a>
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="help-link">Get a free Gemini API key &rarr;</a>
     </div>
 
     <!-- General Settings -->
     <div class="popup-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-        General Settings
+        General
       </div>
 
-      <label class="field-label" for="defaultMode">Default Mode</label>
+      <label class="field-label" for="defaultMode">Default mode</label>
       <select id="defaultMode">
         <option value="summary">Summary</option>
         <option value="keypoints">Key Points</option>
@@ -188,6 +209,66 @@
         </label>
       </div>
     </div>
+
+    </div>
+
+    <div class="popup-tab-panel" id="panel-help" role="tabpanel" aria-labelledby="tab-btn-help" data-tab-panel="help">
+      <div class="help-panel">
+        <p class="help-lead">Follow these steps once. You do not need to be technical—just click where it says.</p>
+
+        <ol class="help-steps">
+          <li class="help-step">
+            <span class="help-step-num">1</span>
+            <div class="help-step-body">
+              <strong>Open YouTube</strong> in Chrome and play any video that has captions (CC).
+            </div>
+          </li>
+          <li class="help-step">
+            <span class="help-step-num">2</span>
+            <div class="help-step-body">
+              <strong>Click the puzzle icon</strong> in Chrome’s toolbar (top right). Find <em>YouTube AI Summarizer</em> and pin it if you like. Then click the extension icon to open this window.
+            </div>
+          </li>
+          <li class="help-step">
+            <span class="help-step-num">3</span>
+            <div class="help-step-body">
+              Go to the <strong>Setup</strong> tab. Choose <strong>Groq</strong> or <strong>Ollama Cloud</strong>. Paste your API key in the box. Use the blue “Get … key” link if you do not have one yet—it opens the sign-up page in a new tab.
+            </div>
+          </li>
+          <li class="help-step">
+            <span class="help-step-num">4</span>
+            <div class="help-step-body">
+              Open the <strong>Options</strong> tab. Pick your <strong>output language</strong> (or leave Auto). For AI podcast voices, add a <strong>Gemini</strong> key in the podcast section—only if you use that feature.
+            </div>
+          </li>
+          <li class="help-step">
+            <span class="help-step-num">5</span>
+            <div class="help-step-body">
+              Press <strong>Save Settings</strong> at the bottom. Wait until it says “Saved”.
+            </div>
+          </li>
+          <li class="help-step">
+            <span class="help-step-num">6</span>
+            <div class="help-step-body">
+              On the video page, click the <strong>red floating button</strong> (or open the side panel). Choose Summary, Key Points, or Chat. The text follows your language and caption choices on YouTube.
+            </div>
+          </li>
+        </ol>
+
+        <div class="help-callout">
+          <strong>Tabs in short:</strong>
+          <ul class="help-mini-list">
+            <li><strong>Setup</strong> — AI provider and API keys.</li>
+            <li><strong>Options</strong> — language, podcast key, defaults and caching.</li>
+            <li><strong>Help</strong> — this guide.</li>
+          </ul>
+        </div>
+
+        <p class="help-foot">Problems? Try <strong>Clear Cache</strong>, reload the YouTube tab, and make sure captions match the language you want. Links at the bottom go to provider docs and privacy.</p>
+      </div>
+    </div>
+
+    </main>
 
     <!-- Actions -->
     <div class="popup-actions">

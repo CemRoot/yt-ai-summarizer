@@ -45,6 +45,21 @@ class StorageHelper {
     return { ...this.#DEFAULTS };
   }
 
+  /**
+   * Popup `#language` labels → YouTube caption `languageCode` (ISO 639-1).
+   * Keeps transcript track selection aligned with user-facing output language names.
+   */
+  outputLanguageToCaptionCode(label) {
+    if (!label || label === 'auto') return null;
+    const map = {
+      English: 'en', Turkish: 'tr', Spanish: 'es', French: 'fr', German: 'de',
+      Portuguese: 'pt', Italian: 'it', Dutch: 'nl', Polish: 'pl', Swedish: 'sv',
+      Japanese: 'ja', Korean: 'ko', Chinese: 'zh', Arabic: 'ar', Russian: 'ru',
+      Hindi: 'hi', Indonesian: 'id', Vietnamese: 'vi', Thai: 'th', Ukrainian: 'uk'
+    };
+    return map[label] || (typeof label === 'string' && label.length <= 5 ? label : null);
+  }
+
   // ─── Obfuscation ───────────────────────────────────────────────────
 
   #obfuscate(plaintext) {
@@ -85,6 +100,10 @@ class StorageHelper {
   // Static helpers so popup.js (separate context) can call without re-implementing
   static obfuscate(plain) { return StorageHelper.getInstance().#obfuscate(plain); }
   static deobfuscate(enc) { return StorageHelper.getInstance().#deobfuscate(enc); }
+
+  // Instance methods — needed because the global export overwrites the class with the instance
+  obfuscate(plain) { return this.#obfuscate(plain); }
+  deobfuscate(enc) { return this.#deobfuscate(enc); }
 
   // ─── Session storage detection ─────────────────────────────────────
 
@@ -369,7 +388,11 @@ class StorageHelper {
 }
 
 // ─── Singleton export — backward compatible with all call sites ────────
+// Reassign the lexical binding so bare `StorageHelper` references in every
+// script (popup, welcome, content, service-worker) resolve to the instance,
+// not the class.  `class` declarations are `let`-like (mutable).
 const _storageInstance = StorageHelper.getInstance();
+StorageHelper = _storageInstance;
 
 if (typeof self !== 'undefined') {
   self.StorageHelper = _storageInstance;
@@ -377,5 +400,3 @@ if (typeof self !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.StorageHelper = _storageInstance;
 }
-
-console.warn('[YTAI] loaded: utils/storage.js');

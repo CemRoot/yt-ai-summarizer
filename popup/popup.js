@@ -29,8 +29,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn           = $('#saveBtn');
   const clearCacheBtn     = $('#clearCacheBtn');
   const privacyLink       = $('#privacyLink');
+  const tabBtns           = $$('.popup-tab');
+  const tabPanels         = $$('.popup-tab-panel');
 
   let activeProvider = 'ollama';
+
+  function setPopupTab(name) {
+    const allowed = ['setup', 'options', 'help'];
+    if (!allowed.includes(name)) name = 'setup';
+    tabBtns.forEach((btn) => {
+      const on = btn.dataset.tab === name;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    tabPanels.forEach((panel) => {
+      panel.classList.toggle('active', panel.dataset.tabPanel === name);
+    });
+    try {
+      sessionStorage.setItem('ytai-popup-tab', name);
+    } catch { /* ignore */ }
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => setPopupTab(btn.dataset.tab));
+  });
+
+  try {
+    const last = sessionStorage.getItem('ytai-popup-tab');
+    if (last && ['setup', 'options', 'help'].includes(last)) {
+      setPopupTab(last);
+    }
+  } catch { /* ignore */ }
 
   await loadSettings();
 
@@ -56,6 +85,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Save ──
   saveBtn.addEventListener('click', saveSettings);
+
+  // ── Auto-save on any setting change ──
+  let _autoSaveTimer = null;
+  function scheduleAutoSave() {
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(saveSettings, 300);
+  }
+  [languageSelect, defaultModeSelect, groqModelSelect, ollamaModelSelect].forEach(
+    (el) => el.addEventListener('change', scheduleAutoSave)
+  );
+  [autoRunToggle, cacheSummariesToggle, cacheTranscriptsToggle].forEach(
+    (el) => el.addEventListener('change', scheduleAutoSave)
+  );
+  providerBtns.forEach((btn) => btn.addEventListener('click', scheduleAutoSave));
+  [groqKeyInput, ollamaKeyInput, geminiKeyInput].forEach(
+    (el) => el.addEventListener('blur', scheduleAutoSave)
+  );
 
   // ── Clear Cache ──
   clearCacheBtn.addEventListener('click', async () => {

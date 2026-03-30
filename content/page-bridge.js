@@ -52,11 +52,75 @@
     return null;
   }
 
+  /**
+   * Live player state: active CC track + audio→caption routing from the same response
+   * the UI uses (multi-dub videos). Innertube alone does not know what the user selected.
+   */
+  function getPlayerCaptionPrefs() {
+    const player = document.querySelector('#movie_player');
+    const videoId = getVideoId();
+    const out = {
+      videoId,
+      activeCaptionTrack: null,
+      activeAudioTrackIndex: null,
+      captionRouting: null
+    };
+    try {
+      if (player && typeof player.getOption === 'function') {
+        const ct = player.getOption('captions', 'track');
+        if (ct && typeof ct === 'object' && ct.languageCode) {
+          out.activeCaptionTrack = {
+            languageCode: String(ct.languageCode),
+            kind: ct.kind || null
+          };
+        }
+        const audioKeys = [
+          ['multilingual', 'activeAudioTrackIndex'],
+          ['multilingual', 'selectedAudioTrackIndex'],
+          ['multilingual', 'audioTrackIndex']
+        ];
+        for (let i = 0; i < audioKeys.length; i++) {
+          try {
+            const v = player.getOption(audioKeys[i][0], audioKeys[i][1]);
+            if (typeof v === 'number' && v >= 0) {
+              out.activeAudioTrackIndex = v;
+              break;
+            }
+          } catch (e) { /* ignore */ }
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    try {
+      const r = player && typeof player.getPlayerResponse === 'function'
+        ? player.getPlayerResponse()?.captions?.playerCaptionsTracklistRenderer
+        : null;
+      if (r && Array.isArray(r.captionTracks) && r.captionTracks.length) {
+        out.captionRouting = {
+          captionTrackSummaries: r.captionTracks.map(function (t) {
+            return { languageCode: t.languageCode, kind: t.kind || null };
+          }),
+          audioTracks: Array.isArray(r.audioTracks) ? r.audioTracks : [],
+          defaultAudioTrackIndex: typeof r.defaultAudioTrackIndex === 'number' ? r.defaultAudioTrackIndex : null
+        };
+      }
+    } catch (e) { /* ignore */ }
+
+    return out;
+  }
+
   window.addEventListener('ytai-request-player-data', () => {
     const tracks = getCaptionTracks();
     const videoId = getVideoId();
     window.dispatchEvent(new CustomEvent('ytai-player-data-response', {
       detail: JSON.stringify({ tracks, videoId })
+    }));
+  });
+
+  window.addEventListener('ytai-request-player-prefs', () => {
+    const prefs = getPlayerCaptionPrefs();
+    window.dispatchEvent(new CustomEvent('ytai-player-prefs-response', {
+      detail: JSON.stringify(prefs)
     }));
   });
 })();

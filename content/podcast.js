@@ -239,8 +239,9 @@ class PodcastPlayer {
   }
 }
 
-// Export singleton
+// Export singleton — reassign lexical binding so bare `PodcastPlayer` resolves to the instance
 const _podcastInstance = PodcastPlayer.getInstance();
+PodcastPlayer = _podcastInstance;
 
 if (typeof window !== 'undefined') {
   window.PodcastPlayer = _podcastInstance;
@@ -248,5 +249,3 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.PodcastPlayer = _podcastInstance;
 }
-
-console.warn('[YTAI] loaded: content/podcast.js');

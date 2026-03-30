@@ -32,7 +32,7 @@ class SummarizerUI {
     settings: `<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`,
     key:      `<svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>`,
     error:    `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
-    sparkle:  `<svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>`,
+    sparkle:  `<svg viewBox="0 0 24 24"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>`,
     send:     `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`,
     ai:       `<svg viewBox="0 0 24 24"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/></svg>`
   };
@@ -154,6 +154,23 @@ class SummarizerUI {
     return btn;
   }
 
+  /** Clears extension summary cache (same action as popup); lives in footer next to copy/refresh. */
+  #wireClearCacheButton(clearBtn) {
+    clearBtn.className = 'ytai-icon-btn ytai-clear-cache-btn';
+    const tr = this.#uiLang() === 'tr';
+    clearBtn.title = tr
+      ? 'Kayıtlı özet önbelleğini temizle'
+      : 'Clear cached summaries stored by this extension';
+    clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+    clearBtn.addEventListener('click', async () => {
+      await StorageHelper.clearCache();
+      clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+      setTimeout(() => {
+        clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+      }, 2000);
+    });
+  }
+
   #createPanel() {
     const panel = document.createElement('div');
     panel.className = 'ytai-panel';
@@ -170,26 +187,15 @@ class SummarizerUI {
       </div>
     `;
 
-    // Clear cache button
-    const clearBtn = document.createElement('button');
-    clearBtn.className = 'ytai-icon-btn ytai-clear-cache-btn';
-    clearBtn.title = (this.#uiLang() === 'tr') ? 'Önbelleği temizle' : 'Clear cache';
-    clearBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-    clearBtn.addEventListener('click', async () => {
-      await StorageHelper.clearCache();
-      clearBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
-      setTimeout(() => {
-        clearBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-      }, 2000);
-    });
-    header.appendChild(clearBtn);
-
     // Close button
     const closeBtn = document.createElement('button');
     closeBtn.className = 'ytai-icon-btn ytai-close-btn';
     closeBtn.innerHTML = SummarizerUI.#ICONS.close;
     closeBtn.addEventListener('click', () => this.togglePanel(false));
-    header.appendChild(closeBtn);
+    const headerActions = document.createElement('div');
+    headerActions.className = 'ytai-header-actions';
+    headerActions.appendChild(closeBtn);
+    header.appendChild(headerActions);
 
     // Tabs
     const tabs = document.createElement('div');
@@ -227,6 +233,12 @@ class SummarizerUI {
     `;
 
     this.#updateProviderLabelEl(footer.querySelector('.ytai-provider-label'));
+
+    const footerActions = footer.querySelector('.ytai-footer-actions');
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    this.#wireClearCacheButton(clearBtn);
+    footerActions.insertBefore(clearBtn, footerActions.firstChild);
 
     footer.querySelector('.ytai-copy-btn').addEventListener('click', () => this.#copyResult());
     footer.querySelector('.ytai-refresh-btn').addEventListener('click', () => {
@@ -344,7 +356,7 @@ class SummarizerUI {
     if (footer) footer.style.display = (mode === 'chat' || mode === 'podcast') ? 'none' : '';
 
     if (mode === 'chat') {
-      PodcastPlayer.stop();
+      globalThis.PodcastPlayer?.stop?.();
       document.dispatchEvent(new CustomEvent('ytai:request-chat'));
       return;
     }
@@ -353,7 +365,7 @@ class SummarizerUI {
       return;
     }
 
-    PodcastPlayer.stop();
+    globalThis.PodcastPlayer?.stop?.();
     document.dispatchEvent(new CustomEvent('ytai:request-summary', { detail: { mode, forceRefresh: false } }));
   }
 
@@ -500,7 +512,8 @@ class SummarizerUI {
     }
 
     const { dialogue, audioBase64 } = data;
-    const dur = PodcastPlayer.formatTime(0);
+    const pp = globalThis.PodcastPlayer;
+    const dur = pp?.formatTime ? pp.formatTime(0) : '0:00';
 
     // BUG FIX: Removed dead 'A'/'B' speaker checks — LLM always returns 'Alex'/'Sam'
     content.innerHTML = `
@@ -552,17 +565,18 @@ class SummarizerUI {
         </div>
       </div>`;
 
-    // Wire up audio player
-    PodcastPlayer.loadAudio(audioBase64).then(() => {
-      const state = PodcastPlayer.getState();
-      const fmt = PodcastPlayer.formatTime(state.duration);
+    // Wire up audio player (use globalThis — bare PodcastPlayer can be the class in another script scope)
+    if (!pp?.loadAudio) return;
+    pp.loadAudio(audioBase64).then(() => {
+      const state = pp.getState();
+      const fmt = pp.formatTime(state.duration);
       const durEl = content.querySelector('#ytaiPodcastDuration');
       const totalEl = content.querySelector('#ytaiPodcastTotalTime');
       if (durEl) durEl.textContent = fmt;
       if (totalEl) totalEl.textContent = fmt;
     });
 
-    PodcastPlayer.setOnStateChange((state) => {
+    pp.setOnStateChange((state) => {
       const playIcon = content.querySelector('.play-icon');
       const pauseIcon = content.querySelector('.pause-icon');
       if (playIcon && pauseIcon) {
@@ -572,24 +586,25 @@ class SummarizerUI {
       const fill = content.querySelector('#ytaiPodcastProgressFill');
       const timeEl = content.querySelector('#ytaiPodcastTime');
       if (fill && state.duration > 0) fill.style.width = `${(state.currentTime / state.duration) * 100}%`;
-      if (timeEl) timeEl.textContent = PodcastPlayer.formatTime(state.currentTime);
+      if (timeEl) timeEl.textContent = pp.formatTime(state.currentTime);
     });
 
     content.querySelector('#ytaiPodcastPlayPause')?.addEventListener('click', () => {
-      PodcastPlayer.togglePlayPause(audioBase64);
+      pp.togglePlayPause(audioBase64);
     });
-    content.querySelector('#ytaiPodcastBack')?.addEventListener('click', () => PodcastPlayer.skipBackward(10));
-    content.querySelector('#ytaiPodcastFwd')?.addEventListener('click', () => PodcastPlayer.skipForward(10));
+    content.querySelector('#ytaiPodcastBack')?.addEventListener('click', () => pp.skipBackward(10));
+    content.querySelector('#ytaiPodcastFwd')?.addEventListener('click', () => pp.skipForward(10));
     content.querySelector('#ytaiPodcastProgressBar')?.addEventListener('click', (e) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const ratio = (e.clientX - rect.left) / rect.width;
-      PodcastPlayer.seek(ratio * PodcastPlayer.getState().duration);
+      const d = pp.getState().duration;
+      pp.seek(ratio * d);
     });
     content.querySelectorAll('.ytai-rate-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         content.querySelectorAll('.ytai-rate-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        PodcastPlayer.setRate(parseFloat(btn.dataset.rate));
+        pp.setRate(parseFloat(btn.dataset.rate));
       });
     });
   }
@@ -884,8 +899,9 @@ class SummarizerUI {
   }
 }
 
-// Export singleton — backward compatible
+// Export singleton — reassign lexical binding so bare `SummarizerUI` resolves to the instance
 const _uiInstance = SummarizerUI.getInstance();
+SummarizerUI = _uiInstance;
 
 if (typeof window !== 'undefined') {
   window.SummarizerUI = _uiInstance;
@@ -893,5 +909,3 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.SummarizerUI = _uiInstance;
 }
-
-console.warn('[YTAI] loaded: content/ui.js');

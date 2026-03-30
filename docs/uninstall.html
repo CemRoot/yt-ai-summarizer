@@ -4,210 +4,520 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Uninstalled — YouTube AI Summarizer</title>
+  <!-- Inline SVG favicon: works on GitHub Pages without a separate file (avoids 404 / wrong asset). -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FF0000' d='M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z'/%3E%3Cpath fill='%23fff' d='M10 15.5l5.5-3.5L10 8.5v7z'/%3E%3C/svg%3E" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #eceff1;
-      --card: #ffffff;
-      --text: #212121;
-      --muted: #616161;
-      --border: #e0e0e0;
-      --accent: #065fd4;
-      --accent-red: #c62828;
-      --cta: #2e7d32;
-      --cta-hover: #1b5e20;
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-elevated: #222222;
+      --bg-glass: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.14);
+      --text-primary: #f1f1f1;
+      --text-secondary: #aaaaaa;
+      --text-muted: #717171;
+      --accent: #ff0000;
+      --accent-glow: rgba(255,0,0,0.15);
+      --accent-hover: #cc0000;
+      --green: #2ba640;
+      --green-hover: #1e7a2f;
+      --radius: 12px;
+      --radius-lg: 16px;
     }
-    * { box-sizing: border-box; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
       min-height: 100vh;
-      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
+      overflow-x: hidden;
     }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(255,0,0,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .wrap {
-      max-width: 640px;
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
       margin: 0 auto;
-      padding: 40px 20px 64px;
+      padding: 48px 24px 80px;
     }
+
+    /* ── Brand header ── */
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 28px;
+      gap: 12px;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards;
     }
-    .brand svg { flex-shrink: 0; }
-    .brand span {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin: 0 0 24px;
-      line-height: 1.25;
-    }
-    .value-card {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      background: var(--card);
-      border: 1px solid var(--border);
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
       border-radius: 8px;
-      padding: 20px 22px;
-      margin-bottom: 36px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    .value-card p {
-      margin: 0;
+    .brand-icon svg { width: 18px; height: 18px; }
+    .brand-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Hero section ── */
+    .hero {
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.1s forwards;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(255,0,0,0.2);
+      color: #ff4e4e;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .hero-badge svg { width: 14px; height: 14px; }
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .hero p {
       font-size: 1.05rem;
-      max-width: 380px;
+      color: var(--text-secondary);
+      max-width: 520px;
     }
-    .value-card strong { color: var(--accent-red); font-weight: 700; }
+
+    /* ── Reinstall card ── */
+    .reinstall-card {
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-secondary));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.2s forwards;
+      transition: border-color 0.2s;
+    }
+    .reinstall-card:hover { border-color: var(--border-hover); }
+    .reinstall-info { flex: 1; min-width: 240px; }
+    .reinstall-info h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .reinstall-info p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .reinstall-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: 12px;
+    }
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .stat svg { width: 14px; height: 14px; opacity: 0.6; }
     .btn-reinstall {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: var(--cta);
-      color: #fff !important;
+      background: var(--green);
+      color: #fff;
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.8rem;
-      letter-spacing: 0.06em;
-      padding: 12px 18px;
-      border-radius: 4px;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+      padding: 12px 24px;
+      border-radius: var(--radius);
       white-space: nowrap;
-      transition: background 0.15s ease;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 20px rgba(43,166,64,0.15);
     }
-    .btn-reinstall:hover { background: var(--cta-hover); }
-    .btn-reinstall svg { width: 18px; height: 18px; }
-    h2 {
-      font-size: 1.35rem;
+    .btn-reinstall:hover {
+      background: var(--green-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 24px rgba(43,166,64,0.25);
+    }
+    .btn-reinstall svg { width: 16px; height: 16px; }
+
+    /* ── Survey section ── */
+    .survey-section {
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.3s forwards;
+    }
+    .section-header {
+      margin-bottom: 20px;
+    }
+    .section-header h2 {
+      font-size: 1.25rem;
       font-weight: 700;
-      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
     }
-    .sub {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin: 0 0 24px;
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
     }
+
     .options {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       margin-bottom: 24px;
     }
     .option {
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 18px;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
+      transition: all 0.15s ease;
+      user-select: none;
     }
-    .option:last-child { border-bottom: none; }
-    .option:hover { background: #fafafa; }
-    .option input {
-      margin-top: 4px;
-      accent-color: var(--accent);
+    .option:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: var(--border-hover);
     }
-    .option span { font-size: 0.95rem; }
-    .submit-row { text-align: center; }
-    button[type="submit"] {
+    .option:has(input:checked) {
+      background: var(--accent-glow);
+      border-color: rgba(255,0,0,0.3);
+    }
+    .option input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--text-muted);
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .option input[type="radio"]:checked {
+      border-color: var(--accent);
+      background: transparent;
+    }
+    .option input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+    .option .option-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .option .option-icon svg { width: 16px; height: 16px; color: var(--text-muted); }
+    .option:has(input:checked) .option-icon { background: rgba(255,0,0,0.1); }
+    .option:has(input:checked) .option-icon svg { color: #ff4e4e; }
+    .option span {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.15s;
+    }
+    .option:has(input:checked) span { color: var(--text-primary); }
+
+    .submit-row { display: flex; justify-content: center; }
+    .btn-submit {
       background: var(--accent);
       color: #fff;
       border: none;
       font-family: inherit;
-      font-weight: 600;
-      font-size: 0.95rem;
-      padding: 12px 36px;
-      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 12px 40px;
+      border-radius: var(--radius);
       cursor: pointer;
-      min-width: 140px;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
     }
-    button[type="submit"]:hover { filter: brightness(1.05); }
-    button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
-    #thanks {
-      background: var(--card);
+    .btn-submit:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-submit:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── Thanks card ── */
+    .thanks-card {
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-secondary));
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 28px 22px;
+      border-radius: var(--radius-lg);
+      padding: 40px 28px;
       text-align: center;
+      animation: fadeUp 0.4s ease forwards;
     }
-    #thanks h2 { margin-bottom: 12px; }
-    #thanks p { margin: 0; color: var(--muted); }
-    .footer-note {
-      margin-top: 48px;
-      font-size: 0.8rem;
-      color: #9e9e9e;
-      text-align: center;
+    .thanks-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(43,166,64,0.1);
+      border: 1px solid rgba(43,166,64,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .thanks-icon svg { width: 28px; height: 28px; color: var(--green); }
+    .thanks-card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .thanks-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.4s forwards;
+    }
+    .footer svg { width: 14px; height: 14px; opacity: 0.5; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .wrap { padding: 32px 16px 60px; }
+      .hero h1 { font-size: 1.55rem; }
+      .reinstall-card { flex-direction: column; align-items: flex-start; }
+      .reinstall-stats { flex-wrap: wrap; gap: 12px; }
     }
   </style>
 </head>
 <body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
   <div class="wrap">
+    <!-- Brand -->
     <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" fill="#065fd4"/>
-      </svg>
-      <span>YouTube AI Summarizer</span>
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+      </div>
+      <span class="brand-name">YouTube AI Summarizer</span>
     </div>
 
-    <h1>YouTube AI Summarizer has been successfully uninstalled</h1>
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        Extension removed
+      </div>
+      <h1>YouTube AI Summarizer has been uninstalled</h1>
+      <p>We're sorry to see you go. Your data and preferences have been cleared from the browser.</p>
+    </div>
 
-    <div class="value-card">
-      <p>
-        We hope the extension helped you <strong>learn faster</strong> from YouTube. You can come back anytime.
-      </p>
-      <!-- Replace href with your Chrome Web Store listing URL when published -->
+    <!-- Reinstall CTA -->
+    <div class="reinstall-card">
+      <div class="reinstall-info">
+        <h3>Changed your mind?</h3>
+        <p>Get back instant AI summaries, key points, and podcast mode for any YouTube video.</p>
+        <div class="reinstall-stats">
+          <div class="stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg>
+            Free &amp; open-source
+          </div>
+          <div class="stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Groq, Ollama &amp; Gemini
+          </div>
+          <div class="stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Privacy-first
+          </div>
+        </div>
+      </div>
       <a class="btn-reinstall" id="reinstallLink" href="https://chromewebstore.google.com/" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-        REINSTALL
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        Reinstall
       </a>
     </div>
 
-    <div id="survey">
-      <h2>Sorry to see you go!</h2>
-      <p class="sub">Would you mind taking a moment and telling us why you uninstalled?</p>
+    <!-- Survey -->
+    <div id="survey" class="survey-section">
+      <div class="section-header">
+        <h2>Help us improve</h2>
+        <p>What made you decide to uninstall? Your feedback matters.</p>
+      </div>
 
       <form id="uninstallForm">
         <div class="options" role="radiogroup" aria-label="Uninstall reason">
-          <label class="option"><input type="radio" name="reason" value="accuracy"><span>Summaries or analysis weren’t accurate enough</span></label>
-          <label class="option"><input type="radio" name="reason" value="missing_feature"><span>I needed a feature that wasn’t there</span></label>
-          <label class="option"><input type="radio" name="reason" value="slow_errors"><span>It was too slow or I hit errors</span></label>
-          <label class="option"><input type="radio" name="reason" value="setup"><span>Setting up API keys was too complicated</span></label>
-          <label class="option"><input type="radio" name="reason" value="youtube"><span>Problems with YouTube (captions, panel, etc.)</span></label>
-          <label class="option"><input type="radio" name="reason" value="privacy"><span>Privacy concerns</span></label>
-          <label class="option"><input type="radio" name="reason" value="other_tool"><span>I’m using a different tool</span></label>
-          <label class="option"><input type="radio" name="reason" value="messaging"><span>Too many prompts or notifications</span></label>
-          <label class="option"><input type="radio" name="reason" value="other"><span>Another reason not listed here</span></label>
+          <label class="option">
+            <input type="radio" name="reason" value="accuracy">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 15h8M9 9h.01M15 9h.01"/></svg></div>
+            <span>Summaries weren't accurate enough</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="missing_feature">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>
+            <span>A feature I needed was missing</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="slow_errors">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <span>Too slow or frequent errors</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="setup">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+            <span>API key setup was too complicated</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="youtube">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.4 19.6C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 001.94-2A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg></div>
+            <span>Issues with YouTube compatibility</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="privacy">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <span>Privacy concerns</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="other_tool">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+            <span>Switched to a different tool</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="reason" value="other">
+            <div class="option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+            <span>Another reason</span>
+          </label>
         </div>
         <div class="submit-row">
-          <button type="submit" id="submitBtn">Submit</button>
+          <button type="submit" class="btn-submit" id="submitBtn">Send Feedback</button>
         </div>
       </form>
     </div>
 
+    <!-- Thanks -->
     <div id="thanks" hidden>
-      <h2>Thank you</h2>
-      <p>Your feedback helps us improve. We appreciate you taking the time.</p>
+      <div class="thanks-card">
+        <div class="thanks-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Thank you for your feedback</h2>
+        <p>Your input helps us build a better experience. If you ever want to come back, we'll be here.</p>
+      </div>
     </div>
 
-    <p class="footer-note">YouTube AI Summarizer — uninstall feedback page</p>
+    <!-- Footer -->
+    <div class="footer">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.4 19.6C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 001.94-2A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#0f0f0f"/></svg>
+      <span>YouTube AI Summarizer</span>
+    </div>
   </div>
+
   <script>
     (function () {
       var form = document.getElementById('uninstallForm');
       var survey = document.getElementById('survey');
       var thanks = document.getElementById('thanks');
       var submitBtn = document.getElementById('submitBtn');
+      var REPO = 'cemroot/yt-ai-summarizer';
+
+      var reasonLabels = {
+        accuracy:        'Summaries weren\'t accurate enough',
+        missing_feature: 'A feature I needed was missing',
+        slow_errors:     'Too slow or frequent errors',
+        setup:           'API key setup was too complicated',
+        youtube:         'Issues with YouTube compatibility',
+        privacy:         'Privacy concerns',
+        other_tool:      'Switched to a different tool',
+        other:           'Another reason'
+      };
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -216,6 +526,22 @@
           submitBtn.focus();
           return;
         }
+
+        var reason = selected.value;
+        var label  = reasonLabels[reason] || reason;
+        var title  = encodeURIComponent('Uninstall feedback: ' + label);
+        var body   = encodeURIComponent(
+          '## Uninstall Feedback\n\n' +
+          '**Reason:** ' + label + '\n' +
+          '**Code:** `' + reason + '`\n' +
+          '**Date:** ' + new Date().toISOString().split('T')[0] + '\n\n' +
+          '_Submitted automatically from the uninstall page._'
+        );
+        var issueUrl = 'https://github.com/' + REPO + '/issues/new?title=' + title +
+                       '&body=' + body + '&labels=uninstall-feedback';
+
+        window.open(issueUrl, '_blank');
+
         survey.hidden = true;
         thanks.hidden = false;
         thanks.scrollIntoView({ behavior: 'smooth', block: 'center' });
