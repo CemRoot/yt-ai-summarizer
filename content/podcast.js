@@ -245,3 +245,6 @@ const _podcastInstance = PodcastPlayer.getInstance();
 if (typeof window !== 'undefined') {
   window.PodcastPlayer = _podcastInstance;
 }
+if (typeof globalThis !== 'undefined') {
+  globalThis.PodcastPlayer = _podcastInstance;
+}

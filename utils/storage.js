@@ -374,3 +374,6 @@ const _storageInstance = StorageHelper.getInstance();
 if (typeof self !== 'undefined') {
   self.StorageHelper = _storageInstance;
 }
+if (typeof globalThis !== 'undefined') {
+  globalThis.StorageHelper = _storageInstance;
+}

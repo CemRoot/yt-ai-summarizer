@@ -6,7 +6,8 @@
 // Import utilities (only storage.js needed — API calls are handled locally in this file)
 importScripts('utils/storage.js');
 
-// Uninstall landing page (must be https:). Host docs/uninstall.html via GitHub Pages or any static host, then set URL below.
+// Served from repo docs/uninstall.html via .github/workflows/github-pages.yml
+// If your GitHub username or repo name differs, change this URL to match Pages.
 const UNINSTALL_FEEDBACK_URL = 'https://cemroot.github.io/yt-ai-summarizer/uninstall.html';
 chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 

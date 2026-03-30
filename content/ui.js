@@ -68,17 +68,17 @@ class SummarizerUI {
   ];
 
   static #TAB_LABELS = {
-    en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed', podcast: '🎙 Podcast', chat: '💬 Chat' },
-    tr: { summary: 'Özet',    keypoints: 'Önemli Noktalar', detailed: 'Detaylı', podcast: '🎙 Podcast', chat: '💬 Sohbet' },
-    es: { summary: 'Resumen', keypoints: 'Puntos Clave',   detailed: 'Detallado', podcast: '🎙 Podcast', chat: '💬 Chat' },
-    fr: { summary: 'Résumé',  keypoints: 'Points Clés',    detailed: 'Détaillée', podcast: '🎙 Podcast', chat: '💬 Chat' },
-    de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detail', podcast: '🎙 Podcast', chat: '💬 Chat' },
-    pt: { summary: 'Resumo',  keypoints: 'Pontos-Chave',   detailed: 'Detalhada', podcast: '🎙 Podcast', chat: '💬 Chat' },
-    ja: { summary: '要約',    keypoints: 'ポイント',        detailed: '詳細分析',  podcast: '🎙 Podcast', chat: '💬 チャット' },
-    ko: { summary: '요약',    keypoints: '핵심',            detailed: '상세',      podcast: '🎙 Podcast', chat: '💬 채팅' },
-    zh: { summary: '摘要',    keypoints: '要点',            detailed: '详细',      podcast: '🎙 Podcast', chat: '💬 聊天' },
-    ar: { summary: 'ملخص',    keypoints: 'نقاط',            detailed: 'تحليل',     podcast: '🎙 Podcast', chat: '💬 دردشة' },
-    ru: { summary: 'Резюме',  keypoints: 'Ключевые',        detailed: 'Подробный', podcast: '🎙 Podcast', chat: '💬 Чат' }
+    en: { summary: 'Summary', keypoints: 'Key Points', detailed: 'Detailed', podcast: 'Podcast', chat: 'Chat' },
+    tr: { summary: 'Özet',    keypoints: 'Önemli Noktalar', detailed: 'Detaylı', podcast: 'Podcast', chat: 'Sohbet' },
+    es: { summary: 'Resumen', keypoints: 'Puntos Clave',   detailed: 'Detallado', podcast: 'Podcast', chat: 'Chat' },
+    fr: { summary: 'Résumé',  keypoints: 'Points Clés',    detailed: 'Détaillée', podcast: 'Podcast', chat: 'Chat' },
+    de: { summary: 'Zusammenfassung', keypoints: 'Kernpunkte', detailed: 'Detail', podcast: 'Podcast', chat: 'Chat' },
+    pt: { summary: 'Resumo',  keypoints: 'Pontos-Chave',   detailed: 'Detalhada', podcast: 'Podcast', chat: 'Chat' },
+    ja: { summary: '要約',    keypoints: 'ポイント',        detailed: '詳細分析',  podcast: 'ポッドキャスト', chat: 'チャット' },
+    ko: { summary: '요약',    keypoints: '핵심',            detailed: '상세',      podcast: '팟캐스트', chat: '채팅' },
+    zh: { summary: '摘要',    keypoints: '要点',            detailed: '详细',      podcast: '播客', chat: '聊天' },
+    ar: { summary: 'ملخص',    keypoints: 'نقاط',            detailed: 'تحليل',     podcast: 'بودكاست', chat: 'دردشة' },
+    ru: { summary: 'Резюме',  keypoints: 'Ключевые',        detailed: 'Подробный', podcast: 'Подкаст', chat: 'Чат' }
   };
 
   static #READY_TEXT = {
@@ -889,4 +889,7 @@ const _uiInstance = SummarizerUI.getInstance();
 
 if (typeof window !== 'undefined') {
   window.SummarizerUI = _uiInstance;
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.SummarizerUI = _uiInstance;
 }

@@ -13,6 +13,8 @@
 
   "host_permissions": [
     "https://www.youtube.com/*",
+    "https://youtube.com/*",
+    "https://m.youtube.com/*",
     "https://api.groq.com/*",
     "https://ollama.com/*",
     "https://generativelanguage.googleapis.com/*"
@@ -24,13 +26,21 @@
 
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
       "js": ["content/page-bridge.js"],
       "run_at": "document_idle",
       "world": "MAIN"
     },
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
       "js": [
         "utils/storage.js",
         "content/transcript.js",

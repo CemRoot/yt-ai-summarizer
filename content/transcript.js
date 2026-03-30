@@ -43,8 +43,16 @@ class TranscriptExtractor {
   // ─── Helpers ───────────────────────────────────────────────────────
 
   getVideoId() {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('v');
+    try {
+      const url = new URL(window.location.href);
+      const v = url.searchParams.get('v');
+      if (v) return v;
+      const shorts = url.pathname.match(/^\/shorts\/([a-zA-Z0-9_-]{11})/);
+      if (shorts) return shorts[1];
+      const embed = url.pathname.match(/^\/embed\/([a-zA-Z0-9_-]{11})/);
+      if (embed) return embed[1];
+    } catch { /* ignore */ }
+    return null;
   }
 
   formatTimestamp(seconds) {
@@ -380,4 +388,7 @@ const _transcriptInstance = TranscriptExtractor.getInstance();
 
 if (typeof window !== 'undefined') {
   window.TranscriptExtractor = _transcriptInstance;
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.TranscriptExtractor = _transcriptInstance;
 }

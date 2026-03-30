@@ -8,6 +8,21 @@
  * SummarizerUI listens for 'ytai:request-summary', 'ytai:panel-open', etc.
  * This eliminates global namespace pollution and race conditions.
  */
+
+const SummarizerUI = globalThis.SummarizerUI;
+const StorageHelper = globalThis.StorageHelper;
+const TranscriptExtractor = globalThis.TranscriptExtractor;
+const PodcastPlayer = globalThis.PodcastPlayer;
+
+if (!SummarizerUI || !StorageHelper || !TranscriptExtractor || !PodcastPlayer) {
+  console.error('[YTAI] Content script deps missing — check script order in manifest.json', {
+    SummarizerUI: !!SummarizerUI,
+    StorageHelper: !!StorageHelper,
+    TranscriptExtractor: !!TranscriptExtractor,
+    PodcastPlayer: !!PodcastPlayer
+  });
+}
+
 class SummarizerController {
 
   static #instance = null;
@@ -24,7 +39,7 @@ class SummarizerController {
     SummarizerController.#instance = this;
     this.#bindEvents();
     this.#setupNavigationListeners();
-    this.initialize().catch(() => {});
+    this.initialize().catch((e) => console.error('[YTAI] initialize failed', e));
   }
 
   static getInstance() {
@@ -61,7 +76,7 @@ class SummarizerController {
       if (sender.id !== chrome.runtime.id) return;
 
       if (message.action === 'settingsUpdated') {
-        this.initialize().catch(() => {});
+        this.initialize().catch((e) => console.error('[YTAI] initialize (settings) failed', e));
         sendResponse({ ok: true });
       } else if (message.action === 'triggerSummary') {
         SummarizerUI.autoOpen();
@@ -84,7 +99,7 @@ class SummarizerController {
   #setupNavigationListeners() {
     // Method 1: YouTube's custom SPA navigation event (most reliable)
     document.addEventListener('yt-navigate-finish', () => {
-      if (window.location.pathname === '/watch') {
+      if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
       } else {
         this.#currentVideoId = null;
@@ -93,7 +108,7 @@ class SummarizerController {
 
     // Method 2: Browser back/forward
     window.addEventListener('popstate', () => {
-      if (window.location.pathname === '/watch') {
+      if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
       }
     });
@@ -104,7 +119,7 @@ class SummarizerController {
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl;
-        if (window.location.pathname === '/watch') {
+        if (this.#isYoutubeVideoPage()) {
           this.#debouncedInitialize();
         }
       }
@@ -115,14 +130,40 @@ class SummarizerController {
     clearTimeout(this.#initTimeout);
     this.#initTimeout = setTimeout(() => {
       this.#currentVideoId = null; // force re-init on SPA nav
-      this.initialize().catch(() => {});
+      this.initialize().catch((e) => console.error('[YTAI] initialize (nav) failed', e));
     }, 800);
+  }
+
+  /** YouTube watch page, Shorts, or embed — extension should activate */
+  #isYoutubeVideoPage() {
+    const raw = window.location.pathname || '/';
+    const p = raw.replace(/\/+$/, '') || '/';
+    return p === '/watch' || p.startsWith('/shorts/') || /^\/embed\/[a-zA-Z0-9_-]{11}/.test(p);
+  }
+
+  async #whenBodyReady() {
+    for (let i = 0; i < 80 && !document.body; i++) {
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    return !!document.body;
   }
 
   // ─── Initialization ────────────────────────────────────────────────
 
   async initialize() {
+    if (!SummarizerUI || !StorageHelper || !TranscriptExtractor || !PodcastPlayer) return;
+    if (!this.#isYoutubeVideoPage()) return;
+
+    if (!(await this.#whenBodyReady())) {
+      console.error('[YTAI] document.body missing — cannot mount panel');
+      return;
+    }
+
     const videoId = TranscriptExtractor.getVideoId();
+
+    // Mount floating button + panel on any watch / Shorts / embed page (even if ID not parsed yet)
+    SummarizerUI.init();
+
     if (!videoId) return;
     if (videoId === this.#currentVideoId) return;
 
@@ -132,8 +173,6 @@ class SummarizerController {
     this.#podcastCache = null;
     this.#chatCache = null;
     PodcastPlayer.destroy();
-
-    SummarizerUI.init();
 
     const hasKey = await StorageHelper.hasApiKey();
     if (!hasKey && SummarizerUI.isPanelOpen()) {
@@ -407,4 +446,8 @@ class SummarizerController {
 }
 
 // Instantiate — constructor wires everything up
-SummarizerController.getInstance();
+if (SummarizerUI && StorageHelper && TranscriptExtractor && PodcastPlayer) {
+  SummarizerController.getInstance();
+} else {
+  console.error('[YTAI] Boot aborted: content script globals not available');
+}
