@@ -6,10 +6,9 @@
 // Import utilities (only storage.js needed — API calls are handled locally in this file)
 importScripts('utils/storage.js');
 
-// Served from repo `docs/` via .github/workflows/github-pages.yml (project site:
-// https://<user>.github.io/<repo>/). If you add a custom domain + docs/CNAME, set
-// this URL to the full https://…/uninstall.html path and redeploy the extension.
-const UNINSTALL_FEEDBACK_URL = 'https://cemroot.github.io/yt-ai-summarizer/uninstall.html';
+// Production uninstall page: hosted on developer domain (Vercel). Source file in
+// repo: docs/uninstall.html — copy to portfolio public/yt-ai-summarizer/ when it changes.
+const UNINSTALL_FEEDBACK_URL = 'https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html';
 chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';

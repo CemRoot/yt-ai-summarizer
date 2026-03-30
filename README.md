@@ -189,15 +189,24 @@ Every push to `main` triggers 5 automated checks:
 
 See the full [Privacy Policy](privacy-policy.html).
 
-### GitHub Pages (uninstall URL)
+### Uninstall feedback URL (custom domain)
 
-The `docs/` folder is published by [`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml). The live uninstall feedback page is:
+After uninstall, Chrome opens a page you host over **HTTPS** (required by `chrome.runtime.setUninstallURL`). This project uses your portfolio domain:
 
-**https://cemroot.github.io/yt-ai-summarizer/uninstall.html**
+**https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html**
 
-That URL is set in `service-worker.js` as `UNINSTALL_FEEDBACK_URL` (Chrome requires `https://` for `setUninstallURL`).
+The constant `UNINSTALL_FEEDBACK_URL` in `service-worker.js` must match that URL exactly (including `www` vs apex if you standardize on one).
 
-**Custom domain (optional):** GitHub Student Pack improves account limits; it does **not** include a free custom DNS name by default. You can keep the `github.io` URL above at no cost, or buy any domain from a registrar, add it under **Repo → Settings → Pages → Custom domain**, add a `docs/CNAME` file with the hostname, point DNS (usually CNAME to `<user>.github.io`), then update `UNINSTALL_FEEDBACK_URL` to match and ship a new extension build.
+**Deploy on Vercel (portfolio site):**
+
+1. In this repo, the canonical HTML is [`docs/uninstall.html`](docs/uninstall.html).
+2. In your **portfolio** Vercel project, add the same file at **`public/yt-ai-summarizer/uninstall.html`** (Next.js, Vite, or any setup that serves `public/` at the site root).
+3. Deploy. Confirm the URL loads in an incognito window.
+4. Whenever you change `docs/uninstall.html` here, copy it to the portfolio repo again and redeploy — then ship a new extension version if the URL path ever changes.
+
+**Why not `github.io`?** Users only see the domain above; `cemroot.github.io` is no longer used for uninstall.
+
+**Optional — GitHub Pages backup:** [`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml) can still publish `docs/` for your own testing or redirects; the extension does not point there unless you change `UNINSTALL_FEEDBACK_URL` back.
 
 ---
 
@@ -214,6 +223,7 @@ That URL is set in `service-worker.js` as `UNINSTALL_FEEDBACK_URL` (Chrome requi
 - **Debug noise:** No `console.log` / `console.warn` / `debugger` in shipping paths; `console.error` is only used for serious failures (e.g. missing content-script dependencies).
 - **Architecture:** Prefer ES classes and shared helpers (`StorageHelper`, controllers, UI modules) — avoid duplicating secrets or API base URLs outside `utils/storage.js` / `service-worker.js`.
 - **Versions:** `manifest.json`, `privacy-policy.html`, and the top README changelog entry must stay aligned (enforced by the **Version Consistency** CI job).
+- **Uninstall page:** After editing `docs/uninstall.html`, copy it to the portfolio Vercel project at `public/yt-ai-summarizer/uninstall.html` and redeploy so it matches `UNINSTALL_FEEDBACK_URL`.
 
 ---
 
@@ -239,6 +249,10 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 ---
 
 ## Changelog
+
+### v1.7.2
+
+- **🔗 Uninstall URL**: Post-uninstall page now opens on **https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html** (portfolio / Vercel) instead of GitHub Pages — same markup as `docs/uninstall.html`; host that file under `public/yt-ai-summarizer/` on Vercel.
 
 ### v1.7.1
 

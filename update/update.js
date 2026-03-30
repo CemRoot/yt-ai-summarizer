@@ -20,6 +20,33 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '1.7.2',
+      date: '2026-03-31',
+      changes: [
+        { type: 'changed', text: 'c172_uninstall_url' },
+      ]
+    },
+    {
+      version: '1.7.1',
+      date: '2026-03-30',
+      changes: [
+        { type: 'improved', text: 'c171_privacy' },
+        { type: 'improved', text: 'c171_pages' },
+        { type: 'changed', text: 'c171_readme' },
+      ]
+    },
+    {
+      version: '1.7.0',
+      date: '2026-03-18',
+      changes: [
+        { type: 'new',      text: 'c170_chat' },
+        { type: 'improved', text: 'c170_fullscreen' },
+        { type: 'changed', text: 'c170_console' },
+        { type: 'fixed',    text: 'c170_podcast_rate' },
+        { type: 'improved', text: 'c170_chat_context' },
+      ]
+    },
+    {
       version: '1.6.4',
       date: '2026-03-12',
       changes: [
@@ -71,6 +98,18 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c172_uninstall_url: 'Uninstall feedback page now opens on your portfolio domain (cemkoyluoglu.codes) instead of GitHub Pages',
+
+      c171_privacy: 'Privacy policy redesigned — clearer layout; Chat, Gemini TTS, storage, and permissions',
+      c171_pages: 'GitHub Pages docs landing polish; uninstall page uses an inline SVG favicon',
+      c171_readme: 'README: project structure, uninstall hosting on Vercel, maintainer pre-release checklist',
+
+      c170_chat: 'Interactive Video Chat — ask follow-ups grounded in the transcript (Groq, Ollama, Gemini)',
+      c170_fullscreen: 'Fullscreen on YouTube auto-hides the extension toggle and side panel',
+      c170_console: 'Removed routine console.log / console.warn; console.error kept for serious failures only',
+      c170_podcast_rate: 'Fixed podcast playback speed change causing a small position jump',
+      c170_chat_context: 'Chat transcript context aligned to 80K characters (same order of magnitude as summaries)',
+
       c164_whats_new_page: "What's New page — see what changed after every update",
       c164_performance: 'Faster transcript extraction with optimized fallback pipeline',
       c164_transcript_fix: 'Fixed caption tracks not loading for certain restricted videos',
@@ -99,6 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c172_uninstall_url: 'Kaldırma geri bildirim sayfası artık GitHub Pages yerine portföy alan adınızda (cemkoyluoglu.codes) açılıyor',
+
+      c171_privacy: 'Gizlilik politikası yenilendi — daha net düzen; Sohbet, Gemini TTS, depolama ve izinler',
+      c171_pages: 'GitHub Pages docs giriş sayfası; kaldırma sayfasında satır içi SVG favicon',
+      c171_readme: 'README: proje yapısı, Vercel’de uninstall barındırma, yayın öncesi kontrol listesi',
+
+      c170_chat: 'Etkileşimli video sohbeti — transkripte dayalı takip soruları (Groq, Ollama, Gemini)',
+      c170_fullscreen: 'YouTube tam ekranda uzantı düğmesi ve yan panel otomatik gizlenir',
+      c170_console: 'Rutin console.log / console.warn kaldırıldı; console.error yalnızca ciddi hatalar için',
+      c170_podcast_rate: 'Podcast oynatma hızı değişince oluşan küçük konum sıçraması düzeltildi',
+      c170_chat_context: 'Sohbet transkript bağlamı 80K karaktere hizalandı (özetlerle aynı mertebe)',
 
       c164_whats_new_page: 'Neler Yeni sayfası — her güncellemeden sonra değişiklikleri görün',
       c164_performance: 'Optimize edilmiş yedek boru hattı ile daha hızlı altyazı çıkarma',
