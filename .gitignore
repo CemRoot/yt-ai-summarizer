@@ -4,3 +4,7 @@
 *.pem
 node_modules/
 .env
+
+# Local-only: Cursor rules (.mdc) and agent prompt — keep out of public GitHub
+.cursor/
+AGENTS.md
