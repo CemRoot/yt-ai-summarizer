@@ -6,8 +6,6 @@
   "default_locale": "en",
   "minimum_chrome_version": "111",
 
-  "uninstall_url": "https://github.com/CemRoot/yt-ai-summarizer/wiki/Uninstall-Feedback",
-
   "permissions": [
     "storage",
     "activeTab"

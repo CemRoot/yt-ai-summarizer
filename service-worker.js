@@ -6,6 +6,9 @@
 // Import utilities (only storage.js needed — API calls are handled locally in this file)
 importScripts('utils/storage.js');
 
+// Set uninstall feedback URL (MV3 programmatic API)
+chrome.runtime.setUninstallURL('https://github.com/CemRoot/yt-ai-summarizer/wiki/Uninstall-Feedback');
+
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
 const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-tts:generateContent';
@@ -478,7 +481,8 @@ async function handleSummarizeAll(data, tabId) {
 
 /**
  * Generate a NotebookLM-style two-host podcast script from summary text.
- * Returns a JSON array of dialogue lines: [{ speaker: "A"|"B", text: "..." }, ...]
+ * Returns a JSON array of dialogue lines: [{ speaker: "Alex"|"Sam", text: "..." }, ...].
+ * Legacy models may emit "A"|"B"; the TTS step maps those to Alex/Sam for Gemini multi-speaker config.
  */
 /*
  * Verified voice list from Google Cloud official docs:

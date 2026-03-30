@@ -7,23 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
-  const _K = 'ytai_2026';
-  function _obf(plain) {
-    if (!plain) return '';
-    let r = '';
-    for (let i = 0; i < plain.length; i++) r += String.fromCharCode(plain.charCodeAt(i) ^ _K.charCodeAt(i % _K.length));
-    return btoa(r);
-  }
-  function _deobf(enc) {
-    if (!enc) return '';
-    try {
-      const d = atob(enc);
-      let r = '';
-      for (let i = 0; i < d.length; i++) r += String.fromCharCode(d.charCodeAt(i) ^ _K.charCodeAt(i % _K.length));
-      return r;
-    } catch { return enc; }
-  }
-
   const providerBtns      = $$('.provider-btn');
   const groqSection       = $('#groqSettings');
   const ollamaSection     = $('#ollamaSettings');
@@ -120,9 +103,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
       activeProvider = s.provider || 'ollama';
-      groqKeyInput.value = _deobf(s.groqApiKey);
-      ollamaKeyInput.value = _deobf(s.ollamaApiKey);
-      geminiKeyInput.value = _deobf(s.geminiApiKey);
+      groqKeyInput.value = StorageHelper.deobfuscate(s.groqApiKey);
+      ollamaKeyInput.value = StorageHelper.deobfuscate(s.ollamaApiKey);
+      geminiKeyInput.value = StorageHelper.deobfuscate(s.geminiApiKey);
       groqModelSelect.value = s.model;
       ollamaModelSelect.value = s.ollamaModel;
       defaultModeSelect.value = s.defaultMode;
@@ -155,9 +138,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const settings = {
       provider: activeProvider,
-      groqApiKey: _obf(groqKey),
-      ollamaApiKey: _obf(ollamaKey),
-      geminiApiKey: _obf(geminiKey),
+      groqApiKey: StorageHelper.obfuscate(groqKey),
+      ollamaApiKey: StorageHelper.obfuscate(ollamaKey),
+      geminiApiKey: StorageHelper.obfuscate(geminiKey),
       model: groqModelSelect.value,
       ollamaModel: ollamaModelSelect.value,
       defaultMode: defaultModeSelect.value,

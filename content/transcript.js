@@ -1,28 +1,53 @@
 /**
- * YouTube Transcript Extraction Module
- * Extracts video transcripts using multiple fallback methods.
+ * TranscriptExtractor — YouTube Caption Extraction Engine
+ * @architecture Singleton class
+ * @version 2.0.0 — OOP refactor
  *
- * Method priority:
- *  1. Page bridge (MAIN world) – uses YouTube's live player API
- *  2. Script-tag parsing – reads embedded JSON from the HTML
- *  3. Service-worker proxy – re-fetches the watch page server-side
+ * Method priority for caption track discovery:
+ *  0. Innertube player API (ANDROID client — most reliable)
+ *  1. Page bridge (MAIN world) — YouTube's live player object
+ *  2. Script-tag parsing — embedded JSON in page HTML
+ *  3. Service-worker proxy — re-fetches watch page server-side
  *
- * Transcript fetching:
- *  1. Direct fetch from content script (JSON3, then XML)
- *  2. Service-worker proxy fetch (bypasses potential CORS/redirect issues)
+ * Transcript fetch priority:
+ *  1. Direct content-script fetch (JSON3, then XML)
+ *  2. Service-worker proxy (bypasses CORS/redirect issues)
  */
+class TranscriptExtractor {
 
-const TranscriptExtractor = (() => {
-  const LOG = '[YT-AI]';
+  static #instance = null;
 
-  // ─── helpers ────────────────────────────────────────────────────────
+  // Kept current by GitHub Actions (youtube-version-monitor.yml)
+  #ANDROID_CFG = {
+    clientName: 'ANDROID',
+    clientVersion: '21.03.36',
+    androidSdkVersion: 35,
+    osVersion: '15',
+    platform: 'MOBILE'
+  };
 
-  function getVideoId() {
+  #cachedWebVersion = null;
+
+  constructor() {
+    if (TranscriptExtractor.#instance) return TranscriptExtractor.#instance;
+    TranscriptExtractor.#instance = this;
+  }
+
+  static getInstance() {
+    if (!TranscriptExtractor.#instance) {
+      TranscriptExtractor.#instance = new TranscriptExtractor();
+    }
+    return TranscriptExtractor.#instance;
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────────
+
+  getVideoId() {
     const url = new URL(window.location.href);
     return url.searchParams.get('v');
   }
 
-  function formatTimestamp(seconds) {
+  formatTimestamp(seconds) {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
@@ -32,7 +57,7 @@ const TranscriptExtractor = (() => {
     return `${mins}:${String(secs).padStart(2, '0')}`;
   }
 
-  function mapRawTrack(track) {
+  #mapRawTrack(track) {
     return {
       baseUrl: track.baseUrl,
       language: track.languageCode,
@@ -42,24 +67,12 @@ const TranscriptExtractor = (() => {
     };
   }
 
-  function extractTracksFromPlayerResponse(playerResponse) {
-    try {
-      const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer;
-      if (!captions?.captionTracks) return null;
-      return captions.captionTracks.map(mapRawTrack);
-    } catch (e) {
-      return null;
-    }
-  }
+  // ─── Balanced JSON/Array extraction (string-aware) ─────────────────
 
-  // ─── balanced JSON / array extraction (string-aware) ───────────────
-
-  function extractBalancedJSON(text, startIdx) {
+  #extractBalancedJSON(text, startIdx) {
     const jsonStart = text.indexOf('{', startIdx);
     if (jsonStart === -1) return null;
-    let depth = 0;
-    let inString = false;
-    let escaped = false;
+    let depth = 0, inString = false, escaped = false;
     for (let i = jsonStart; i < text.length; i++) {
       const ch = text[i];
       if (escaped) { escaped = false; continue; }
@@ -70,20 +83,17 @@ const TranscriptExtractor = (() => {
       else if (ch === '}') {
         depth--;
         if (depth === 0) {
-          try { return JSON.parse(text.substring(jsonStart, i + 1)); }
-          catch { return null; }
+          try { return JSON.parse(text.substring(jsonStart, i + 1)); } catch { return null; }
         }
       }
     }
     return null;
   }
 
-  function extractBalancedArray(text, startIdx) {
+  #extractBalancedArray(text, startIdx) {
     const arrStart = text.indexOf('[', startIdx);
     if (arrStart === -1) return null;
-    let depth = 0;
-    let inString = false;
-    let escaped = false;
+    let depth = 0, inString = false, escaped = false;
     for (let i = arrStart; i < text.length; i++) {
       const ch = text[i];
       if (escaped) { escaped = false; continue; }
@@ -94,45 +104,30 @@ const TranscriptExtractor = (() => {
       else if (ch === ']') {
         depth--;
         if (depth === 0) {
-          try { return JSON.parse(text.substring(arrStart, i + 1)); }
-          catch { return null; }
+          try { return JSON.parse(text.substring(arrStart, i + 1)); } catch { return null; }
         }
       }
     }
     return null;
   }
 
-  // ─── YouTube client version management ──────────────────────────────
-  //
-  // ANDROID hardcoded version is kept up to date by GitHub Actions
-  // (youtube-version-monitor.yml).  At runtime we also try to extract
-  // the current WEB version from the page as a self-healing fallback.
+  // ─── YouTube client version ────────────────────────────────────────
 
-  const ANDROID_DEFAULTS = {
-    clientName: 'ANDROID',
-    clientVersion: '21.03.36',
-    androidSdkVersion: 35,
-    osVersion: '15',
-    platform: 'MOBILE'
-  };
-
-  let _cachedWebVersion = null;
-
-  function extractWebClientVersion() {
-    if (_cachedWebVersion) return _cachedWebVersion;
+  #extractWebClientVersion() {
+    if (this.#cachedWebVersion) return this.#cachedWebVersion;
     try {
       const scripts = document.querySelectorAll('script');
       for (const s of scripts) {
         const t = s.textContent;
         if (!t || !t.includes('INNERTUBE_CLIENT_VERSION')) continue;
         const m = t.match(/INNERTUBE_CLIENT_VERSION["']\s*:\s*["']([^"']+)/);
-        if (m) { _cachedWebVersion = m[1]; return m[1]; }
+        if (m) { this.#cachedWebVersion = m[1]; return m[1]; }
       }
     } catch {}
     return null;
   }
 
-  async function innertubePlayerRequest(videoId, clientConfig) {
+  async #innertubePlayerRequest(videoId, clientConfig) {
     const resp = await fetch('/youtubei/v1/player?prettyPrint=false', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -146,35 +141,30 @@ const TranscriptExtractor = (() => {
     return data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null;
   }
 
-  // ─── Method 0: Innertube client (ANDROID primary, WEB fallback) ────
+  // ─── Method 0: Innertube (ANDROID primary, WEB fallback) ──────────
 
-  async function getCaptionTracksViaInnertube() {
+  async #getCaptionTracksViaInnertube() {
     try {
-      const videoId = getVideoId();
+      const videoId = this.getVideoId();
       if (!videoId) return null;
 
-      const tracks = await innertubePlayerRequest(videoId, ANDROID_DEFAULTS);
-      if (tracks?.length) {
-        return tracks.map(mapRawTrack);
-      }
+      const tracks = await this.#innertubePlayerRequest(videoId, this.#ANDROID_CFG);
+      if (tracks?.length) return tracks.map(t => this.#mapRawTrack(t));
 
-      const webVer = extractWebClientVersion();
+      const webVer = this.#extractWebClientVersion();
       if (webVer) {
-        const webTracks = await innertubePlayerRequest(videoId, {
+        const webTracks = await this.#innertubePlayerRequest(videoId, {
           clientName: 'WEB', clientVersion: webVer, platform: 'DESKTOP'
         });
-        if (webTracks?.length) {
-          return webTracks.map(mapRawTrack);
-        }
+        if (webTracks?.length) return webTracks.map(t => this.#mapRawTrack(t));
       }
-    } catch (e) {
-    }
+    } catch {}
     return null;
   }
 
-  // ─── Method 1: Page bridge (MAIN world) ────────────────────────────
+  // ─── Method 1: Page bridge (MAIN world) ───────────────────────────
 
-  async function getCaptionTracksFromPageBridge() {
+  async #getCaptionTracksFromPageBridge() {
     for (let attempt = 0; attempt < 3; attempt++) {
       const result = await new Promise((resolve) => {
         const timeout = setTimeout(() => {
@@ -187,13 +177,13 @@ const TranscriptExtractor = (() => {
           window.removeEventListener('ytai-player-data-response', handler);
           try {
             const payload = JSON.parse(event.detail);
-            if (payload?.tracks && Array.isArray(payload.tracks) && payload.tracks.length > 0) {
-              const currentVid = getVideoId();
-              if (payload.videoId && payload.videoId !== currentVid) {
-                resolve(null);
-                return;
-              }
-              resolve(payload.tracks.map(mapRawTrack));
+            const currentVid = new URL(window.location.href).searchParams.get('v');
+            if (payload?.videoId && payload.videoId !== currentVid) {
+              resolve(null);
+              return;
+            }
+            if (payload?.tracks?.length) {
+              resolve(payload.tracks);
             } else {
               resolve(null);
             }
@@ -206,20 +196,15 @@ const TranscriptExtractor = (() => {
         window.dispatchEvent(new CustomEvent('ytai-request-player-data'));
       });
 
-      if (result) {
-        return result;
-      }
-
-      if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 800));
-      }
+      if (result) return result.map(t => this.#mapRawTrack(t));
+      if (attempt < 2) await new Promise(r => setTimeout(r, 800));
     }
     return null;
   }
 
-  // ─── Method 2: Script-tag parsing ──────────────────────────────────
+  // ─── Method 2: Script-tag parsing ─────────────────────────────────
 
-  function extractTracksFromPageScripts() {
+  #extractTracksFromPageScripts() {
     try {
       const scripts = document.querySelectorAll('script');
       for (const script of scripts) {
@@ -228,186 +213,151 @@ const TranscriptExtractor = (() => {
         const idx = text.indexOf('"captionTracks"');
         const colonIdx = text.indexOf(':', idx + 15);
         if (colonIdx === -1) continue;
-
-        const tracks = extractBalancedArray(text, colonIdx);
-        if (tracks && Array.isArray(tracks) && tracks.length > 0) {
-          return tracks.map(mapRawTrack);
-        }
+        const tracks = this.#extractBalancedArray(text, colonIdx);
+        if (tracks?.length) return tracks.map(t => this.#mapRawTrack(t));
       }
-    } catch (e) {
-    }
+    } catch {}
     return null;
   }
 
-  // ─── Method 3: Service-worker proxy (fetches page & parses) ────────
+  // ─── Method 3: Service-worker proxy ───────────────────────────────
 
-  async function fetchCaptionTracksViaProxy() {
+  async #fetchCaptionTracksViaProxy() {
     try {
-      const videoId = getVideoId();
+      const videoId = this.getVideoId();
       if (!videoId) return null;
-      const response = await chrome.runtime.sendMessage({
-        action: 'fetchCaptionTracks',
-        videoId
-      });
-      if (response?.tracks && response.tracks.length > 0) {
-        return response.tracks;
-      }
-    } catch (e) {
-    }
+      const response = await chrome.runtime.sendMessage({ action: 'fetchCaptionTracks', videoId });
+      if (response?.tracks?.length) return response.tracks;
+    } catch {}
     return null;
   }
 
-  // ─── Orchestrator: get caption tracks ──────────────────────────────
+  // ─── Orchestrator ─────────────────────────────────────────────────
 
-  async function getCaptionTracks() {
-    // Innertube ANDROID client returns working timedtext URLs
-    const inntTracks = await getCaptionTracksViaInnertube();
+  async #getCaptionTracks() {
+    const inntTracks = await this.#getCaptionTracksViaInnertube();
     if (inntTracks?.length) return inntTracks;
 
-    // Fallbacks (URLs may contain xowf=1 – still useful for track discovery,
-    // and the service-worker proxy will re-fetch via ANDROID if direct fails)
-    const bridgeTracks = await getCaptionTracksFromPageBridge();
+    const bridgeTracks = await this.#getCaptionTracksFromPageBridge();
     if (bridgeTracks?.length) return bridgeTracks;
 
-    const scriptTracks = extractTracksFromPageScripts();
+    const scriptTracks = this.#extractTracksFromPageScripts();
     if (scriptTracks?.length) return scriptTracks;
 
-    return await fetchCaptionTracksViaProxy();
+    return await this.#fetchCaptionTracksViaProxy();
   }
 
   // ─── Transcript fetching ───────────────────────────────────────────
 
-  function parseJSON3Events(data) {
+  #parseJSON3Events(data) {
     if (!data?.events) return null;
     const entries = data.events
-      .filter((ev) => ev.segs)
-      .map((ev) => {
+      .filter(ev => ev.segs)
+      .map(ev => {
         const startMs = ev.tStartMs || 0;
-        const text = ev.segs.map((s) => s.utf8).join('').replace(/\n/g, ' ').trim();
-        return { start: startMs / 1000, startFormatted: formatTimestamp(startMs / 1000), text };
+        const text = ev.segs.map(s => s.utf8).join('').replace(/\n/g, ' ').trim();
+        return { start: startMs / 1000, startFormatted: this.formatTimestamp(startMs / 1000), text };
       })
-      .filter((e) => e.text.length > 0);
+      .filter(e => e.text.length > 0);
     return entries.length > 0 ? entries : null;
   }
 
-  async function fetchTranscriptDirect(trackUrl) {
+  async #fetchTranscriptDirect(trackUrl) {
     if (!trackUrl || typeof trackUrl !== 'string') return null;
-
     const fetchOpts = { credentials: 'include' };
 
-    // JSON3
+    // Try JSON3 format first
     try {
       const url = new URL(trackUrl);
       url.searchParams.set('fmt', 'json3');
       const resp = await fetch(url.toString(), fetchOpts);
       if (resp.ok) {
         const body = await resp.text();
-        if (body && body.length > 2) {
-          const entries = parseJSON3Events(JSON.parse(body));
-          if (entries) {
-            return entries;
-          }
+        if (body?.length > 2) {
+          const entries = this.#parseJSON3Events(JSON.parse(body));
+          if (entries) return entries;
         }
       }
-    } catch (e) {
-    }
+    } catch {}
 
-    // XML fallback
+    // Fallback to XML
     try {
       const resp = await fetch(trackUrl, fetchOpts);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (!resp.ok) return null;
       const xmlText = await resp.text();
-      if (!xmlText || xmlText.length < 10) throw new Error('Empty XML response');
+      if (!xmlText || xmlText.length < 10) return null;
+
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-      const textNodes = xmlDoc.querySelectorAll('text');
-      const entries = Array.from(textNodes)
-        .map((node) => {
-          const start = parseFloat(node.getAttribute('start') || '0');
-          const text = node.textContent.replace(/\n/g, ' ').trim();
-          return { start, startFormatted: formatTimestamp(start), text };
-        })
-        .filter((e) => e.text.length > 0);
-      if (entries.length > 0) {
-        return entries;
-      }
-    } catch (e) {
-    }
+      const entries = Array.from(xmlDoc.querySelectorAll('text'))
+        .map(node => ({
+          start: parseFloat(node.getAttribute('start') || '0'),
+          startFormatted: this.formatTimestamp(parseFloat(node.getAttribute('start') || '0')),
+          text: node.textContent.replace(/\n/g, ' ').trim()
+        }))
+        .filter(e => e.text.length > 0);
+
+      if (entries.length > 0) return entries;
+    } catch {}
+
     return null;
   }
 
-  async function fetchTranscriptViaProxy(trackUrl) {
+  async #fetchTranscriptViaProxy(trackUrl) {
     try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'fetchTranscript',
-        url: trackUrl
-      });
+      const response = await chrome.runtime.sendMessage({ action: 'fetchTranscript', url: trackUrl });
       if (response?.entries?.length > 0) {
-        return response.entries.map((e) => ({
+        return response.entries.map(e => ({
           ...e,
-          startFormatted: formatTimestamp(e.start)
+          startFormatted: this.formatTimestamp(e.start)
         }));
       }
-    } catch (e) {
-    }
+    } catch {}
     return null;
   }
 
   // ─── Track selection ───────────────────────────────────────────────
 
-  function selectBestTrack(tracks, preferredLang = 'auto') {
+  #selectBestTrack(tracks, preferredLang = 'auto') {
     if (!tracks?.length) return null;
-
     if (preferredLang !== 'auto') {
-      const exact = tracks.find((t) => t.language === preferredLang && !t.isAutoGenerated);
+      const exact = tracks.find(t => t.language === preferredLang && !t.isAutoGenerated);
       if (exact) return exact;
-      const autoGen = tracks.find((t) => t.language === preferredLang && t.isAutoGenerated);
+      const autoGen = tracks.find(t => t.language === preferredLang && t.isAutoGenerated);
       if (autoGen) return autoGen;
     }
-
-    const manual = tracks.find((t) => !t.isAutoGenerated);
-    if (manual) return manual;
-
-    const english = tracks.find((t) => t.language === 'en');
-    if (english) return english;
-
-    return tracks[0];
+    return tracks.find(t => !t.isAutoGenerated)
+      || tracks.find(t => t.language === 'en')
+      || tracks[0];
   }
 
-  // ─── Main entry point ─────────────────────────────────────────────
+  // ─── Public API ───────────────────────────────────────────────────
 
-  async function getTranscript(preferredLang = 'auto') {
-    const videoId = getVideoId();
+  async getTranscript(preferredLang = 'auto') {
+    const videoId = this.getVideoId();
     if (!videoId) throw new Error('NO_VIDEO_ID');
 
     const cached = await StorageHelper.getCachedTranscript(videoId);
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
-    const tracks = await getCaptionTracks();
+    const tracks = await this.#getCaptionTracks();
     if (!tracks?.length) throw new Error('NO_TRANSCRIPT');
 
-    const selectedTrack = selectBestTrack(tracks, preferredLang);
+    const selectedTrack = this.#selectBestTrack(tracks, preferredLang);
     if (!selectedTrack) throw new Error('NO_TRANSCRIPT');
 
-    // Try direct fetch first, then service-worker proxy
-    let entries = await fetchTranscriptDirect(selectedTrack.baseUrl);
-    if (!entries) {
-      entries = await fetchTranscriptViaProxy(selectedTrack.baseUrl);
-    }
-
+    let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
+    if (!entries) entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
     if (!entries?.length) throw new Error('EMPTY_TRANSCRIPT');
 
-    const fullText = entries.map((e) => e.text).join(' ');
     const result = {
       videoId,
       entries,
-      fullText,
+      fullText: entries.map(e => e.text).join(' '),
       language: selectedTrack.language,
       trackName: selectedTrack.name,
       isAutoGenerated: selectedTrack.isAutoGenerated,
-      availableTracks: tracks.map((t) => ({
+      availableTracks: tracks.map(t => ({
         language: t.language,
         name: t.name,
         isAutoGenerated: t.isAutoGenerated
@@ -418,20 +368,16 @@ const TranscriptExtractor = (() => {
     return result;
   }
 
-  async function getAvailableLanguages() {
-    const tracks = await getCaptionTracks();
+  async getAvailableLanguages() {
+    const tracks = await this.#getCaptionTracks();
     if (!tracks) return [];
-    return tracks.map((t) => ({ code: t.language, name: t.name, isAutoGenerated: t.isAutoGenerated }));
+    return tracks.map(t => ({ code: t.language, name: t.name, isAutoGenerated: t.isAutoGenerated }));
   }
+}
 
-  return {
-    getVideoId,
-    getTranscript,
-    getAvailableLanguages,
-    formatTimestamp
-  };
-})();
+// Export singleton
+const _transcriptInstance = TranscriptExtractor.getInstance();
 
 if (typeof window !== 'undefined') {
-  window.TranscriptExtractor = TranscriptExtractor;
+  window.TranscriptExtractor = _transcriptInstance;
 }

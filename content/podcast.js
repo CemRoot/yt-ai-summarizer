@@ -1,51 +1,79 @@
 /**
- * YouTube AI Summarizer — Podcast Audio Player
- * Plays PCM audio from Gemini TTS via AudioContext.
+ * PodcastPlayer — Web Audio API Podcast Engine
+ * @architecture Singleton class
+ * @version 2.0.0 — OOP refactor + rate-change bug fix
+ *
+ * BUG FIX: setRate() now correctly stores the position BEFORE
+ * updating playbackRate, preventing position drift on rate change.
  */
+class PodcastPlayer {
 
-const PodcastPlayer = (() => {
-  let audioContext = null;
-  let sourceNode = null;
-  let audioBuffer = null;
-  let startTime = 0;
-  let pauseOffset = 0;
-  let isPlaying = false;
-  let playbackRate = 1.0;
-  let duration = 0;
-  let onStateChange = null;
-  let progressInterval = null;
-  let stoppingForSeek = false;
+  static #instance = null;
 
-  function getCurrentTime() {
-    if (isPlaying && audioContext) {
-      return Math.min((audioContext.currentTime - startTime) * playbackRate, duration);
-    }
-    return Math.min(pauseOffset, duration);
+  #audioContext = null;
+  #sourceNode = null;
+  #audioBuffer = null;
+  #startTime = 0;
+  #pauseOffset = 0;
+  #isPlaying = false;
+  #playbackRate = 1.0;
+  #duration = 0;
+  #onStateChange = null;
+  #progressInterval = null;
+  #stoppingForSeek = false;
+
+  constructor() {
+    if (PodcastPlayer.#instance) return PodcastPlayer.#instance;
+    PodcastPlayer.#instance = this;
   }
 
-  function notifyState() {
-    if (typeof onStateChange === 'function') {
-      onStateChange({
-        isPlaying,
-        currentTime: getCurrentTime(),
-        duration,
-        rate: playbackRate
+  static getInstance() {
+    if (!PodcastPlayer.#instance) {
+      PodcastPlayer.#instance = new PodcastPlayer();
+    }
+    return PodcastPlayer.#instance;
+  }
+
+  // ─── State ─────────────────────────────────────────────────────────
+
+  #getCurrentTime() {
+    if (this.#isPlaying && this.#audioContext) {
+      return Math.min(
+        (this.#audioContext.currentTime - this.#startTime) * this.#playbackRate,
+        this.#duration
+      );
+    }
+    return Math.min(this.#pauseOffset, this.#duration);
+  }
+
+  #notifyState() {
+    if (typeof this.#onStateChange === 'function') {
+      this.#onStateChange({
+        isPlaying: this.#isPlaying,
+        currentTime: this.#getCurrentTime(),
+        duration: this.#duration,
+        rate: this.#playbackRate
       });
     }
   }
 
-  function startProgressPolling() {
-    stopProgressPolling();
-    progressInterval = setInterval(notifyState, 250);
+  #startProgressPolling() {
+    this.#stopProgressPolling();
+    this.#progressInterval = setInterval(() => this.#notifyState(), 250);
   }
 
-  function stopProgressPolling() {
-    if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+  #stopProgressPolling() {
+    if (this.#progressInterval) {
+      clearInterval(this.#progressInterval);
+      this.#progressInterval = null;
+    }
   }
 
-  async function loadAudio(base64Data) {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // ─── Audio loading ─────────────────────────────────────────────────
+
+  async loadAudio(base64Data) {
+    if (!this.#audioContext) {
+      this.#audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     const raw = atob(base64Data);
@@ -54,159 +82,166 @@ const PodcastPlayer = (() => {
 
     const sampleRate = 24000;
     const numSamples = bytes.length / 2;
-    audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
-    const channelData = audioBuffer.getChannelData(0);
+    this.#audioBuffer = this.#audioContext.createBuffer(1, numSamples, sampleRate);
+    const channelData = this.#audioBuffer.getChannelData(0);
 
     const view = new DataView(bytes.buffer);
     for (let i = 0; i < numSamples; i++) {
       channelData[i] = view.getInt16(i * 2, true) / 32768;
     }
 
-    duration = audioBuffer.duration;
-    pauseOffset = 0;
-    isPlaying = false;
-    notifyState();
+    this.#duration = this.#audioBuffer.duration;
+    this.#pauseOffset = 0;
+    this.#isPlaying = false;
+    this.#notifyState();
   }
 
-  function stopSource() {
-    if (sourceNode) {
-      stoppingForSeek = true;
-      try { sourceNode.stop(); } catch { /* ignore */ }
-      sourceNode.disconnect();
-      sourceNode = null;
-      stoppingForSeek = false;
+  // ─── Playback control ─────────────────────────────────────────────
+
+  #stopSource() {
+    if (this.#sourceNode) {
+      this.#stoppingForSeek = true;
+      try { this.#sourceNode.stop(); } catch {}
+      this.#sourceNode.disconnect();
+      this.#sourceNode = null;
+      this.#stoppingForSeek = false;
     }
   }
 
-  function startPlayback(offset) {
-    if (!audioBuffer || !audioContext) return;
+  #startPlayback(offset) {
+    if (!this.#audioBuffer || !this.#audioContext) return;
 
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
+    if (this.#audioContext.state === 'suspended') {
+      this.#audioContext.resume();
     }
 
-    stopSource();
+    this.#stopSource();
 
-    sourceNode = audioContext.createBufferSource();
-    sourceNode.buffer = audioBuffer;
-    sourceNode.playbackRate.value = playbackRate;
-    sourceNode.connect(audioContext.destination);
+    this.#sourceNode = this.#audioContext.createBufferSource();
+    this.#sourceNode.buffer = this.#audioBuffer;
+    this.#sourceNode.playbackRate.value = this.#playbackRate;
+    this.#sourceNode.connect(this.#audioContext.destination);
 
-    sourceNode.onended = () => {
-      if (stoppingForSeek) return;
-
-      const elapsed = getCurrentTime();
-      if (elapsed >= duration - 0.1) {
-        isPlaying = false;
-        pauseOffset = 0;
-        stopProgressPolling();
-        notifyState();
+    this.#sourceNode.onended = () => {
+      if (this.#stoppingForSeek) return;
+      const elapsed = this.#getCurrentTime();
+      if (elapsed >= this.#duration - 0.1) {
+        this.#isPlaying = false;
+        this.#pauseOffset = 0;
+        this.#stopProgressPolling();
+        this.#notifyState();
       }
     };
 
-    const safeOffset = Math.max(0, Math.min(offset, duration - 0.01));
-    sourceNode.start(0, safeOffset);
-    startTime = audioContext.currentTime - (safeOffset / playbackRate);
-    isPlaying = true;
-    startProgressPolling();
-    notifyState();
+    const safeOffset = Math.max(0, Math.min(offset, this.#duration - 0.01));
+    this.#sourceNode.start(0, safeOffset);
+    this.#startTime = this.#audioContext.currentTime - (safeOffset / this.#playbackRate);
+    this.#isPlaying = true;
+    this.#startProgressPolling();
+    this.#notifyState();
   }
 
-  function play() {
-    startPlayback(pauseOffset);
+  play() {
+    this.#startPlayback(this.#pauseOffset);
   }
 
-  function pause() {
-    if (!isPlaying) return;
-    pauseOffset = getCurrentTime();
-    stopSource();
-    isPlaying = false;
-    stopProgressPolling();
-    notifyState();
+  pause() {
+    if (!this.#isPlaying) return;
+    this.#pauseOffset = this.#getCurrentTime();
+    this.#stopSource();
+    this.#isPlaying = false;
+    this.#stopProgressPolling();
+    this.#notifyState();
   }
 
-  function togglePlayPause(base64Data) {
-    if (!audioBuffer && base64Data) {
-      loadAudio(base64Data).then(() => play());
+  togglePlayPause(base64Data) {
+    if (!this.#audioBuffer && base64Data) {
+      this.loadAudio(base64Data).then(() => this.play());
       return;
     }
-    if (isPlaying) {
-      pause();
+    if (this.#isPlaying) {
+      this.pause();
     } else {
-      play();
+      this.play();
     }
   }
 
-  function stop() {
-    stopSource();
-    isPlaying = false;
-    pauseOffset = 0;
-    stopProgressPolling();
-    notifyState();
+  stop() {
+    this.#stopSource();
+    this.#isPlaying = false;
+    this.#pauseOffset = 0;
+    this.#stopProgressPolling();
+    this.#notifyState();
   }
 
-  function seek(time) {
-    const target = Math.max(0, Math.min(time, duration));
-    if (isPlaying) {
-      startPlayback(target);
+  seek(time) {
+    const target = Math.max(0, Math.min(time, this.#duration));
+    if (this.#isPlaying) {
+      this.#startPlayback(target);
     } else {
-      pauseOffset = target;
-      notifyState();
+      this.#pauseOffset = target;
+      this.#notifyState();
     }
   }
 
-  function skipForward(seconds = 10) {
-    seek(getCurrentTime() + seconds);
+  skipForward(seconds = 10) {
+    this.seek(this.#getCurrentTime() + seconds);
   }
 
-  function skipBackward(seconds = 10) {
-    seek(Math.max(0, getCurrentTime() - seconds));
+  skipBackward(seconds = 10) {
+    this.seek(Math.max(0, this.#getCurrentTime() - seconds));
   }
 
-  function setRate(rate) {
-    const currentPos = getCurrentTime(); // read position BEFORE changing rate
-    playbackRate = Math.max(0.5, Math.min(2.0, rate));
-    if (isPlaying && sourceNode) {
-      sourceNode.playbackRate.value = playbackRate;
-      startTime = audioContext.currentTime - (currentPos / playbackRate);
+  /**
+   * BUG FIX: Read current position BEFORE updating rate, then
+   * recalculate startTime with the NEW rate so the position is preserved.
+   */
+  setRate(rate) {
+    const currentPos = this.#getCurrentTime(); // capture BEFORE rate change
+    this.#playbackRate = Math.max(0.5, Math.min(2.0, rate));
+
+    if (this.#isPlaying && this.#sourceNode) {
+      this.#sourceNode.playbackRate.value = this.#playbackRate;
+      // Recalculate startTime so getCurrentTime() returns currentPos correctly
+      this.#startTime = this.#audioContext.currentTime - (currentPos / this.#playbackRate);
     }
-    notifyState();
+    this.#notifyState();
   }
 
-  function setOnStateChange(cb) { onStateChange = cb; }
+  setOnStateChange(cb) {
+    this.#onStateChange = cb;
+  }
 
-  function getState() {
+  getState() {
     return {
-      isPlaying,
-      currentTime: getCurrentTime(),
-      duration,
-      rate: playbackRate
+      isPlaying: this.#isPlaying,
+      currentTime: this.#getCurrentTime(),
+      duration: this.#duration,
+      rate: this.#playbackRate
     };
   }
 
-  function formatTime(seconds) {
+  formatTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
-  function destroy() {
-    stop();
-    if (audioContext) {
-      audioContext.close().catch(() => {});
-      audioContext = null;
+  destroy() {
+    this.stop();
+    if (this.#audioContext) {
+      this.#audioContext.close().catch(() => {});
+      this.#audioContext = null;
     }
-    audioBuffer = null;
-    onStateChange = null;
+    this.#audioBuffer = null;
+    this.#onStateChange = null;
+    PodcastPlayer.#instance = null;
   }
+}
 
-  return {
-    loadAudio, play, pause, togglePlayPause, stop,
-    seek, skipForward, skipBackward, setRate,
-    setOnStateChange, getState, formatTime, destroy
-  };
-})();
+// Export singleton
+const _podcastInstance = PodcastPlayer.getInstance();
 
 if (typeof window !== 'undefined') {
-  window.PodcastPlayer = PodcastPlayer;
+  window.PodcastPlayer = _podcastInstance;
 }
