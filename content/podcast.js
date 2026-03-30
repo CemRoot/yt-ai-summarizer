@@ -248,3 +248,5 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.PodcastPlayer = _podcastInstance;
 }
+
+console.warn('[YTAI] loaded: content/podcast.js');

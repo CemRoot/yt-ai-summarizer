@@ -12,9 +12,9 @@
   ],
 
   "host_permissions": [
-    "https://www.youtube.com/*",
+    "https://*.youtube.com/*",
     "https://youtube.com/*",
-    "https://m.youtube.com/*",
+    "https://youtu.be/*",
     "https://api.groq.com/*",
     "https://ollama.com/*",
     "https://generativelanguage.googleapis.com/*"
@@ -27,9 +27,9 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/*",
+        "https://*.youtube.com/*",
         "https://youtube.com/*",
-        "https://m.youtube.com/*"
+        "https://youtu.be/*"
       ],
       "js": ["content/page-bridge.js"],
       "run_at": "document_idle",
@@ -37,9 +37,9 @@
     },
     {
       "matches": [
-        "https://www.youtube.com/*",
+        "https://*.youtube.com/*",
         "https://youtube.com/*",
-        "https://m.youtube.com/*"
+        "https://youtu.be/*"
       ],
       "js": [
         "utils/storage.js",
@@ -49,7 +49,7 @@
         "content/content.js"
       ],
       "css": ["content/content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_end"
     }
   ],
 

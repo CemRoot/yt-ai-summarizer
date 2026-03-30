@@ -893,3 +893,5 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.SummarizerUI = _uiInstance;
 }
+
+console.warn('[YTAI] loaded: content/ui.js');

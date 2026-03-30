@@ -392,3 +392,5 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.TranscriptExtractor = _transcriptInstance;
 }
+
+console.warn('[YTAI] loaded: content/transcript.js');

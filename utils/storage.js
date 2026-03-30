@@ -377,3 +377,5 @@ if (typeof self !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   globalThis.StorageHelper = _storageInstance;
 }
+
+console.warn('[YTAI] loaded: utils/storage.js');

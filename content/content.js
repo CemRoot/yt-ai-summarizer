@@ -5,21 +5,27 @@
  *
  * ARCHITECTURAL CHANGE: Removed window._ytai* globals.
  * Cross-module communication now uses CustomEvents dispatched on document.
- * SummarizerUI listens for 'ytai:request-summary', 'ytai:panel-open', etc.
+ * SummarizerUI (singleton as `ui`) listens for 'ytai:request-summary', 'ytai:panel-open', etc.
  * This eliminates global namespace pollution and race conditions.
  */
 
-const SummarizerUI = globalThis.SummarizerUI;
-const StorageHelper = globalThis.StorageHelper;
-const TranscriptExtractor = globalThis.TranscriptExtractor;
-const PodcastPlayer = globalThis.PodcastPlayer;
+try {
+  document.documentElement.setAttribute('data-ytai-extension', 'loading');
+} catch (e) { /* ignore */ }
+console.warn('[YTAI] content.js start', location.hostname, location.pathname);
 
-if (!SummarizerUI || !StorageHelper || !TranscriptExtractor || !PodcastPlayer) {
+// Singleton instances (must NOT use class names — those are already declared in other files' global scope)
+const ui = globalThis.SummarizerUI;
+const storage = globalThis.StorageHelper;
+const tx = globalThis.TranscriptExtractor;
+const player = globalThis.PodcastPlayer;
+
+if (!ui || !storage || !tx || !player) {
   console.error('[YTAI] Content script deps missing — check script order in manifest.json', {
-    SummarizerUI: !!SummarizerUI,
-    StorageHelper: !!StorageHelper,
-    TranscriptExtractor: !!TranscriptExtractor,
-    PodcastPlayer: !!PodcastPlayer
+    SummarizerUI: !!ui,
+    storage: !!storage,
+    tx: !!tx,
+    player: !!player
   });
 }
 
@@ -79,14 +85,14 @@ class SummarizerController {
         this.initialize().catch((e) => console.error('[YTAI] initialize (settings) failed', e));
         sendResponse({ ok: true });
       } else if (message.action === 'triggerSummary') {
-        SummarizerUI.autoOpen();
+        ui.autoOpen();
         this.requestSummary(message.mode || 'summary', true).catch(() => {});
         sendResponse({ ok: true });
       } else if (message.action === 'progress') {
-        SummarizerUI.showLoading(message.text, message.progress);
+        ui.showLoading(message.text, message.progress);
         sendResponse({ ok: true });
       } else if (message.action === 'podcastProgress') {
-        SummarizerUI.showPodcastLoading(message.text);
+        ui.showPodcastLoading(message.text);
         sendResponse({ ok: true });
       }
 
@@ -151,7 +157,7 @@ class SummarizerController {
   // ─── Initialization ────────────────────────────────────────────────
 
   async initialize() {
-    if (!SummarizerUI || !StorageHelper || !TranscriptExtractor || !PodcastPlayer) return;
+    if (!ui || !storage || !tx || !player) return;
     if (!this.#isYoutubeVideoPage()) return;
 
     if (!(await this.#whenBodyReady())) {
@@ -159,10 +165,10 @@ class SummarizerController {
       return;
     }
 
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
 
     // Mount floating button + panel on any watch / Shorts / embed page (even if ID not parsed yet)
-    SummarizerUI.init();
+    ui.init();
 
     if (!videoId) return;
     if (videoId === this.#currentVideoId) return;
@@ -172,21 +178,21 @@ class SummarizerController {
     this.#combinedCache = null;
     this.#podcastCache = null;
     this.#chatCache = null;
-    PodcastPlayer.destroy();
+    player.destroy();
 
-    const hasKey = await StorageHelper.hasApiKey();
-    if (!hasKey && SummarizerUI.isPanelOpen()) {
-      SummarizerUI.showApiKeyPrompt();
+    const hasKey = await storage.hasApiKey();
+    if (!hasKey && ui.isPanelOpen()) {
+      ui.showApiKeyPrompt();
     }
 
-    const settings = await StorageHelper.getSettings();
+    const settings = await storage.getSettings();
     if (settings.autoRun && hasKey) {
-      SummarizerUI.autoOpen();
-      const cached = await StorageHelper.getCachedSummary(videoId, settings.defaultMode || 'summary');
+      ui.autoOpen();
+      const cached = await storage.getCachedSummary(videoId, settings.defaultMode || 'summary');
       if (cached?.content) {
-        SummarizerUI.showResult(cached.content);
+        ui.showResult(cached.content);
       } else {
-        SummarizerUI.showReadyPrompt();
+        ui.showReadyPrompt();
       }
     }
   }
@@ -196,41 +202,41 @@ class SummarizerController {
   async requestSummary(mode = 'summary', forceRefresh = false) {
     if (this.#isProcessing) return;
 
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const hasKey = await StorageHelper.hasApiKey();
+    const hasKey = await storage.hasApiKey();
     if (!hasKey) {
-      SummarizerUI.showApiKeyPrompt();
+      ui.showApiKeyPrompt();
       return;
     }
 
     // Serve from in-memory cache (instant tab switch)
     if (!forceRefresh && this.#combinedCache?.videoId === videoId && this.#combinedCache[mode]) {
-      SummarizerUI.showResult(this.#combinedCache[mode]);
+      ui.showResult(this.#combinedCache[mode]);
       return;
     }
 
     // Serve from persistent cache
     if (!forceRefresh) {
-      const cached = await StorageHelper.getCachedSummary(videoId, mode);
+      const cached = await storage.getCachedSummary(videoId, mode);
       if (cached?.content) {
-        SummarizerUI.showResult(cached.content);
+        ui.showResult(cached.content);
         return;
       }
     }
 
     this.#isProcessing = true;
-    SummarizerUI.showLoading(null, 0);
+    ui.showLoading(null, 0);
 
     try {
-      SummarizerUI.showLoading('Extracting transcript...', 0.1);
-      const transcript = await TranscriptExtractor.getTranscript();
+      ui.showLoading('Extracting transcript...', 0.1);
+      const transcript = await tx.getTranscript();
       if (!transcript?.fullText) throw new Error('NO_TRANSCRIPT');
 
-      SummarizerUI.showLoading('Sending to AI...', 0.2);
+      ui.showLoading('Sending to AI...', 0.2);
 
-      const settings = await StorageHelper.getSettings();
+      const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'summarizeAll',
         data: {
@@ -250,19 +256,19 @@ class SummarizerController {
         detailed: response.detailed
       };
 
-      if (response.provider) SummarizerUI.updateProviderLabel(response.provider);
+      if (response.provider) ui.updateProviderLabel(response.provider);
 
       // Persist all modes to storage
       for (const m of ['summary', 'keypoints', 'detailed']) {
         if (response[m]) {
-          StorageHelper.cacheSummary(videoId, m, {
+          storage.cacheSummary(videoId, m, {
             content: response[m],
             model: response.model
           }).catch(() => {});
         }
       }
 
-      SummarizerUI.showResult(response[mode]);
+      ui.showResult(response[mode]);
 
     } catch (error) {
       this.#handleError(error);
@@ -274,27 +280,27 @@ class SummarizerController {
   // ─── Podcast ──────────────────────────────────────────────────────
 
   async requestPodcast() {
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const settings = await StorageHelper.getSettings();
+    const settings = await storage.getSettings();
     if (!settings.geminiApiKey) {
-      SummarizerUI.showPodcastKeyPrompt();
+      ui.showPodcastKeyPrompt();
       return;
     }
 
     if (this.#podcastCache?.videoId === videoId && this.#podcastCache.dialogue) {
-      SummarizerUI.showPodcastPlayer(this.#podcastCache);
+      ui.showplayer(this.#podcastCache);
       return;
     }
 
     const summaryText = this.#combinedCache?.summary;
     if (!summaryText) {
-      const cached = await StorageHelper.getCachedSummary(videoId, 'summary');
+      const cached = await storage.getCachedSummary(videoId, 'summary');
       if (cached?.content) {
         return this.#generatePodcastFromText(cached.content, videoId);
       }
-      SummarizerUI.showPodcastPlayer(null);
+      ui.showplayer(null);
       return;
     }
 
@@ -304,10 +310,10 @@ class SummarizerController {
   async #generatePodcastFromText(text, videoId) {
     if (this.#isProcessing) return;
     this.#isProcessing = true;
-    SummarizerUI.showPodcastLoading('Writing podcast script...');
+    ui.showPodcastLoading('Writing podcast script...');
 
     try {
-      const settings = await StorageHelper.getSettings();
+      const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'generatePodcast',
         data: { summaryText: text, language: settings.language || 'auto' }
@@ -315,20 +321,20 @@ class SummarizerController {
 
       if (!response) throw new Error('No response from extension.');
       if (response.error) {
-        if (response.error === 'GEMINI_KEY_MISSING') { SummarizerUI.showPodcastKeyPrompt(); return; }
+        if (response.error === 'GEMINI_KEY_MISSING') { ui.showPodcastKeyPrompt(); return; }
         if (response.error === 'GEMINI_REGION_BLOCKED') {
-          SummarizerUI.showError('Region Not Supported', 'Gemini TTS is not available in your region. This is a Google restriction.', false);
+          ui.showError('Region Not Supported', 'Gemini TTS is not available in your region. This is a Google restriction.', false);
           return;
         }
         if (response.error === 'GEMINI_RATE_LIMITED') {
-          SummarizerUI.showError('Rate Limited', 'Too many requests. Please wait a moment and try again.', true);
+          ui.showError('Rate Limited', 'Too many requests. Please wait a moment and try again.', true);
           return;
         }
         throw new Error(response.error);
       }
 
       this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
-      SummarizerUI.showPodcastPlayer(this.#podcastCache);
+      ui.showplayer(this.#podcastCache);
 
     } catch (error) {
       this.#handleError(error);
@@ -340,39 +346,39 @@ class SummarizerController {
   // ─── Chat ─────────────────────────────────────────────────────────
 
   requestChat() {
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
     if (!videoId) return;
 
     if (!this.#chatCache || this.#chatCache.videoId !== videoId) {
       this.#chatCache = { videoId, messages: [] };
     }
 
-    SummarizerUI.showChatUI(this.#chatCache.messages);
+    ui.showChatUI(this.#chatCache.messages);
   }
 
   async sendChatMessage(text) {
     if (this.#isProcessing) return;
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const hasKey = await StorageHelper.hasApiKey();
-    if (!hasKey) { SummarizerUI.showApiKeyPrompt(); return; }
+    const hasKey = await storage.hasApiKey();
+    if (!hasKey) { ui.showApiKeyPrompt(); return; }
 
     if (!this.#chatCache || this.#chatCache.videoId !== videoId) {
       this.#chatCache = { videoId, messages: [] };
     }
 
     this.#chatCache.messages.push({ role: 'user', text });
-    SummarizerUI.addChatMessage('user', text);
+    ui.addChatMessage('user', text);
 
     this.#isProcessing = true;
-    SummarizerUI.addChatMessage('loading', '');
+    ui.addChatMessage('loading', '');
 
     try {
-      const transcript = await TranscriptExtractor.getTranscript();
+      const transcript = await tx.getTranscript();
       if (!transcript?.fullText) throw new Error('NO_TRANSCRIPT');
 
-      const settings = await StorageHelper.getSettings();
+      const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'chatWithVideo',
         data: {
@@ -388,12 +394,12 @@ class SummarizerController {
       if (response.error) throw new Error(response.error);
 
       this.#chatCache.messages.push({ role: 'ai', text: response.answer });
-      SummarizerUI.addChatMessage('ai', response.answer);
+      ui.addChatMessage('ai', response.answer);
 
     } catch (error) {
       const msg = error?.message?.replace('API_ERROR: ', '') || 'Failed to get answer.';
       this.#chatCache.messages.push({ role: 'error', text: msg });
-      SummarizerUI.addChatMessage('error', msg);
+      ui.addChatMessage('error', msg);
     } finally {
       this.#isProcessing = false;
     }
@@ -402,23 +408,23 @@ class SummarizerController {
   // ─── Panel open handler ───────────────────────────────────────────
 
   onPanelOpen() {
-    const videoId = TranscriptExtractor.getVideoId();
+    const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const mode = SummarizerUI.getCurrentMode();
+    const mode = ui.getCurrentMode();
 
     if (this.#combinedCache?.videoId === videoId && this.#combinedCache[mode]) {
-      SummarizerUI.showResult(this.#combinedCache[mode]);
+      ui.showResult(this.#combinedCache[mode]);
       return;
     }
 
-    StorageHelper.hasApiKey().then(async (hasKey) => {
-      if (!hasKey) { SummarizerUI.showApiKeyPrompt(); return; }
-      const cached = await StorageHelper.getCachedSummary(videoId, mode);
+    storage.hasApiKey().then(async (hasKey) => {
+      if (!hasKey) { ui.showApiKeyPrompt(); return; }
+      const cached = await storage.getCachedSummary(videoId, mode);
       if (cached?.content) {
-        SummarizerUI.showResult(cached.content);
+        ui.showResult(cached.content);
       } else {
-        SummarizerUI.showReadyPrompt();
+        ui.showReadyPrompt();
       }
     });
   }
@@ -441,13 +447,17 @@ class SummarizerController {
       retryable: true
     };
 
-    SummarizerUI.showError(mapped.title, mapped.message, mapped.retryable);
+    ui.showError(mapped.title, mapped.message, mapped.retryable);
   }
 }
 
 // Instantiate — constructor wires everything up
-if (SummarizerUI && StorageHelper && TranscriptExtractor && PodcastPlayer) {
+if (ui && storage && tx && player) {
   SummarizerController.getInstance();
+  try {
+    document.documentElement.setAttribute('data-ytai-extension', chrome.runtime.id);
+  } catch (e) { /* ignore */ }
+  console.warn('[YTAI] boot OK — floating button should appear on video pages');
 } else {
   console.error('[YTAI] Boot aborted: content script globals not available');
 }
