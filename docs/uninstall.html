@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uninstalled — YouTube AI Summarizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eceff1;
+      --card: #ffffff;
+      --text: #212121;
+      --muted: #616161;
+      --border: #e0e0e0;
+      --accent: #065fd4;
+      --accent-red: #c62828;
+      --cta: #2e7d32;
+      --cta-hover: #1b5e20;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .brand svg { flex-shrink: 0; }
+    .brand span {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 24px;
+      line-height: 1.25;
+    }
+    .value-card {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 22px;
+      margin-bottom: 36px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .value-card p {
+      margin: 0;
+      font-size: 1.05rem;
+      max-width: 380px;
+    }
+    .value-card strong { color: var(--accent-red); font-weight: 700; }
+    .btn-reinstall {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--cta);
+      color: #fff !important;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      padding: 12px 18px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+    .btn-reinstall:hover { background: var(--cta-hover); }
+    .btn-reinstall svg { width: 18px; height: 18px; }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 24px;
+    }
+    .options {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 0;
+      margin-bottom: 24px;
+    }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .option:last-child { border-bottom: none; }
+    .option:hover { background: #fafafa; }
+    .option input {
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+    .option span { font-size: 0.95rem; }
+    .submit-row { text-align: center; }
+    button[type="submit"] {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 12px 36px;
+      border-radius: 4px;
+      cursor: pointer;
+      min-width: 140px;
+    }
+    button[type="submit"]:hover { filter: brightness(1.05); }
+    button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+    #thanks {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 22px;
+      text-align: center;
+    }
+    #thanks h2 { margin-bottom: 12px; }
+    #thanks p { margin: 0; color: var(--muted); }
+    .footer-note {
+      margin-top: 48px;
+      font-size: 0.8rem;
+      color: #9e9e9e;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" fill="#065fd4"/>
+      </svg>
+      <span>YouTube AI Summarizer</span>
+    </div>
+
+    <h1>YouTube AI Summarizer has been successfully uninstalled</h1>
+
+    <div class="value-card">
+      <p>
+        We hope the extension helped you <strong>learn faster</strong> from YouTube. You can come back anytime.
+      </p>
+      <!-- Replace href with your Chrome Web Store listing URL when published -->
+      <a class="btn-reinstall" id="reinstallLink" href="https://chromewebstore.google.com/" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        REINSTALL
+      </a>
+    </div>
+
+    <div id="survey">
+      <h2>Sorry to see you go!</h2>
+      <p class="sub">Would you mind taking a moment and telling us why you uninstalled?</p>
+
+      <form id="uninstallForm">
+        <div class="options" role="radiogroup" aria-label="Uninstall reason">
+          <label class="option"><input type="radio" name="reason" value="accuracy"><span>Summaries or analysis weren’t accurate enough</span></label>
+          <label class="option"><input type="radio" name="reason" value="missing_feature"><span>I needed a feature that wasn’t there</span></label>
+          <label class="option"><input type="radio" name="reason" value="slow_errors"><span>It was too slow or I hit errors</span></label>
+          <label class="option"><input type="radio" name="reason" value="setup"><span>Setting up API keys was too complicated</span></label>
+          <label class="option"><input type="radio" name="reason" value="youtube"><span>Problems with YouTube (captions, panel, etc.)</span></label>
+          <label class="option"><input type="radio" name="reason" value="privacy"><span>Privacy concerns</span></label>
+          <label class="option"><input type="radio" name="reason" value="other_tool"><span>I’m using a different tool</span></label>
+          <label class="option"><input type="radio" name="reason" value="messaging"><span>Too many prompts or notifications</span></label>
+          <label class="option"><input type="radio" name="reason" value="other"><span>Another reason not listed here</span></label>
+        </div>
+        <div class="submit-row">
+          <button type="submit" id="submitBtn">Submit</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="thanks" hidden>
+      <h2>Thank you</h2>
+      <p>Your feedback helps us improve. We appreciate you taking the time.</p>
+    </div>
+
+    <p class="footer-note">YouTube AI Summarizer — uninstall feedback page</p>
+  </div>
+  <script>
+    (function () {
+      var form = document.getElementById('uninstallForm');
+      var survey = document.getElementById('survey');
+      var thanks = document.getElementById('thanks');
+      var submitBtn = document.getElementById('submitBtn');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var selected = form.querySelector('input[name="reason"]:checked');
+        if (!selected) {
+          submitBtn.focus();
+          return;
+        }
+        survey.hidden = true;
+        thanks.hidden = false;
+        thanks.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    })();
+  </script>
+</body>
+</html>

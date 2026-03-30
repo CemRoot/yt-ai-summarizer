@@ -6,8 +6,9 @@
 // Import utilities (only storage.js needed — API calls are handled locally in this file)
 importScripts('utils/storage.js');
 
-// Set uninstall feedback URL (MV3 programmatic API)
-chrome.runtime.setUninstallURL('https://github.com/CemRoot/yt-ai-summarizer/wiki/Uninstall-Feedback');
+// Uninstall landing page (must be https:). Host docs/uninstall.html via GitHub Pages or any static host, then set URL below.
+const UNINSTALL_FEEDBACK_URL = 'https://cemroot.github.io/yt-ai-summarizer/uninstall.html';
+chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
