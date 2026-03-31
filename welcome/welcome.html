@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Set up YouTube AI Summarizer — choose an AI provider and add your API key.">
+  <meta name="theme-color" content="#ececee">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -10,6 +12,8 @@
   <title>Welcome — YouTube AI Summarizer</title>
 </head>
 <body>
+  <div class="welcome-page">
+  <div class="welcome-accent" aria-hidden="true"></div>
   <div class="welcome-container">
 
     <!-- Language Selector -->
@@ -33,18 +37,39 @@
       </div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-label="Onboarding progress" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <nav class="step-rail" id="stepRail" aria-label="Steps">
+        <div class="step-rail-item is-active" data-step="1">
+          <span class="step-rail-dot"><span class="step-rail-num">1</span></span>
+          <span class="step-rail-label" id="railL1">Provider</span>
+        </div>
+        <span class="step-rail-line" aria-hidden="true"></span>
+        <div class="step-rail-item" data-step="2">
+          <span class="step-rail-dot"><span class="step-rail-num">2</span></span>
+          <span class="step-rail-label" id="railL2">API key</span>
+        </div>
+        <span class="step-rail-line" aria-hidden="true"></span>
+        <div class="step-rail-item" data-step="3">
+          <span class="step-rail-dot"><span class="step-rail-num">3</span></span>
+          <span class="step-rail-label" id="railL3">Start</span>
+        </div>
+      </nav>
     </div>
 
     <!-- Hero -->
     <header class="hero">
-      <div class="hero-badge">
-        <svg viewBox="0 0 24 24" width="32" height="32"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>
+      <div class="hero-card">
+        <div class="hero-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        </div>
+        <p class="hero-kicker" id="heroKicker">Chrome extension</p>
+        <h1 id="heroTitle">YouTube AI Summarizer</h1>
+        <p class="hero-sub" id="heroSub">Get instant AI-powered summaries, key points, and detailed analysis for any YouTube video.</p>
       </div>
-      <h1 id="heroTitle">YouTube AI Summarizer</h1>
-      <p class="hero-sub" id="heroSub">Get instant AI-powered summaries, key points, and detailed analysis for any YouTube video.</p>
     </header>
 
     <!-- Step 1: Choose Provider -->
@@ -168,7 +193,7 @@
           </div>
           <div>
             <h3 id="how3Title">Choose Your Mode</h3>
-            <p id="how3Desc">Pick <strong>Summary</strong>, <strong>Key Points</strong>, <strong>Detailed Analysis</strong>, or <strong>Podcast</strong> — all generated instantly.</p>
+            <p id="how3Desc">Pick <strong>Summary</strong>, <strong>Key Points</strong>, <strong>Detailed Analysis</strong>, <strong>Chat</strong>, or <strong>Podcast</strong> — all generated instantly.</p>
           </div>
         </div>
       </div>
@@ -186,6 +211,7 @@
     <footer class="welcome-footer">
       <span id="footerPowered">Powered by</span> <a href="https://groq.com" target="_blank" rel="noopener noreferrer">Groq</a> &amp; <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a> &middot; <a href="privacy-policy.html" id="privacyLink" target="_blank">Privacy Policy</a>
     </footer>
+  </div>
   </div>
 
   <script src="../utils/storage.js"></script>

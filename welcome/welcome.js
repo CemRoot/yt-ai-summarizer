@@ -55,12 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
       how2title: 'Click the AI Button',
       how2desc: 'A floating button appears on the bottom-right of the page. Click it to open the panel.',
       how3title: 'Choose Your Mode',
-      how3desc: 'Pick <strong>Summary</strong>, <strong>Key Points</strong>, <strong>Detailed Analysis</strong>, or <strong>Podcast</strong> — all generated instantly.',
+      how3desc: 'Pick <strong>Summary</strong>, <strong>Key Points</strong>, <strong>Detailed Analysis</strong>, <strong>Chat</strong>, or <strong>Podcast</strong> — all generated instantly.',
       goYoutube: 'Go to YouTube & Try It',
       tip: 'You can change your provider, model, and language anytime from the extension settings (click the puzzle icon in Chrome toolbar).',
       footerPowered: 'Powered by',
       privacyPolicy: 'Privacy Policy',
       langLabel: 'Language',
+      heroKicker: 'Chrome extension',
+      rail1: 'Provider',
+      rail2: 'API key',
+      rail3: 'Start',
     },
     tr: {
       title: 'YouTube AI Özetleyici',
@@ -108,12 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
       how2title: 'AI Butonuna Tıklayın',
       how2desc: 'Sayfanın sağ altında beliren butona tıklayarak paneli açın.',
       how3title: 'Modunuzu Seçin',
-      how3desc: '<strong>Özet</strong>, <strong>Anahtar Noktalar</strong>, <strong>Detaylı Analiz</strong> veya <strong>Podcast</strong> — hepsi anında oluşturulur.',
+      how3desc: '<strong>Özet</strong>, <strong>Anahtar Noktalar</strong>, <strong>Detaylı Analiz</strong>, <strong>Sohbet</strong> veya <strong>Podcast</strong> — hepsi anında oluşturulur.',
       goYoutube: 'YouTube\'a Git ve Dene',
       tip: 'Sağlayıcı, model ve dili istediğiniz zaman uzantı ayarlarından değiştirebilirsiniz (Chrome araç çubuğundaki yapboz simgesine tıklayın).',
       footerPowered: 'Altyapı',
       privacyPolicy: 'Gizlilik Politikası',
       langLabel: 'Dil',
+      heroKicker: 'Chrome uzantısı',
+      rail1: 'Sağlayıcı',
+      rail2: 'API anahtarı',
+      rail3: 'Başla',
     },
     es: {
       title: 'YouTube AI Summarizer',
@@ -342,6 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const step2         = $('#step2');
   const step3         = $('#step3');
   const progressFill  = $('#progressFill');
+  const progressBarEl = $('#progressBar');
+  const stepRailItems = $$('.step-rail-item');
   const langToggle    = $('#langToggle');
   const langMenu      = $('#langMenu');
   const langGrid      = $('#langGrid');
@@ -356,6 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('#heroTitle').textContent = t('title');
     $('#heroSub').textContent = t('subtitle');
+    const kicker = $('#heroKicker');
+    if (kicker) kicker.textContent = t('heroKicker');
+    $('#railL1').textContent = t('rail1');
+    $('#railL2').textContent = t('rail2');
+    $('#railL3').textContent = t('rail3');
 
     $('#step1Chip').textContent = t('step1chip');
     $('#step1Title').textContent = t('step1title');
@@ -569,6 +584,15 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#validateBtnText').textContent = t('validateSave');
   }
 
+  function updateStepRail(num) {
+    stepRailItems.forEach((el) => {
+      const sn = parseInt(el.dataset.step, 10) || 0;
+      el.classList.remove('is-active', 'is-done');
+      if (sn < num) el.classList.add('is-done');
+      else if (sn === num) el.classList.add('is-active');
+    });
+  }
+
   function goToStep(num) {
     const allSteps = [step1, step2, step3];
 
@@ -581,6 +605,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentStep = num;
     progressFill.style.width = `${(num / 3) * 100}%`;
+    if (progressBarEl) progressBarEl.setAttribute('aria-valuenow', String(num));
+    updateStepRail(num);
     allSteps[num - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
@@ -604,4 +630,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   applyTranslations();
+  updateStepRail(1);
 });
