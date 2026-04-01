@@ -347,6 +347,7 @@ class SummarizerUI {
   // ─── Mode switching ───────────────────────────────────────────────
 
   switchMode(mode) {
+    if (mode === this.#currentMode) return;
     this.#currentMode = mode;
     this.#panelRoot?.querySelectorAll('.ytai-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.mode === mode);
@@ -354,6 +355,10 @@ class SummarizerUI {
 
     const footer = this.#panelRoot?.querySelector('.ytai-footer');
     if (footer) footer.style.display = (mode === 'chat' || mode === 'podcast') ? 'none' : '';
+
+    // Immediately blank old content so stale text from a different tab never lingers
+    const content = this.#panelRoot?.querySelector('.ytai-content');
+    if (content) content.innerHTML = '';
 
     if (mode === 'chat') {
       globalThis.PodcastPlayer?.stop?.();
@@ -511,9 +516,11 @@ class SummarizerUI {
       return;
     }
 
-    const { dialogue, audioBase64 } = data;
+    const { dialogue, audioBase64, videoId: podcastVideoId } = data;
     const pp = globalThis.PodcastPlayer;
     const dur = pp?.formatTime ? pp.formatTime(0) : '0:00';
+    const isTR = this.#uiLang() === 'tr';
+    const volLabel = isTR ? 'Ses' : 'Volume';
 
     // BUG FIX: Removed dead 'A'/'B' speaker checks — LLM always returns 'Alex'/'Sam'
     content.innerHTML = `
@@ -546,6 +553,20 @@ class SummarizerUI {
           <button class="ytai-podcast-ctrl" id="ytaiPodcastFwd" title="Forward 10s">
             <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
           </button>
+        </div>
+        <div class="ytai-podcast-volume">
+          <span class="ytai-podcast-volume-label" id="ytaiPodcastVolumeLabel">${this.#escapeHtml(volLabel)}</span>
+          <input type="range" id="ytaiPodcastVolume" class="ytai-podcast-volume-slider" min="0" max="1" step="0.05" value="1"
+            aria-label="${this.#escapeHtml(volLabel)}" aria-valuemin="0" aria-valuemax="100" />
+          <span class="ytai-podcast-volume-pct" id="ytaiPodcastVolumePct">100%</span>
+        </div>
+        <div class="ytai-podcast-download-wrap">
+          <button type="button" class="ytai-podcast-download" id="ytaiPodcastDownload"
+            title="${this.#escapeHtml(isTR ? 'Telefonda dinlemek için indirip WhatsApp üzerinden belge olarak gönderebilirsiniz.' : 'Download, then attach as a document in WhatsApp to listen on your phone.')}">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            <span>${this.#escapeHtml(isTR ? 'Sesi indir (WAV)' : 'Download audio (WAV)')}</span>
+          </button>
+          <div class="ytai-podcast-download-hint">${this.#escapeHtml(isTR ? 'İndirip WhatsApp üzerinden «Belge» olarak paylaşabilirsiniz. Kalıcı internet linki oluşturulmaz.' : 'Save and share as a document in WhatsApp. No public hosting link is created.')}</div>
         </div>
         <div class="ytai-podcast-rate">
           <button class="ytai-rate-btn" data-rate="0.75">0.75x</button>
@@ -606,6 +627,50 @@ class SummarizerUI {
         btn.classList.add('active');
         pp.setRate(parseFloat(btn.dataset.rate));
       });
+    });
+
+    const volSlider = content.querySelector('#ytaiPodcastVolume');
+    const volPct = content.querySelector('#ytaiPodcastVolumePct');
+    let volSaveTimer = null;
+    let volLoaded = false;
+    const applyUiVolume = (v) => {
+      pp.setVolume(v);
+      if (volPct) volPct.textContent = `${Math.round(v * 100)}%`;
+      if (volSlider) volSlider.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+    };
+    (async () => {
+      try {
+        const s = await StorageHelper.getSettings();
+        if (volLoaded) return;
+        const raw = s.podcastVolume;
+        const v = typeof raw === 'number' && raw >= 0 && raw <= 1 && Number.isFinite(raw) ? raw : 1;
+        if (volSlider) volSlider.value = String(v);
+        applyUiVolume(v);
+      } catch {
+        if (!volLoaded) applyUiVolume(1);
+      } finally {
+        volLoaded = true;
+      }
+    })();
+    volSlider?.addEventListener('input', () => {
+      volLoaded = true;
+      const v = parseFloat(volSlider.value);
+      applyUiVolume(v);
+      clearTimeout(volSaveTimer);
+      volSaveTimer = setTimeout(async () => {
+        try {
+          const s = await StorageHelper.getSettings();
+          s.podcastVolume = v;
+          await StorageHelper.saveSettings(s);
+        } catch { /* ignore */ }
+      }, 300);
+    });
+
+    content.querySelector('#ytaiPodcastDownload')?.addEventListener('click', () => {
+      const exp = globalThis.YtaiGeminiWavExport;
+      if (!exp?.triggerDownload || !audioBase64) return;
+      const id = typeof podcastVideoId === 'string' ? podcastVideoId.replace(/[^a-zA-Z0-9_-]/g, '') : '';
+      exp.triggerDownload(audioBase64, `ytai-podcast-${id || 'export'}.wav`);
     });
   }
 

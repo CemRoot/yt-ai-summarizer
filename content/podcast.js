@@ -11,8 +11,11 @@ class PodcastPlayer {
   static #instance = null;
 
   #audioContext = null;
+  #gainNode = null;
   #sourceNode = null;
   #audioBuffer = null;
+  /** Output gain 0–1; persisted via settings from UI */
+  #volume = 1;
   #startTime = 0;
   #pauseOffset = 0;
   #isPlaying = false;
@@ -74,6 +77,9 @@ class PodcastPlayer {
   async loadAudio(base64Data) {
     if (!this.#audioContext) {
       this.#audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.#gainNode = this.#audioContext.createGain();
+      this.#gainNode.gain.value = this.#volume;
+      this.#gainNode.connect(this.#audioContext.destination);
     }
 
     const raw = atob(base64Data);
@@ -120,7 +126,8 @@ class PodcastPlayer {
     this.#sourceNode = this.#audioContext.createBufferSource();
     this.#sourceNode.buffer = this.#audioBuffer;
     this.#sourceNode.playbackRate.value = this.#playbackRate;
-    this.#sourceNode.connect(this.#audioContext.destination);
+    const dest = this.#gainNode || this.#audioContext.destination;
+    this.#sourceNode.connect(dest);
 
     this.#sourceNode.onended = () => {
       if (this.#stoppingForSeek) return;
@@ -196,6 +203,19 @@ class PodcastPlayer {
    * BUG FIX: Read current position BEFORE updating rate, then
    * recalculate startTime with the NEW rate so the position is preserved.
    */
+  /**
+   * @param {number} level 0–1 linear gain
+   */
+  setVolume(level) {
+    const v = Math.max(0, Math.min(1, Number(level)));
+    this.#volume = Number.isFinite(v) ? v : 1;
+    if (this.#gainNode) this.#gainNode.gain.value = this.#volume;
+  }
+
+  getVolume() {
+    return this.#volume;
+  }
+
   setRate(rate) {
     const currentPos = this.#getCurrentTime(); // capture BEFORE rate change
     this.#playbackRate = Math.max(0.5, Math.min(2.0, rate));
@@ -233,6 +253,7 @@ class PodcastPlayer {
       this.#audioContext.close().catch(() => {});
       this.#audioContext = null;
     }
+    this.#gainNode = null;
     this.#audioBuffer = null;
     this.#onStateChange = null;
     PodcastPlayer.#instance = null;

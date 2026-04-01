@@ -848,6 +848,84 @@
   fill: var(--ytai-accent-on);
 }
 
+.ytai-podcast-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.ytai-podcast-volume-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ytai-text-muted);
+  flex-shrink: 0;
+  min-width: 44px;
+}
+
+.ytai-podcast-volume-pct {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ytai-text-muted);
+  flex-shrink: 0;
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ytai-podcast-volume-slider {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  accent-color: var(--ytai-accent);
+  cursor: pointer;
+}
+
+.ytai-podcast-download-wrap {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.ytai-podcast-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ytai-border);
+  background: var(--ytai-bg-sunken);
+  color: var(--ytai-text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ytai-podcast-download:hover {
+  background: var(--ytai-bg-hover);
+  border-color: var(--ytai-accent);
+}
+
+.ytai-podcast-download svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.ytai-podcast-download-hint {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ytai-text-faint);
+  text-align: center;
+  padding: 0 4px;
+}
+
 .ytai-podcast-rate {
   display: flex;
   align-items: center;

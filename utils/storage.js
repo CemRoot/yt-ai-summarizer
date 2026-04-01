@@ -20,7 +20,9 @@ class StorageHelper {
     cacheSummaries: true,
     cacheTranscripts: false,
     theme: 'auto',
-    onboardingComplete: false
+    onboardingComplete: false,
+    /** Podcast player output 0–1 (Web Audio gain) */
+    podcastVolume: 1
   };
 
   #MAX_CACHED_VIDEOS = 20;

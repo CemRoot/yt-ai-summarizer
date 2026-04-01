@@ -13,7 +13,8 @@ chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
-const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-tts:generateContent';
+/** @see https://ai.google.dev/gemini-api/docs/speech-generation — preview TTS model id for generateContent */
+const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
 const MAX_RETRIES = 3;
 
 /**

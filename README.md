@@ -16,9 +16,10 @@ Turn any YouTube video into a concise, actionable summary in seconds. Bring your
 - **Summary** — Full picture in 3–5 clean paragraphs
 - **Key Points** — 5–10 evidence-backed takeaways as a numbered list
 - **Detailed Analysis** — Section-by-section breakdown with names, dates, data preserved
+- **🎙️ AI Podcast** — Two-host NotebookLM-style audio conversation with Gemini TTS, volume control, and WAV download
 - **💬 Chat** — Ask follow-up questions about the video and get AI answers grounded in the transcript
 
-All three are generated in a **single API call** — no rate limit issues.
+Summary, Key Points, and Detailed are generated in a **single API call** — no rate limit issues.
 
 ---
 
@@ -34,9 +35,9 @@ All three are generated in a **single API call** — no rate limit issues.
 | **First-Visit Tooltip** | Animated "Hey! I'm here" bubble guides new users to the button. |
 | **One-Click Copy** | Copy any analysis to clipboard instantly. |
 | **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
-| **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant. |
+| **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant — even during active generation. |
 | **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
-| **🎙️ AI Podcast** | NotebookLM-style two-host podcast with randomly paired male & female voices. Powered by Gemini TTS — completely free. |
+| **🎙️ AI Podcast** | NotebookLM-style two-host podcast with randomly paired male & female voices. Powered by Gemini TTS — volume control, WAV download for offline/WhatsApp sharing, completely free. |
 | **💬 Video Chat** | Ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history. |
 | **🖥️ Fullscreen-Aware** | Extension UI auto-hides in fullscreen mode for distraction-free viewing. |
 | **🌍 Multi-Language Onboarding** | Welcome page auto-detects browser language with manual selector. 11 languages: EN, TR, ES, FR, DE, JA, KO, ZH, PT, AR, HI. |
@@ -140,7 +141,8 @@ yt-ai-summarizer/
 │   ├── welcome.js             # Provider selection & validation
 │   └── welcome.css            # Onboarding styles
 ├── utils/
-│   └── storage.js             # Provider-aware storage helpers
+│   ├── storage.js             # Provider-aware storage helpers
+│   └── gemini-pcm-wav.js      # Gemini TTS PCM→WAV export + download
 ├── icons/                     # Extension icons (16, 48, 128px)
 ├── _locales/
 │   ├── en/messages.json       # English strings
@@ -250,6 +252,14 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ## Changelog
 
+### v1.8.0
+
+- **🎙️ Podcast TTS Model Fix**: Migrated from `gemini-2.5-flash-tts` (non-existent in v1beta) to `gemini-2.5-flash-preview-tts` — the correct model ID per Google's official speech generation docs. Fixes "model not found" error that broke all podcast generation.
+- **🔊 Podcast Volume Control**: New volume slider (0–100%) on the podcast player. Setting persists across videos via `chrome.storage.local`.
+- **📥 Podcast WAV Download**: "Download audio (WAV)" button exports the Gemini TTS audio as a proper WAV file. Users can save locally or share via WhatsApp as a document for offline listening.
+- **🔄 Non-Blocking Tab Switching**: Completely reworked tab switch architecture — each pipeline (summary, podcast, chat) now has its own busy flag. Switching tabs while AI is generating no longer freezes the UI or shows stale content from another tab. Cache-first display ensures instant tab switches.
+- **🧹 Clean Content Transitions**: `switchMode` now clears the content area synchronously before dispatching async handlers, eliminating brief flashes of wrong-tab content.
+
 ### v1.7.2
 
 - **🔗 Uninstall URL**: Post-uninstall page now opens on **https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html** (portfolio / Vercel) instead of GitHub Pages — same markup as `docs/uninstall.html`; host that file under `public/yt-ai-summarizer/` on Vercel.
@@ -271,7 +281,7 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ### v1.6.4
 
-- **Gemini TTS Stable Upgrade**: Migrated from `gemini-2.5-flash-preview-tts` (preview) to `gemini-2.5-flash-tts` (stable GA). Preview models can be removed by Google without notice; stable GA ensures long-term reliability.
+- **Gemini TTS Model Update**: Updated TTS model identifier.
 - **Auto-Merge Pipeline**: Version Monitor PRs now auto-merge via squash after all CI checks pass — zero manual intervention needed.
 - **Branch Protection**: All PRs require 5 CI checks before merging (Manifest, Lint, Security, Version Consistency, Build).
 - **CODEOWNERS**: Critical files auto-assign @CemRoot as reviewer on PRs.

@@ -36,7 +36,10 @@ class SummarizerController {
   #combinedCache = null;  // { videoId, summary, keypoints, detailed }
   #podcastCache = null;   // { videoId, dialogue, audioBase64 }
   #chatCache = null;      // { videoId, messages: [] }
-  #isProcessing = false;
+  /** Ayrı pipeline bayrakları: sekme değişince diğer iş arka planda sürer, UI doğru sekmede kalır */
+  #summaryBusy = false;
+  #podcastBusy = false;
+  #chatBusy = false;
   #initTimeout = null;
 
   constructor() {
@@ -88,10 +91,14 @@ class SummarizerController {
         this.requestSummary(message.mode || 'summary', true).catch(() => {});
         sendResponse({ ok: true });
       } else if (message.action === 'progress') {
-        ui.showLoading(message.text, message.progress);
+        if (this.#isTextResultMode(ui.getCurrentMode())) {
+          ui.showLoading(message.text, message.progress);
+        }
         sendResponse({ ok: true });
       } else if (message.action === 'podcastProgress') {
-        ui.showPodcastLoading(message.text);
+        if (ui.getCurrentMode() === 'podcast') {
+          ui.showPodcastLoading(message.text);
+        }
         sendResponse({ ok: true });
       }
 
@@ -173,7 +180,9 @@ class SummarizerController {
     if (videoId === this.#currentVideoId) return;
 
     this.#currentVideoId = videoId;
-    this.#isProcessing = false;
+    this.#summaryBusy = false;
+    this.#podcastBusy = false;
+    this.#chatBusy = false;
     this.#combinedCache = null;
     this.#podcastCache = null;
     this.#chatCache = null;
@@ -196,36 +205,39 @@ class SummarizerController {
     }
   }
 
+  #isTextResultMode(mode) {
+    return mode === 'summary' || mode === 'keypoints' || mode === 'detailed';
+  }
+
   // ─── Summary ──────────────────────────────────────────────────────
 
   async requestSummary(mode = 'summary', forceRefresh = false) {
-    if (this.#isProcessing) return;
-
     const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const hasKey = await storage.hasApiKey();
-    if (!hasKey) {
-      ui.showApiKeyPrompt();
-      return;
-    }
-
-    // Serve from in-memory cache (instant tab switch)
+    // 1) In-memory cache → instant tab switch (even while busy)
     if (!forceRefresh && this.#combinedCache?.videoId === videoId && this.#combinedCache[mode]) {
       ui.showResult(this.#combinedCache[mode]);
       return;
     }
 
-    // Serve from persistent cache
-    if (!forceRefresh) {
-      const cached = await storage.getCachedSummary(videoId, mode);
-      if (cached?.content) {
-        ui.showResult(cached.content);
-        return;
-      }
+    // 2) Already generating → show loading for current tab, don't start a second request
+    if (this.#summaryBusy) {
+      ui.showLoading(null, -1);
+      return;
     }
 
-    this.#isProcessing = true;
+    const hasKey = await storage.hasApiKey();
+    if (!hasKey) { ui.showApiKeyPrompt(); return; }
+
+    // 3) Persistent cache
+    if (!forceRefresh) {
+      const cached = await storage.getCachedSummary(videoId, mode);
+      if (cached?.content) { ui.showResult(cached.content); return; }
+    }
+
+    // 4) Start generating
+    this.#summaryBusy = true;
     ui.showLoading(null, 0);
 
     try {
@@ -233,16 +245,14 @@ class SummarizerController {
       const transcript = await tx.getTranscript();
       if (!transcript?.fullText) throw new Error('NO_TRANSCRIPT');
 
-      ui.showLoading('Sending to AI...', 0.2);
+      if (this.#isTextResultMode(ui.getCurrentMode())) {
+        ui.showLoading('Sending to AI...', 0.2);
+      }
 
       const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'summarizeAll',
-        data: {
-          transcript: transcript.fullText,
-          language: settings.language || 'auto',
-          videoId
-        }
+        data: { transcript: transcript.fullText, language: settings.language || 'auto', videoId }
       });
 
       if (!response) throw new Error('API_ERROR: No response from extension. Please reload the page.');
@@ -257,22 +267,23 @@ class SummarizerController {
 
       if (response.provider) ui.updateProviderLabel(response.provider);
 
-      // Persist all modes to storage
       for (const m of ['summary', 'keypoints', 'detailed']) {
         if (response[m]) {
-          storage.cacheSummary(videoId, m, {
-            content: response[m],
-            model: response.model
-          }).catch(() => {});
+          storage.cacheSummary(videoId, m, { content: response[m], model: response.model }).catch(() => {});
         }
       }
 
-      ui.showResult(response[mode]);
+      const cur = ui.getCurrentMode();
+      if (this.#isTextResultMode(cur) && this.#combinedCache[cur]) {
+        ui.showResult(this.#combinedCache[cur]);
+      }
 
     } catch (error) {
-      this.#handleError(error);
+      if (this.#isTextResultMode(ui.getCurrentMode())) {
+        this.#handleError(error);
+      }
     } finally {
-      this.#isProcessing = false;
+      this.#summaryBusy = false;
     }
   }
 
@@ -282,16 +293,20 @@ class SummarizerController {
     const videoId = tx.getVideoId();
     if (!videoId) return;
 
-    const settings = await storage.getSettings();
-    if (!settings.geminiApiKey) {
-      ui.showPodcastKeyPrompt();
-      return;
-    }
-
+    // 1) Cached podcast → instant show
     if (this.#podcastCache?.videoId === videoId && this.#podcastCache.dialogue) {
       ui.showPodcastPlayer(this.#podcastCache);
       return;
     }
+
+    // 2) Already generating → show loading, don't start second request
+    if (this.#podcastBusy) {
+      ui.showPodcastLoading('Generating podcast...');
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    if (!settings.geminiApiKey) { ui.showPodcastKeyPrompt(); return; }
 
     const summaryText = this.#combinedCache?.summary;
     if (!summaryText) {
@@ -307,8 +322,11 @@ class SummarizerController {
   }
 
   async #generatePodcastFromText(text, videoId) {
-    if (this.#isProcessing) return;
-    this.#isProcessing = true;
+    if (this.#podcastBusy) {
+      ui.showPodcastLoading('Generating podcast...');
+      return;
+    }
+    this.#podcastBusy = true;
     ui.showPodcastLoading('Writing podcast script...');
 
     try {
@@ -320,25 +338,36 @@ class SummarizerController {
 
       if (!response) throw new Error('No response from extension.');
       if (response.error) {
-        if (response.error === 'GEMINI_KEY_MISSING') { ui.showPodcastKeyPrompt(); return; }
+        if (response.error === 'GEMINI_KEY_MISSING') {
+          if (ui.getCurrentMode() === 'podcast') ui.showPodcastKeyPrompt();
+          return;
+        }
         if (response.error === 'GEMINI_REGION_BLOCKED') {
-          ui.showError('Region Not Supported', 'Gemini TTS is not available in your region. This is a Google restriction.', false);
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showError('Region Not Supported', 'Gemini TTS is not available in your region. This is a Google restriction.', false);
+          }
           return;
         }
         if (response.error === 'GEMINI_RATE_LIMITED') {
-          ui.showError('Rate Limited', 'Too many requests. Please wait a moment and try again.', true);
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showError('Rate Limited', 'Too many requests. Please wait a moment and try again.', true);
+          }
           return;
         }
         throw new Error(response.error);
       }
 
       this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
-      ui.showPodcastPlayer(this.#podcastCache);
+      if (ui.getCurrentMode() === 'podcast') {
+        ui.showPodcastPlayer(this.#podcastCache);
+      }
 
     } catch (error) {
-      this.#handleError(error);
+      if (ui.getCurrentMode() === 'podcast') {
+        this.#handleError(error);
+      }
     } finally {
-      this.#isProcessing = false;
+      this.#podcastBusy = false;
     }
   }
 
@@ -356,7 +385,7 @@ class SummarizerController {
   }
 
   async sendChatMessage(text) {
-    if (this.#isProcessing) return;
+    if (this.#chatBusy) return;
     const videoId = tx.getVideoId();
     if (!videoId) return;
 
@@ -370,7 +399,7 @@ class SummarizerController {
     this.#chatCache.messages.push({ role: 'user', text });
     ui.addChatMessage('user', text);
 
-    this.#isProcessing = true;
+    this.#chatBusy = true;
     ui.addChatMessage('loading', '');
 
     try {
@@ -400,7 +429,7 @@ class SummarizerController {
       this.#chatCache.messages.push({ role: 'error', text: msg });
       ui.addChatMessage('error', msg);
     } finally {
-      this.#isProcessing = false;
+      this.#chatBusy = false;
     }
   }
 
