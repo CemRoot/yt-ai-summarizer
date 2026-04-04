@@ -252,6 +252,12 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ## Changelog
 
+### v1.8.1
+
+- **📦 Store resubmit**: Bumped manifest version above 1.8.0 so Chrome Web Store accepts a new package (same codebase as 1.8.0 feature set).
+- **🏷️ Version label**: Popup and What’s New read `chrome.runtime.getManifest().version` — no hardcoded version string.
+- **📁 Package**: Distribution ZIP includes `update/` (What’s New page assets).
+
 ### v1.8.0
 
 - **🎙️ Podcast TTS Model Fix**: Migrated from `gemini-2.5-flash-tts` (non-existent in v1beta) to `gemini-2.5-flash-preview-tts` — the correct model ID per Google's official speech generation docs. Fixes "model not found" error that broke all podcast generation.

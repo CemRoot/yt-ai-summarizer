@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '1.8.1',
+      date: '2026-04-04',
+      changes: [
+        { type: 'fixed', text: 'c181_version_labels' },
+        { type: 'changed', text: 'c181_store_bundle' },
+      ]
+    },
+    {
       version: '1.8.0',
       date: '2026-04-04',
       changes: [
@@ -109,6 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c181_version_labels: 'Settings popup and What’s New show the live version from manifest.json (no stale hardcoded label)',
+      c181_store_bundle: 'Store package includes update/ assets; manifest bumped for Chrome Web Store resubmit',
+
       c180_tts_model: 'Podcast TTS: switched to gemini-2.5-flash-preview-tts (correct v1beta model) — fixes “model not found” errors',
       c180_volume: 'Podcast volume slider (0–100%) with setting saved across videos',
       c180_wav: 'Download podcast audio as WAV for offline listening or sharing (e.g. WhatsApp as document)',
@@ -155,6 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c181_version_labels: 'Ayarlar popup’ı ve Neler Yeni, manifest.json’daki canlı sürümü gösterir (sabit metin yok)',
+      c181_store_bundle: 'Mağaza paketine update/ dosyaları dahil; Chrome Web Store yeniden yükleme için manifest sürümü yükseltildi',
 
       c180_tts_model: 'Podcast TTS: gemini-2.5-flash-preview-tts modeline geçildi (doğru v1beta kimliği) — “model bulunamadı” hataları giderildi',
       c180_volume: 'Podcast ses kaydırıcısı (%0–100); ayar videolar arasında saklanır',
