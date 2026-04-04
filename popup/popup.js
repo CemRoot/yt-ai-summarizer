@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
+  try {
+    const v = chrome.runtime?.getManifest?.()?.version;
+    const verEl = $('#popupVersion');
+    if (verEl && v) verEl.textContent = `v${v}`;
+  } catch { /* ignore */ }
+
   const providerBtns      = $$('.provider-btn');
   const groqSection       = $('#groqSettings');
   const ollamaSection     = $('#ollamaSettings');

@@ -20,6 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '1.8.0',
+      date: '2026-04-04',
+      changes: [
+        { type: 'fixed', text: 'c180_tts_model' },
+        { type: 'new', text: 'c180_volume' },
+        { type: 'new', text: 'c180_wav' },
+        { type: 'improved', text: 'c180_tabs' },
+        { type: 'improved', text: 'c180_clear_content' },
+      ]
+    },
+    {
       version: '1.7.2',
       date: '2026-03-31',
       changes: [
@@ -98,6 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c180_tts_model: 'Podcast TTS: switched to gemini-2.5-flash-preview-tts (correct v1beta model) — fixes “model not found” errors',
+      c180_volume: 'Podcast volume slider (0–100%) with setting saved across videos',
+      c180_wav: 'Download podcast audio as WAV for offline listening or sharing (e.g. WhatsApp as document)',
+      c180_tabs: 'Non-blocking tab switching: summary, podcast, and chat each have their own busy state',
+      c180_clear_content: 'Tab switch clears content immediately — no brief flash of another tab’s text',
+
       c172_uninstall_url: 'Uninstall feedback page now opens on your portfolio domain (cemkoyluoglu.codes) instead of GitHub Pages',
 
       c171_privacy: 'Privacy policy redesigned — clearer layout; Chat, Gemini TTS, storage, and permissions',
@@ -138,6 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c180_tts_model: 'Podcast TTS: gemini-2.5-flash-preview-tts modeline geçildi (doğru v1beta kimliği) — “model bulunamadı” hataları giderildi',
+      c180_volume: 'Podcast ses kaydırıcısı (%0–100); ayar videolar arasında saklanır',
+      c180_wav: 'Podcast sesini WAV olarak indirme — çevrimdışı dinleme veya paylaşım (ör. WhatsApp belge)',
+      c180_tabs: 'Engellemeyen sekme geçişi: özet, podcast ve sohbet için ayrı meşgul durumu',
+      c180_clear_content: 'Sekme değişince içerik anında temizlenir — başka sekmenin metni kısa süre görünmez',
 
       c172_uninstall_url: 'Kaldırma geri bildirim sayfası artık GitHub Pages yerine portföy alan adınızda (cemkoyluoglu.codes) açılıyor',
 
@@ -513,12 +536,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (manifestVersion) {
     $('#versionPill').textContent = `v${manifestVersion}`;
-    const matchingEntry = CHANGELOG.find(e => e.version === manifestVersion);
-    if (matchingEntry && matchingEntry !== currentVersion) {
-      $('#currentChangelog').innerHTML = buildChangelogCard(matchingEntry, true);
-    } else {
-      $('#currentChangelog').innerHTML = buildChangelogCard(currentVersion, true);
-    }
+    const matchingEntry = CHANGELOG.find((e) => e.version === manifestVersion);
+    const cardEntry = matchingEntry || currentVersion;
+    $('#currentChangelog').innerHTML = buildChangelogCard(cardEntry, true);
   } else {
     $('#currentChangelog').innerHTML = buildChangelogCard(currentVersion, true);
   }
