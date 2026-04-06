@@ -594,12 +594,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Settings button ──
   $('#settingsBtn').addEventListener('click', () => {
-    const fallbackUrl = chrome.runtime.getURL('popup/popup.html');
     chrome.runtime.sendMessage({ action: 'openSettings' }, (response) => {
       const failed = chrome.runtime.lastError || !response?.ok;
       if (failed) {
-        chrome.tabs.create({ url: fallbackUrl }).catch(() => window.open(fallbackUrl, '_blank'));
+        showSettingsToast();
       }
     });
   });
+
+  function showSettingsToast() {
+    const existing = document.querySelector('.settings-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'settings-toast';
+    toast.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="color:#065fd4;flex-shrink:0">
+        <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+      </svg>
+      <span>${lang === 'tr' ? 'Ayarları açmak için tarayıcı araç çubuğundaki uzantı simgesine tıklayın.' : 'Click the extension icon in your browser toolbar to open settings.'}</span>
+      <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;padding:0 0 0 8px">×</button>
+    `;
+    toast.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      display:flex;align-items:center;gap:10px;
+      background:#fff;color:#0f172a;
+      padding:14px 18px;border-radius:12px;
+      box-shadow:0 8px 32px rgba(15,23,42,0.14),0 0 0 1px rgba(15,23,42,0.06);
+      font-size:13px;font-weight:500;line-height:1.4;
+      max-width:420px;z-index:9999;
+      animation:fadeSlideUp 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+  }
 });

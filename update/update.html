@@ -11,14 +11,17 @@
   <title>What's New — YouTube AI Summarizer</title>
 </head>
 <body>
+  <div class="welcome-accent" aria-hidden="true"></div>
   <div class="update-container">
 
     <!-- Hero -->
     <header class="hero">
-      <div class="hero-badge">
-        <svg viewBox="0 0 24 24" width="32" height="32"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>
+      <div class="hero-icon-row">
+        <div class="popup-logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" focusable="false"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"></path><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"></path></svg>
+        </div>
+        <div class="version-pill" id="versionPill">v…</div>
       </div>
-      <div class="version-pill" id="versionPill">v…</div>
       <h1 id="heroTitle">What's New</h1>
       <p class="hero-sub" id="heroSub">YouTube AI Summarizer has been updated with new features and improvements.</p>
     </header>
@@ -32,7 +35,7 @@
 
     <!-- Previous Versions (collapsible) -->
     <section class="history-section" id="historySection">
-      <button class="history-toggle" id="historyToggle" type="button">
+      <button class="history-toggle" id="historyToggle" type="button" aria-expanded="false">
         <span id="historyToggleText">Previous Versions</span>
         <svg class="history-chevron" viewBox="0 0 24 24" width="20" height="20"><path d="M7 10l5 5 5-5z"/></svg>
       </button>

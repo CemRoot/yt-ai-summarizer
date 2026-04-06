@@ -258,12 +258,14 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 
 ### v1.8.1
 
-- **📦 Store resubmit**: Bumped manifest version above 1.8.0 so Chrome Web Store accepts a new package (same codebase as 1.8.0 feature set).
+- **📦 Store resubmit**: Bumped manifest version above 1.8.0 so Chrome Web Store accepts a new package.
 - **🏷️ Version label**: Popup and What’s New read `chrome.runtime.getManifest().version` — no hardcoded version string.
 - **📁 Package**: Distribution ZIP includes `update/` (What’s New page assets).
-- **🎨 Update page polish**: Refined `update/update.css` for a more professional What's New layout and visual hierarchy.
+- **🎨 Update page polish**: Refined `update/update.css` for a more professional What's New layout and visual hierarchy. Fixed top accent line styling to match the welcome page.
+- **✨ Hero icon update**: Replaced the oversized red star SVG with the actual extension icon (`icon128.png`) in the update page's hero section.
 - **🔖 YouTube favicon**: Added a YouTube-style SVG favicon and wired it to update + popup pages.
-- **🧭 Open Settings behavior**: What's New now requests opening the extension action popup first, with fallback to `popup/popup.html`.
+- **🧭 Open Settings behavior**: What's New now requests opening the extension action popup first, with an elegant in-page Settings Toast fallback if the popup API fails, instead of opening an ugly new tab.
+- **📜 Previous Versions toggle**: Fixed a CSS conflict (`display: flex` overriding `hidden`) making the previous versions list permanently visible instead of hidden by default.
 
 ### v1.8.0
 

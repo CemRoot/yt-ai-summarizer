@@ -337,6 +337,7 @@ jobs:
             icons/ \
             content/ \
             popup/ \
+            update/ \
             welcome/ \
             utils/ \
             _locales/ \
