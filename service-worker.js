@@ -229,9 +229,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'openSettings') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') });
-    sendResponse({ ok: true });
-    return false;
+    chrome.action.openPopup()
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') })
+          .then(() => sendResponse({ ok: true }))
+          .catch(() => sendResponse({ ok: false }));
+      });
+    return true;
   }
 
   if (message.action === 'fetchTranscript') {
