@@ -594,7 +594,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Settings button ──
   $('#settingsBtn').addEventListener('click', () => {
-    const url = chrome.runtime.getURL('popup/popup.html');
-    chrome.tabs.create({ url }).catch(() => window.open(url, '_blank'));
+    const fallbackUrl = chrome.runtime.getURL('popup/popup.html');
+    chrome.runtime.sendMessage({ action: 'openSettings' }, (response) => {
+      const failed = chrome.runtime.lastError || !response?.ok;
+      if (failed) {
+        chrome.tabs.create({ url: fallbackUrl }).catch(() => window.open(fallbackUrl, '_blank'));
+      }
+    });
   });
 });

@@ -136,6 +136,10 @@ yt-ai-summarizer/
 │   ├── popup.html             # Settings panel (dual provider)
 │   ├── popup.js               # Settings logic
 │   └── popup.css              # Modern card-based styles
+├── update/
+│   ├── update.html            # What's New page shown after extension updates
+│   ├── update.js              # Changelog rendering + i18n + actions
+│   └── update.css             # What's New page styles
 ├── welcome/
 │   ├── welcome.html           # Step-by-step onboarding
 │   ├── welcome.js             # Provider selection & validation
@@ -257,6 +261,9 @@ If you uninstall the extension and immediately try to reinstall from the Chrome 
 - **📦 Store resubmit**: Bumped manifest version above 1.8.0 so Chrome Web Store accepts a new package (same codebase as 1.8.0 feature set).
 - **🏷️ Version label**: Popup and What’s New read `chrome.runtime.getManifest().version` — no hardcoded version string.
 - **📁 Package**: Distribution ZIP includes `update/` (What’s New page assets).
+- **🎨 Update page polish**: Refined `update/update.css` for a more professional What's New layout and visual hierarchy.
+- **🔖 YouTube favicon**: Added a YouTube-style SVG favicon and wired it to update + popup pages.
+- **🧭 Open Settings behavior**: What's New now requests opening the extension action popup first, with fallback to `popup/popup.html`.
 
 ### v1.8.0
 
