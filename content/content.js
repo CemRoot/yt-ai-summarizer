@@ -28,8 +28,6 @@ if (!ui || !storage || !tx || !player) {
   });
 }
 
-const CHAT_HELPER_TEXT = 'Open a YouTube video to start chatting.';
-
 class SummarizerController {
 
   static #instance = null;
@@ -192,6 +190,13 @@ class SummarizerController {
     return cache;
   }
 
+  #chatHelperText() {
+    const lang = String(navigator?.language || '').toLowerCase();
+    return lang.startsWith('tr')
+      ? 'Sohbete başlamak için bir YouTube videosu açın.'
+      : 'Open a YouTube video to start chatting.';
+  }
+
   #enterNonWatchState() {
     this.#currentVideoId = null;
     this.#summaryBusy = false;
@@ -205,7 +210,7 @@ class SummarizerController {
     if (ui.getCurrentMode?.() === 'chat') {
       ui.showChatUI([], {
         disabled: true,
-        helperText: CHAT_HELPER_TEXT,
+        helperText: this.#chatHelperText(),
         noticeMessage: this.#getErrorPresentation('NOT_ON_VIDEO_PAGE').message
       });
     }
@@ -241,7 +246,7 @@ class SummarizerController {
       if (ui.isPanelOpen() && ui.getCurrentMode() === 'chat') {
         ui.showChatUI([], {
           disabled: true,
-          helperText: CHAT_HELPER_TEXT,
+          helperText: this.#chatHelperText(),
           noticeMessage: this.#getErrorPresentation('VIDEO_ID_MISSING').message
         });
       }
@@ -254,7 +259,7 @@ class SummarizerController {
     this.#podcastBusy = false;
     this.#chatBusy = false;
     this.#combinedCache = this.#summaryCacheByVideo.get(videoId) || null;
-    this.#podcastCache = null;
+    this.#podcastCache = null; // Intentional: podcast audio payload can be large; keep only active-video session cache.
     this.#chatCache = this.#chatCacheByVideo.get(videoId) || null;
     player.destroy();
 
@@ -471,7 +476,7 @@ class SummarizerController {
       const mapped = this.#getErrorPresentation(ctx.errorCode);
       ui.showChatUI([], {
         disabled: true,
-        helperText: CHAT_HELPER_TEXT,
+        helperText: this.#chatHelperText(),
         noticeMessage: mapped.message
       });
       return;
