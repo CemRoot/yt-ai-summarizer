@@ -1281,6 +1281,11 @@
   transition: border-color 0.2s;
 }
 
+.ytai-chat-input-wrap.disabled {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
 .ytai-chat-input-wrap:focus-within {
   border-color: var(--ytai-accent);
 }
@@ -1299,6 +1304,11 @@
   max-height: 100px;
   overflow-y: auto;
   line-height: 1.4;
+}
+
+#ytaiChatInput:disabled {
+  cursor: not-allowed;
+  color: var(--ytai-text-faint);
 }
 
 #ytaiChatInput::placeholder {
@@ -1329,6 +1339,18 @@
 #ytaiChatSendBtn:not(:disabled):hover {
   background: var(--ytai-accent-hover);
   transform: scale(1.05);
+}
+
+.ytai-chat-helper {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ytai-text-muted);
+}
+
+.ytai-chat-helper-error {
+  color: var(--ytai-error);
 }
 
 #ytaiChatSendBtn svg {
