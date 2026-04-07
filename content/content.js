@@ -259,7 +259,9 @@ class SummarizerController {
     this.#podcastBusy = false;
     this.#chatBusy = false;
     this.#combinedCache = this.#summaryCacheByVideo.get(videoId) || null;
-    this.#podcastCache = null; // Intentional: podcast audio payload can be large; keep only active-video session cache.
+    // Intentional: summary/chat caches are lightweight text and restored per-video from maps;
+    // podcast payload is larger (audio) so we keep it ephemeral to the active video session only.
+    this.#podcastCache = null;
     this.#chatCache = this.#chatCacheByVideo.get(videoId) || null;
     player.destroy();
 
@@ -580,6 +582,7 @@ class SummarizerController {
     if (!errorMsg) return 'UNKNOWN_ERROR';
 
     if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
+    // Keep NO_VIDEO_ID for compatibility with any legacy throw sites.
     if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
     if (errorMsg === 'API_KEY_MISSING') return 'API_KEY_MISSING';
     if (errorMsg === 'INVALID_API_KEY' || errorMsg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
