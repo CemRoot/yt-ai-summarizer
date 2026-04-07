@@ -50,11 +50,11 @@ class TranscriptExtractor {
 
   #getRuntimeConfig() {
     const cfg = globalThis.__YTAI_TRANSCRIPT_RUNTIME_CONFIG || {};
-    const delays = Array.isArray(cfg.retryDelaysMs) && cfg.retryDelaysMs.length > 0
+    const effectiveDelays = Array.isArray(cfg.retryDelaysMs) && cfg.retryDelaysMs.length > 0
       ? cfg.retryDelaysMs
       : [300, 800, 1500];
     return {
-      retryDelaysMs: delays,
+      retryDelaysMs: effectiveDelays,
       maxAttempts: Number.isInteger(cfg.maxAttempts) && cfg.maxAttempts > 0
         ? cfg.maxAttempts
         : 3,
@@ -69,6 +69,19 @@ class TranscriptExtractor {
 
   #sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  #getAvailabilityErrorForAttempt(attempt, attempts) {
+    return new Error(attempt < attempts ? 'TRANSCRIPT_NOT_READY' : 'TRANSCRIPT_UNAVAILABLE');
+  }
+
+  #getEmptyTranscriptErrorForAttempt(attempt, attempts) {
+    return new Error(attempt < attempts ? 'TRANSCRIPT_EMPTY_RETRYABLE' : 'TRANSCRIPT_EMPTY_FINAL');
+  }
+
+  #retryDelayForAttempt(attempt, delays) {
+    // `attempt` is 1-based; delay arrays are 0-based.
+    return delays[Math.min(attempt - 1, delays.length - 1)];
   }
 
   #beginRequestContext(videoId) {
@@ -127,6 +140,8 @@ class TranscriptExtractor {
   }
 
   async #waitForTranscriptReadiness(ctx, preferredLang) {
+    // Resolves only when lightweight player/caption readiness signals are present.
+    // Throws TRANSCRIPT_NOT_READY when readiness does not arrive within the bounded window.
     const { readinessTimeoutMs, readinessPollMs } = this.#getRuntimeConfig();
     const start = Date.now();
 
@@ -574,12 +589,12 @@ class TranscriptExtractor {
       const tracks = await this.#getCaptionTracks();
 
       if (!tracks?.length) {
-        lastError = new Error(attempt < attempts ? 'TRANSCRIPT_NOT_READY' : 'TRANSCRIPT_UNAVAILABLE');
+        lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
       } else {
         const { track: selectedTrack } = this.#selectBestTrack(tracks, preferredLang, playerPrefs);
 
         if (!selectedTrack?.baseUrl) {
-          lastError = new Error(attempt < attempts ? 'TRANSCRIPT_NOT_READY' : 'TRANSCRIPT_UNAVAILABLE');
+          lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
         } else {
           this.#debugLog(
             `attempt=${attempt}`,
@@ -632,12 +647,12 @@ class TranscriptExtractor {
             return result;
           }
 
-          lastError = new Error(attempt < attempts ? 'TRANSCRIPT_EMPTY_RETRYABLE' : 'TRANSCRIPT_EMPTY_FINAL');
+          lastError = this.#getEmptyTranscriptErrorForAttempt(attempt, attempts);
         }
       }
 
       if (attempt < attempts) {
-        const delayMs = retryCfg.retryDelaysMs[Math.min(attempt - 1, retryCfg.retryDelaysMs.length - 1)];
+        const delayMs = this.#retryDelayForAttempt(attempt, retryCfg.retryDelaysMs);
         this.#debugLog(
           `attempt=${attempt}`,
           `retryDelayMs=${delayMs}`,

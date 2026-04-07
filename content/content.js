@@ -468,6 +468,7 @@ class SummarizerController {
       'TRANSCRIPT_NOT_READY': { title: 'Transcript Loading', message: 'Captions are still loading for this video. Please try again in a moment.', retryable: true },
       'TRANSCRIPT_EMPTY_RETRYABLE': { title: 'Transcript Loading', message: 'Captions were detected but are not ready yet. Please try again.', retryable: true },
       'TRANSCRIPT_EMPTY_FINAL': { title: 'Empty Transcript',  message: 'The transcript was found but appears to be empty.', retryable: true  },
+      // Legacy compatibility for older paths still throwing EMPTY_TRANSCRIPT.
       'EMPTY_TRANSCRIPT':  { title: 'Empty Transcript',  message: 'The transcript was found but appears to be empty.',                                            retryable: true  },
       'TRANSCRIPT_REQUEST_STALE': { title: 'Video Changed', message: 'Transcript request was cancelled because the video changed.', retryable: true },
       'INVALID_API_KEY':   { title: 'Invalid API Key',   message: 'Your API key is invalid. Please check your settings.',                                         retryable: false },

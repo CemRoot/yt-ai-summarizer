@@ -1,10 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const vm = require('node:vm');
 
 const transcriptSource = fs.readFileSync(
-  '/home/runner/work/yt-ai-summarizer/yt-ai-summarizer/content/transcript.js',
+  path.join(__dirname, 'transcript.js'),
   'utf8'
 );
 
@@ -172,7 +173,7 @@ function createHarness(options = {}) {
   return { tx: context.globalThis.TranscriptExtractor, state, setVideoId };
 }
 
-test('empty first attempt succeeds on second attempt', async () => {
+test('retries and succeeds after initial empty transcript', async () => {
   const h = createHarness({
     trackResponses: [
       [{ baseUrl: 'https://x/timedtext?lang=en', language: 'en' }],
@@ -186,10 +187,9 @@ test('empty first attempt succeeds on second attempt', async () => {
   assert.equal(result.fullText, 'hello world');
 });
 
-test('all attempts empty returns TRANSCRIPT_EMPTY_FINAL', async () => {
+test('throws TRANSCRIPT_EMPTY_FINAL when all retry attempts return empty', async () => {
   const h = createHarness({
     trackResponses: [
-      [{ baseUrl: 'https://x/timedtext?lang=en', language: 'en' }],
       [{ baseUrl: 'https://x/timedtext?lang=en', language: 'en' }],
       [{ baseUrl: 'https://x/timedtext?lang=en', language: 'en' }],
       [{ baseUrl: 'https://x/timedtext?lang=en', language: 'en' }]
