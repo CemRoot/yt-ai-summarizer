@@ -27,6 +27,8 @@ class TranscriptExtractor {
   };
 
   #cachedWebVersion = null;
+  #requestGeneration = 0;
+  #activeRequestVideoId = null;
 
   constructor() {
     if (TranscriptExtractor.#instance) return TranscriptExtractor.#instance;
@@ -38,6 +40,128 @@ class TranscriptExtractor {
       TranscriptExtractor.#instance = new TranscriptExtractor();
     }
     return TranscriptExtractor.#instance;
+  }
+
+  #debugLog(...args) {
+    if (globalThis.__YTAI_DEBUG_TRANSCRIPT === true) {
+      console.debug('[YTAI][Transcript]', ...args);
+    }
+  }
+
+  #getRuntimeConfig() {
+    const cfg = globalThis.__YTAI_TRANSCRIPT_RUNTIME_CONFIG || {};
+    const effectiveDelays = Array.isArray(cfg.retryDelaysMs) && cfg.retryDelaysMs.length > 0
+      ? cfg.retryDelaysMs
+      : [300, 800, 1500];
+    return {
+      retryDelaysMs: effectiveDelays,
+      maxAttempts: Number.isInteger(cfg.maxAttempts) && cfg.maxAttempts > 0
+        ? cfg.maxAttempts
+        : 3,
+      readinessTimeoutMs: Number.isInteger(cfg.readinessTimeoutMs) && cfg.readinessTimeoutMs > 0
+        ? cfg.readinessTimeoutMs
+        : 2500,
+      readinessPollMs: Number.isInteger(cfg.readinessPollMs) && cfg.readinessPollMs > 0
+        ? cfg.readinessPollMs
+        : 200
+    };
+  }
+
+  #sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  #getAvailabilityErrorForAttempt(attempt, attempts) {
+    return new Error(attempt < attempts ? 'TRANSCRIPT_NOT_READY' : 'TRANSCRIPT_UNAVAILABLE');
+  }
+
+  #getEmptyTranscriptErrorForAttempt(attempt, attempts) {
+    return new Error(attempt < attempts ? 'TRANSCRIPT_EMPTY_RETRYABLE' : 'TRANSCRIPT_EMPTY_FINAL');
+  }
+
+  #retryDelayForAttempt(attempt, delays) {
+    // `attempt` is 1-based; delay arrays are 0-based.
+    return delays[Math.min(attempt - 1, delays.length - 1)];
+  }
+
+  #beginRequestContext(videoId) {
+    if (this.#activeRequestVideoId !== videoId) {
+      this.#activeRequestVideoId = videoId;
+      this.#requestGeneration += 1;
+    }
+    return { videoId, generation: this.#requestGeneration };
+  }
+
+  #assertRequestContext(ctx) {
+    const currentVideoId = this.getVideoId();
+    if (
+      this.#requestGeneration !== ctx.generation
+      || this.#activeRequestVideoId !== ctx.videoId
+      || currentVideoId !== ctx.videoId
+    ) {
+      throw new Error('TRANSCRIPT_REQUEST_STALE');
+    }
+  }
+
+  #isPlayerReadyForVideo(videoId) {
+    try {
+      const player = document.querySelector('#movie_player');
+      if (!player) return false;
+      if (typeof player.getVideoData === 'function') {
+        const data = player.getVideoData();
+        if (data?.video_id && data.video_id !== videoId) return false;
+      }
+      if (typeof player.getPlayerResponse === 'function') {
+        const response = player.getPlayerResponse();
+        const responseVideoId = response?.videoDetails?.videoId;
+        if (responseVideoId && responseVideoId !== videoId) return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  #getCaptionTracksQuick() {
+    try {
+      const player = document.querySelector('#movie_player');
+      if (player && typeof player.getPlayerResponse === 'function') {
+        const responseTracks = player.getPlayerResponse()?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+        if (responseTracks?.length) return responseTracks.map(t => this.#mapRawTrack(t));
+      }
+    } catch {}
+
+    try {
+      const initTracks = window.ytInitialPlayerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      if (initTracks?.length) return initTracks.map(t => this.#mapRawTrack(t));
+    } catch {}
+
+    return this.#extractTracksFromPageScripts();
+  }
+
+  async #waitForTranscriptReadiness(ctx, preferredLang) {
+    // Resolves only when lightweight player/caption readiness signals are present.
+    // Throws TRANSCRIPT_NOT_READY when readiness does not arrive within the bounded window.
+    const { readinessTimeoutMs, readinessPollMs } = this.#getRuntimeConfig();
+    const start = Date.now();
+
+    while (Date.now() - start < readinessTimeoutMs) {
+      this.#assertRequestContext(ctx);
+
+      if (this.#isPlayerReadyForVideo(ctx.videoId)) {
+        const tracks = this.#getCaptionTracksQuick();
+        if (tracks?.length) {
+          const { track } = this.#selectBestTrack(tracks, preferredLang, null);
+          if (track?.baseUrl) {
+            return;
+          }
+        }
+      }
+
+      await this.#sleep(readinessPollMs);
+    }
+
+    throw new Error('TRANSCRIPT_NOT_READY');
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────
@@ -450,42 +574,96 @@ class TranscriptExtractor {
   async getTranscript(preferredLang = 'auto') {
     const videoId = this.getVideoId();
     if (!videoId) throw new Error('NO_VIDEO_ID');
-
-    const playerPrefs = await this.#getPlayerPrefsFromBridge();
-
-    const tracks = await this.#getCaptionTracks();
-    if (!tracks?.length) throw new Error('NO_TRANSCRIPT');
-
-    const { track: selectedTrack } = this.#selectBestTrack(tracks, preferredLang, playerPrefs);
-    if (!selectedTrack) throw new Error('NO_TRANSCRIPT');
+    const requestCtx = this.#beginRequestContext(videoId);
+    const retryCfg = this.#getRuntimeConfig();
 
     const cached = await StorageHelper.getCachedTranscript(videoId);
-    if (cached
-      && cached.language === selectedTrack.language
-      && !!cached.isAutoGenerated === !!selectedTrack.isAutoGenerated) {
-      return cached;
+    await this.#waitForTranscriptReadiness(requestCtx, preferredLang);
+
+    let lastError = null;
+    const attempts = Math.max(1, retryCfg.maxAttempts);
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      this.#assertRequestContext(requestCtx);
+      const playerPrefs = await this.#getPlayerPrefsFromBridge();
+      const tracks = await this.#getCaptionTracks();
+
+      if (!tracks?.length) {
+        lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
+      } else {
+        const { track: selectedTrack } = this.#selectBestTrack(tracks, preferredLang, playerPrefs);
+
+        if (!selectedTrack?.baseUrl) {
+          lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
+        } else {
+          this.#debugLog(
+            `attempt=${attempt}`,
+            `track=${selectedTrack.vssId || 'n/a'}`,
+            `lang=${selectedTrack.language}`,
+            'fetch=direct'
+          );
+
+          if (
+            cached
+            && cached.language === selectedTrack.language
+            && !!cached.isAutoGenerated === !!selectedTrack.isAutoGenerated
+          ) {
+            this.#debugLog(`attempt=${attempt}`, 'cache-hit=true');
+            return cached;
+          }
+
+          let fetchMode = 'direct';
+          let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
+          if (!entries) {
+            fetchMode = 'proxy';
+            entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
+          }
+
+          this.#debugLog(
+            `attempt=${attempt}`,
+            `track=${selectedTrack.vssId || 'n/a'}`,
+            `lang=${selectedTrack.language}`,
+            `fetch=${fetchMode}`,
+            `entries=${entries?.length || 0}`
+          );
+
+          if (entries?.length) {
+            this.#assertRequestContext(requestCtx);
+            const result = {
+              videoId,
+              entries,
+              fullText: entries.map(e => e.text).join(' '),
+              language: selectedTrack.language,
+              trackName: selectedTrack.name,
+              isAutoGenerated: selectedTrack.isAutoGenerated,
+              availableTracks: tracks.map(t => ({
+                language: t.language,
+                name: t.name,
+                isAutoGenerated: t.isAutoGenerated
+              }))
+            };
+
+            await StorageHelper.cacheTranscript(videoId, result);
+            return result;
+          }
+
+          lastError = this.#getEmptyTranscriptErrorForAttempt(attempt, attempts);
+        }
+      }
+
+      if (attempt < attempts) {
+        const delayMs = this.#retryDelayForAttempt(attempt, retryCfg.retryDelaysMs);
+        this.#debugLog(
+          `attempt=${attempt}`,
+          `retryDelayMs=${delayMs}`,
+          `reason=${lastError?.message || 'unknown'}`
+        );
+        await this.#sleep(delayMs);
+      }
     }
 
-    let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
-    if (!entries) entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
-    if (!entries?.length) throw new Error('EMPTY_TRANSCRIPT');
-
-    const result = {
-      videoId,
-      entries,
-      fullText: entries.map(e => e.text).join(' '),
-      language: selectedTrack.language,
-      trackName: selectedTrack.name,
-      isAutoGenerated: selectedTrack.isAutoGenerated,
-      availableTracks: tracks.map(t => ({
-        language: t.language,
-        name: t.name,
-        isAutoGenerated: t.isAutoGenerated
-      }))
-    };
-
-    await StorageHelper.cacheTranscript(videoId, result);
-    return result;
+    this.#debugLog(`finalFailure=${lastError?.message || 'UNKNOWN'}`);
+    throw lastError || new Error('TRANSCRIPT_EMPTY_FINAL');
   }
 
   async getAvailableLanguages() {
