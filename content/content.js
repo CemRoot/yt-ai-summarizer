@@ -36,6 +36,8 @@ class SummarizerController {
   #combinedCache = null;  // { videoId, summary, keypoints, detailed }
   #podcastCache = null;   // { videoId, dialogue, audioBase64 }
   #chatCache = null;      // { videoId, messages: [] }
+  #summaryCacheByVideo = new Map();
+  #chatCacheByVideo = new Map();
   /** Ayrı pipeline bayrakları: sekme değişince diğer iş arka planda sürer, UI doğru sekmede kalır */
   #summaryBusy = false;
   #podcastBusy = false;
@@ -114,7 +116,7 @@ class SummarizerController {
       if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
       } else {
-        this.#currentVideoId = null;
+        this.#enterNonWatchState();
       }
     });
 
@@ -122,6 +124,8 @@ class SummarizerController {
     window.addEventListener('popstate', () => {
       if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
+      } else {
+        this.#enterNonWatchState();
       }
     });
 
@@ -133,6 +137,8 @@ class SummarizerController {
         lastUrl = currentUrl;
         if (this.#isYoutubeVideoPage()) {
           this.#debouncedInitialize();
+        } else {
+          this.#enterNonWatchState();
         }
       }
     }, 1000);
@@ -153,6 +159,63 @@ class SummarizerController {
     return p === '/watch' || p.startsWith('/shorts/') || /^\/embed\/[a-zA-Z0-9_-]{11}/.test(p);
   }
 
+  #isWatchPage() {
+    const raw = window.location.pathname || '/';
+    const p = raw.replace(/\/+$/, '') || '/';
+    return p === '/watch';
+  }
+
+  #isValidVideoId(videoId) {
+    return typeof videoId === 'string' && /^[a-zA-Z0-9_-]{11}$/.test(videoId);
+  }
+
+  #getChatPageContext() {
+    if (!this.#isWatchPage()) {
+      return { ok: false, errorCode: 'NOT_ON_VIDEO_PAGE' };
+    }
+    const videoId = tx.getVideoId();
+    if (!this.#isValidVideoId(videoId)) {
+      return { ok: false, errorCode: 'VIDEO_ID_MISSING' };
+    }
+    return { ok: true, videoId };
+  }
+
+  #ensureChatCache(videoId) {
+    let cache = this.#chatCacheByVideo.get(videoId);
+    if (!cache) {
+      cache = { videoId, messages: [] };
+      this.#chatCacheByVideo.set(videoId, cache);
+    }
+    this.#chatCache = cache;
+    return cache;
+  }
+
+  #chatHelperText() {
+    const lang = String(navigator?.language || '').toLowerCase();
+    return lang.startsWith('tr')
+      ? 'Sohbete başlamak için bir YouTube videosu açın.'
+      : 'Open a YouTube video to start chatting.';
+  }
+
+  #enterNonWatchState() {
+    this.#currentVideoId = null;
+    this.#summaryBusy = false;
+    this.#podcastBusy = false;
+    this.#chatBusy = false;
+    this.#combinedCache = null;
+    this.#podcastCache = null;
+    this.#chatCache = null;
+    player.destroy();
+
+    if (ui.getCurrentMode?.() === 'chat') {
+      ui.showChatUI([], {
+        disabled: true,
+        helperText: this.#chatHelperText(),
+        noticeMessage: this.#getErrorPresentation('NOT_ON_VIDEO_PAGE').message
+      });
+    }
+  }
+
   async #whenBodyReady() {
     for (let i = 0; i < 80 && !document.body; i++) {
       await new Promise((r) => setTimeout(r, 25));
@@ -164,7 +227,10 @@ class SummarizerController {
 
   async initialize() {
     if (!ui || !storage || !tx || !player) return;
-    if (!this.#isYoutubeVideoPage()) return;
+    if (!this.#isYoutubeVideoPage()) {
+      this.#enterNonWatchState();
+      return;
+    }
 
     if (!(await this.#whenBodyReady())) {
       console.error('[YTAI] document.body missing — cannot mount panel');
@@ -176,16 +242,27 @@ class SummarizerController {
     // Mount floating button + panel on any watch / Shorts / embed page (even if ID not parsed yet)
     ui.init();
 
-    if (!videoId) return;
+    if (!videoId) {
+      if (ui.isPanelOpen() && ui.getCurrentMode() === 'chat') {
+        ui.showChatUI([], {
+          disabled: true,
+          helperText: this.#chatHelperText(),
+          noticeMessage: this.#getErrorPresentation('VIDEO_ID_MISSING').message
+        });
+      }
+      return;
+    }
     if (videoId === this.#currentVideoId) return;
 
     this.#currentVideoId = videoId;
     this.#summaryBusy = false;
     this.#podcastBusy = false;
     this.#chatBusy = false;
-    this.#combinedCache = null;
+    this.#combinedCache = this.#summaryCacheByVideo.get(videoId) || null;
+    // Intentional: summary/chat caches are lightweight text and restored per-video from maps;
+    // podcast payload is larger (audio) so we keep it ephemeral to the active video session only.
     this.#podcastCache = null;
-    this.#chatCache = null;
+    this.#chatCache = this.#chatCacheByVideo.get(videoId) || null;
     player.destroy();
 
     const hasKey = await storage.hasApiKey();
@@ -198,10 +275,19 @@ class SummarizerController {
       ui.autoOpen();
       const cached = await storage.getCachedSummary(videoId, settings.defaultMode || 'summary');
       if (cached?.content) {
+        const existing = this.#summaryCacheByVideo.get(videoId) || { videoId };
+        existing[settings.defaultMode || 'summary'] = cached.content;
+        this.#summaryCacheByVideo.set(videoId, existing);
+        this.#combinedCache = existing;
         ui.showResult(cached.content);
       } else {
         ui.showReadyPrompt();
       }
+    }
+
+    if (ui.isPanelOpen()) {
+      if (ui.getCurrentMode() === 'chat') this.requestChat();
+      else this.onPanelOpen();
     }
   }
 
@@ -215,9 +301,14 @@ class SummarizerController {
     const videoId = tx.getVideoId();
     if (!videoId) return;
 
+    const inMemory = this.#combinedCache?.videoId === videoId
+      ? this.#combinedCache
+      : this.#summaryCacheByVideo.get(videoId);
+
     // 1) In-memory cache → instant tab switch (even while busy)
-    if (!forceRefresh && this.#combinedCache?.videoId === videoId && this.#combinedCache[mode]) {
-      ui.showResult(this.#combinedCache[mode]);
+    if (!forceRefresh && inMemory?.[mode]) {
+      this.#combinedCache = inMemory;
+      ui.showResult(inMemory[mode]);
       return;
     }
 
@@ -233,7 +324,14 @@ class SummarizerController {
     // 3) Persistent cache
     if (!forceRefresh) {
       const cached = await storage.getCachedSummary(videoId, mode);
-      if (cached?.content) { ui.showResult(cached.content); return; }
+      if (cached?.content) {
+        const existing = this.#summaryCacheByVideo.get(videoId) || { videoId };
+        existing[mode] = cached.content;
+        this.#summaryCacheByVideo.set(videoId, existing);
+        this.#combinedCache = existing;
+        ui.showResult(cached.content);
+        return;
+      }
     }
 
     // 4) Start generating
@@ -264,6 +362,7 @@ class SummarizerController {
         keypoints: response.keypoints,
         detailed: response.detailed
       };
+      this.#summaryCacheByVideo.set(videoId, this.#combinedCache);
 
       if (response.provider) ui.updateProviderLabel(response.provider);
 
@@ -374,29 +473,43 @@ class SummarizerController {
   // ─── Chat ─────────────────────────────────────────────────────────
 
   requestChat() {
-    const videoId = tx.getVideoId();
-    if (!videoId) return;
-
-    if (!this.#chatCache || this.#chatCache.videoId !== videoId) {
-      this.#chatCache = { videoId, messages: [] };
+    const ctx = this.#getChatPageContext();
+    if (!ctx.ok) {
+      const mapped = this.#getErrorPresentation(ctx.errorCode);
+      ui.showChatUI([], {
+        disabled: true,
+        helperText: this.#chatHelperText(),
+        noticeMessage: mapped.message
+      });
+      return;
     }
 
-    ui.showChatUI(this.#chatCache.messages);
+    const chatCache = this.#ensureChatCache(ctx.videoId);
+    ui.showChatUI(chatCache.messages);
   }
 
   async sendChatMessage(text) {
     if (this.#chatBusy) return;
-    const videoId = tx.getVideoId();
-    if (!videoId) return;
+    const ctx = this.#getChatPageContext();
+    if (!ctx.ok) {
+      this.requestChat();
+      return;
+    }
+    const videoId = ctx.videoId;
 
     const hasKey = await storage.hasApiKey();
-    if (!hasKey) { ui.showApiKeyPrompt(); return; }
-
-    if (!this.#chatCache || this.#chatCache.videoId !== videoId) {
-      this.#chatCache = { videoId, messages: [] };
+    if (!hasKey) {
+      const chatCache = this.#ensureChatCache(videoId);
+      const mapped = this.#getErrorPresentation('API_KEY_MISSING');
+      chatCache.messages.push({ role: 'error', text: mapped.message });
+      ui.addChatMessage('error', mapped.message);
+      return;
     }
 
-    this.#chatCache.messages.push({ role: 'user', text });
+    const chatCache = this.#ensureChatCache(videoId);
+
+    this.#chatCache = chatCache;
+    chatCache.messages.push({ role: 'user', text });
     ui.addChatMessage('user', text);
 
     this.#chatBusy = true;
@@ -414,20 +527,20 @@ class SummarizerController {
           language: settings.language || 'auto',
           videoId,
           question: text,
-          history: this.#chatCache.messages.slice(0, -1)
+          history: chatCache.messages.slice(0, -1)
         }
       });
 
       if (!response) throw new Error('API_ERROR: No response from extension. Please reload.');
       if (response.error) throw new Error(response.error);
 
-      this.#chatCache.messages.push({ role: 'ai', text: response.answer });
+      chatCache.messages.push({ role: 'ai', text: response.answer });
       ui.addChatMessage('ai', response.answer);
 
     } catch (error) {
-      const msg = error?.message?.replace('API_ERROR: ', '') || 'Failed to get answer.';
-      this.#chatCache.messages.push({ role: 'error', text: msg });
-      ui.addChatMessage('error', msg);
+      const mapped = this.#getErrorPresentation(this.#normalizeErrorCode(error));
+      chatCache.messages.push({ role: 'error', text: mapped.message });
+      ui.addChatMessage('error', mapped.message);
     } finally {
       this.#chatBusy = false;
     }
@@ -460,28 +573,99 @@ class SummarizerController {
   // ─── Error handling ───────────────────────────────────────────────
 
   #handleError(error) {
-    const errorMsg = error?.message || error?.toString() || 'Unknown error';
-    const errorMap = {
-      'NO_VIDEO_ID':       { title: 'No Video Found',    message: 'Could not detect a YouTube video on this page.',                                              retryable: false },
-      'NO_TRANSCRIPT':     { title: chrome.i18n?.getMessage('noTranscript') || 'No Transcript', message: "This video doesn't have captions/subtitles available.", retryable: false },
-      'TRANSCRIPT_UNAVAILABLE': { title: chrome.i18n?.getMessage('noTranscript') || 'No Transcript', message: "This video doesn't have captions/subtitles available.", retryable: false },
-      'TRANSCRIPT_NOT_READY': { title: 'Transcript Loading', message: 'Captions are still loading for this video. Please try again in a moment.', retryable: true },
-      'TRANSCRIPT_EMPTY_RETRYABLE': { title: 'Transcript Loading', message: 'Captions were detected but are not ready yet. Please try again.', retryable: true },
-      'TRANSCRIPT_EMPTY_FINAL': { title: 'Empty Transcript',  message: 'The transcript was found but appears to be empty.', retryable: true  },
-      // Legacy compatibility for older paths still throwing EMPTY_TRANSCRIPT.
-      'EMPTY_TRANSCRIPT':  { title: 'Empty Transcript',  message: 'The transcript was found but appears to be empty.',                                            retryable: true  },
-      'TRANSCRIPT_REQUEST_STALE': { title: 'Video Changed', message: 'Transcript request was cancelled because the video changed.', retryable: true },
-      'INVALID_API_KEY':   { title: 'Invalid API Key',   message: 'Your API key is invalid. Please check your settings.',                                         retryable: false },
-      'RATE_LIMITED':      { title: 'Rate Limited',      message: 'Too many requests. Please wait a moment and try again.',                                       retryable: true  }
-    };
-
-    const mapped = errorMap[errorMsg] || {
-      title:     chrome.i18n?.getMessage('errorGeneric') || 'Error',
-      message:   errorMsg.startsWith('API_ERROR') ? errorMsg.replace('API_ERROR: ', '') : 'An unexpected error occurred.',
-      retryable: true
-    };
-
+    const mapped = this.#getErrorPresentation(this.#normalizeErrorCode(error));
     ui.showError(mapped.title, mapped.message, mapped.retryable);
+  }
+
+  #normalizeErrorCode(error) {
+    const errorMsg = String(error?.message || error || '').trim();
+    if (!errorMsg) return 'UNKNOWN_ERROR';
+
+    if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
+    // Keep NO_VIDEO_ID for compatibility with any legacy throw sites.
+    if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
+    if (errorMsg === 'API_KEY_MISSING') return 'API_KEY_MISSING';
+    if (errorMsg === 'INVALID_API_KEY' || errorMsg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
+    if (errorMsg === 'RATE_LIMITED' || errorMsg === 'GEMINI_RATE_LIMITED') return 'PROVIDER_RATE_LIMIT';
+
+    if (
+      errorMsg === 'NO_TRANSCRIPT'
+      || errorMsg === 'TRANSCRIPT_UNAVAILABLE'
+      || errorMsg === 'TRANSCRIPT_NOT_READY'
+      || errorMsg === 'TRANSCRIPT_EMPTY_RETRYABLE'
+      || errorMsg === 'TRANSCRIPT_EMPTY_FINAL'
+      || errorMsg === 'EMPTY_TRANSCRIPT'
+      || errorMsg === 'TRANSCRIPT_REQUEST_STALE'
+    ) {
+      return 'TRANSCRIPT_UNAVAILABLE';
+    }
+
+    if (/failed to fetch|networkerror|network request failed|err_network/i.test(errorMsg)) {
+      return 'NETWORK_ERROR';
+    }
+
+    if (errorMsg.startsWith('API_ERROR')) {
+      const statusMatch = errorMsg.match(/API_ERROR:\s*(\d{3})/);
+      const status = statusMatch ? Number(statusMatch[1]) : null;
+      if (status === 401 || status === 403) return 'API_KEY_INVALID';
+      if (status === 429) return 'PROVIDER_RATE_LIMIT';
+      if (status && status >= 500) return 'PROVIDER_UNAVAILABLE';
+      return 'PROVIDER_UNAVAILABLE';
+    }
+
+    if (errorMsg === 'PROVIDER_UNAVAILABLE') return 'PROVIDER_UNAVAILABLE';
+    return 'UNKNOWN_ERROR';
+  }
+
+  #getErrorPresentation(errorCode) {
+    const errorMap = {
+      NOT_ON_VIDEO_PAGE: {
+        title: 'Open a Video',
+        message: 'You are not on a YouTube video page. Open a video to use Chat.',
+        retryable: false
+      },
+      VIDEO_ID_MISSING: {
+        title: 'Video Not Ready',
+        message: 'We could not detect this video yet. Wait a moment and try again.',
+        retryable: true
+      },
+      TRANSCRIPT_UNAVAILABLE: {
+        title: chrome.i18n?.getMessage('noTranscript') || 'No Transcript',
+        message: "This video's captions are unavailable right now.",
+        retryable: true
+      },
+      API_KEY_MISSING: {
+        title: 'API Key Required',
+        message: 'Please add your API key in Settings to use Chat.',
+        retryable: false
+      },
+      API_KEY_INVALID: {
+        title: 'Invalid API Key',
+        message: 'Your API key looks invalid. Please check your settings.',
+        retryable: false
+      },
+      PROVIDER_RATE_LIMIT: {
+        title: 'Rate Limited',
+        message: 'Too many requests right now. Please wait a moment and try again.',
+        retryable: true
+      },
+      PROVIDER_UNAVAILABLE: {
+        title: 'Service Unavailable',
+        message: 'The AI service is temporarily unavailable. Please try again soon.',
+        retryable: true
+      },
+      NETWORK_ERROR: {
+        title: 'Network Issue',
+        message: 'Network connection issue detected. Check your connection and try again.',
+        retryable: true
+      },
+      UNKNOWN_ERROR: {
+        title: chrome.i18n?.getMessage('errorGeneric') || 'Error',
+        message: 'Something went wrong. Please try again.',
+        retryable: true
+      }
+    };
+    return errorMap[errorCode] || errorMap.UNKNOWN_ERROR;
   }
 }
 

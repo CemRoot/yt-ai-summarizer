@@ -233,6 +233,76 @@ The constant `UNINSTALL_FEEDBACK_URL` in `service-worker.js` must match that URL
 
 ---
 
+## E2E checklist (manual QA)
+
+### Kurulum / Ön Koşul
+
+- [ ] Extension temiz profilde yükleniyor (Developer mode / unpacked).
+- [ ] Ayarlar ekranında API key kaydetme ve yeniden açınca korunma doğrulanıyor.
+- [ ] YouTube’de floating buton ve panel sorunsuz açılıyor.
+
+### Ana Özet Akışı (`/watch`)
+
+- [ ] Video sayfasında `Summary`, `Key Points`, `Detailed` üretimi başarılı.
+- [ ] Üretim sırasında loading/progress metinleri doğru görünüyor.
+- [ ] Sonuç metni copy butonu ile panoya kopyalanıyor.
+- [ ] Refresh (regenerate) yeni istek tetikliyor ve sonuç güncelleniyor.
+
+### Transcript Dayanıklılık
+
+- [ ] Caption olan videoda transcript çekimi başarılı.
+- [ ] Caption olmayan videoda kullanıcıya doğru hata (transcript unavailable) gösteriliyor.
+- [ ] Sayfa yeni videoya geçince stale request sonucu eski videoya yazılmıyor.
+- [ ] Retry sonrası transcript geldiğinde akış toparlanıyor.
+
+### Chat Akışı
+
+- [ ] Chat sekmesi `/watch` üzerinde aktif ve mesaj gönderimi çalışıyor.
+- [ ] AI yanıtı transcript’e bağlı geliyor; sohbet geçmişi korunuyor.
+- [ ] API key yoksa doğru uyarı/hata mesajı gösteriliyor.
+- [ ] Geçersiz key / rate limit / provider down durumlarında doğru hata sınıfı gösteriliyor.
+
+### Route / Navigation (SPA)
+
+- [ ] YouTube SPA geçişlerinde (video→video) panel durumu bozulmuyor.
+- [ ] `/` (home), arama, abonelik gibi non-watch sayfalarda Chat disable oluyor.
+- [ ] Non-watch’ta helper text ve “video aç” yönlendirmesi doğru.
+- [ ] `/watch` geri dönüşte aynı video cache’den hızlı restore ediliyor.
+
+### Kısa Video ve Embed
+
+- [ ] `/shorts/...` ve `/embed/...` sayfalarında panel mount davranışı doğru.
+- [ ] Bu rotalarda desteklenmeyen chat durumları varsa kullanıcı mesajı net.
+
+### Cache Davranışı
+
+- [ ] Aynı videoda tab geçişleri anlık (in-memory cache) çalışıyor.
+- [ ] Persistent cache’den sonuç geri yükleme çalışıyor.
+- [ ] “Clear cache” sonrası eski içerik dönmüyor.
+- [ ] Farklı videolar arasında cache izolasyonu korunuyor.
+
+### Podcast Akışı (varsa kapsamda)
+
+- [ ] Podcast üretimi summary’den tetikleniyor.
+- [ ] Gemini key eksik/region block/rate limit hataları doğru gösteriliyor.
+- [ ] Podcast oynatıcı UI (play/pause/seek) stabil.
+
+### UI/UX ve Tema
+
+- [ ] Dark/Light tema YouTube temasına uyumlu.
+- [ ] Panel aç/kapat, tab switch, fullscreen auto-hide davranışları doğru.
+- [ ] Türkçe/İngilizce metinler ve i18n fallback’leri doğru.
+
+### Regresyon / CI Doğrulama
+
+- [ ] `node --check` tüm JS dosyalarında temiz.
+- [ ] `node --test content/transcript.orchestration.test.js` geçiyor.
+- [ ] JSON/HTML yapı kontrolleri temiz.
+- [ ] Paket zip içeriğinde `update/` dahil gerekli dosyalar mevcut.
+- [ ] GitHub Actions’ta özellikle **Transcript Health Check** ve CI run’ları yeşil.
+
+---
+
 ## Troubleshooting
 
 ### "This extension is not trusted by Enhanced Safe Browsing"
