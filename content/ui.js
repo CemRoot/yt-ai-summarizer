@@ -781,7 +781,7 @@ class SummarizerUI {
 
     if (!messages?.length) {
       const emptyTitle = disabled
-        ? (isTR ? 'Sohbet başlatmak için bir video açın' : 'Open a video to start chatting')
+        ? (helperText || (isTR ? 'Sohbet başlatmak için bir video açın' : 'Open a video to start chatting'))
         : (isTR ? 'Videoya dair sorularınızı sorun' : 'Ask questions about this video');
       const emptyDesc = disabled
         ? (isTR ? 'YouTube ana sayfa, arama ve abonelik sayfalarında sohbet kapalıdır.' : 'Chat is disabled on YouTube home, search, and subscriptions pages.')

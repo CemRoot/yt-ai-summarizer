@@ -28,6 +28,8 @@ if (!ui || !storage || !tx || !player) {
   });
 }
 
+const CHAT_HELPER_TEXT = 'Open a YouTube video to start chatting.';
+
 class SummarizerController {
 
   static #instance = null;
@@ -203,7 +205,7 @@ class SummarizerController {
     if (ui.getCurrentMode?.() === 'chat') {
       ui.showChatUI([], {
         disabled: true,
-        helperText: 'Open a YouTube video to start chatting.',
+        helperText: CHAT_HELPER_TEXT,
         noticeMessage: this.#getErrorPresentation('NOT_ON_VIDEO_PAGE').message
       });
     }
@@ -239,7 +241,7 @@ class SummarizerController {
       if (ui.isPanelOpen() && ui.getCurrentMode() === 'chat') {
         ui.showChatUI([], {
           disabled: true,
-          helperText: 'Open a YouTube video to start chatting.',
+          helperText: CHAT_HELPER_TEXT,
           noticeMessage: this.#getErrorPresentation('VIDEO_ID_MISSING').message
         });
       }
@@ -469,7 +471,7 @@ class SummarizerController {
       const mapped = this.#getErrorPresentation(ctx.errorCode);
       ui.showChatUI([], {
         disabled: true,
-        helperText: 'Open a YouTube video to start chatting.',
+        helperText: CHAT_HELPER_TEXT,
         noticeMessage: mapped.message
       });
       return;
