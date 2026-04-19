@@ -245,6 +245,19 @@ body {
 .step-rail-item.is-active .step-rail-label { color: var(--accent); }
 .step-rail-item.is-done .step-rail-label { color: var(--text-sec); }
 
+.step-rail-item.is-done {
+  cursor: pointer;
+}
+
+.step-rail-item.is-done:hover .step-rail-dot {
+  box-shadow: 0 0 0 4px var(--green-soft);
+  transform: scale(1.08);
+}
+
+.step-rail-item.is-done:hover .step-rail-label {
+  color: var(--green);
+}
+
 .step-rail-line {
   flex: 0 0 24px;
   height: 2px;
@@ -345,7 +358,34 @@ body {
 .step.completed h2 { margin-bottom: 0; font-size: 15px; font-weight: 600; }
 .step.completed h2::before { content: '✓ '; color: var(--green); font-weight: 700; }
 
-.step-indicator { margin-bottom: 14px; }
+.step-indicator {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.step-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-sec);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--tr), border-color var(--tr), background var(--tr);
+  font-family: inherit;
+}
+
+.step-back-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-faint);
+}
 
 .step-chip {
   display: inline-block;
@@ -702,10 +742,230 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ═══ Onboard Path Cards (Step 1 — Get Started) ═══ */
+.onboard-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 8px 0 16px;
+}
+
+.onboard-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 22px 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--tr), box-shadow var(--tr), transform var(--tr);
+  position: relative;
+  font: inherit;
+  color: inherit;
+}
+
+.onboard-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(6, 95, 212, 0.1);
+  transform: translateY(-2px);
+}
+
+.onboard-primary {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(6, 95, 212, 0.04) 0%, var(--surface) 100%);
+}
+
+.onboard-secondary {
+  border-color: var(--border);
+}
+
+.onboard-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.onboard-card-icon.google-icon {
+  background: #f8f9fa;
+  border: 1px solid #e8eaed;
+}
+
+.onboard-card-icon.byok-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.onboard-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.onboard-card p {
+  font-size: 13px;
+  color: var(--text-sec);
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.onboard-features {
+  list-style: none;
+  width: 100%;
+  text-align: left;
+}
+
+.onboard-features li {
+  font-size: 13px;
+  color: var(--text-sec);
+  padding: 4px 0;
+  padding-left: 20px;
+  position: relative;
+}
+
+.onboard-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.onboard-card .provider-tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.onboard-card:disabled,
+.onboard-card.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Auth status message */
+.auth-status {
+  text-align: center;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 12px;
+  animation: stepIn 0.3s ease;
+}
+
+.auth-status.hidden { display: none; }
+.auth-status.loading { background: var(--accent-faint); color: var(--accent); }
+.auth-status.success { background: var(--green-soft); color: var(--green); }
+.auth-status.error { background: rgba(220, 38, 38, 0.08); color: #dc2626; }
+
+.auth-status-summary {
+  margin: 0 0 0.35rem;
+}
+
+.auth-status-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.auth-status details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.auth-debug-pre {
+  font-size: 11px;
+  line-height: 1.35;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0.5rem 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+}
+
+.auth-status .auth-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.auth-status .auth-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.auth-status .auth-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ═══ Provider Toggle (inside Step 2 for BYOK) ═══ */
+.welcome-provider-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.provider-card.compact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  position: relative;
+}
+
+.provider-card.compact h3 {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.provider-card.compact p {
+  font-size: 11px;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.provider-card.compact .provider-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.provider-card.compact .provider-tag {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 9px;
+  padding: 1px 6px;
+}
+
 @media (max-width: 600px) {
   .welcome-container { padding: 0 14px 48px; }
   .hero-card { padding: 24px 18px; }
   .provider-cards { grid-template-columns: 1fr; }
+  .onboard-paths { grid-template-columns: 1fr; }
+  .welcome-provider-toggle { grid-template-columns: 1fr; }
   .step { padding: 22px 18px; }
   .api-input-group { flex-direction: column; }
   .api-input-wrap { min-width: 0; }

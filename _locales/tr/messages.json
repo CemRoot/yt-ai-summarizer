@@ -4,7 +4,7 @@
     "description": "Chrome Web Store ve tarayıcıda gösterilen uzantı adı"
   },
   "extDescription": {
-    "message": "YouTube için ücretsiz AI'nız — videoları anında özetleyin. 20+ dilde özet, önemli noktalar ve detaylı analiz. Abonelik yok.",
+    "message": "Her YouTube videosu için AI özet, önemli noktalar, podcast TTS ve sohbet. 20+ dil. Ücretsiz deneme, BYOK veya Pro.",
     "description": "Chrome Web Store listeleme açıklaması (max 132 karakter)"
   },
   "apiKeyRequired": {

@@ -36,6 +36,22 @@ jobs:
           print(f'OK: Manifest v{m[\"version\"]} — all required fields present')
           "
 
+      - name: Reject Cursor/local NDJSON debug ingest in ship surface
+        run: |
+          set +e
+          hits=$(grep -rnlE '127\.0\.0\.1:7243|:7243/ingest' manifest.json service-worker.js content popup welcome utils 2>/dev/null)
+          set -e
+          if [ -n "$hits" ]; then
+            echo "FAIL: Remove debug NDJSON ingest before ship (127.0.0.1:7243 or :7243/ingest):"
+            echo "$hits"
+            exit 1
+          fi
+          if grep -qE '127\.0\.0\.1|:7243' manifest.json; then
+            echo "FAIL: manifest.json must not declare localhost debug hosts (127.0.0.1 / :7243)."
+            exit 1
+          fi
+          echo "OK: No debug ingest hosts in manifest or extension JS roots"
+
       - name: Verify all referenced files exist
         run: |
           python3 -c "
@@ -341,7 +357,7 @@ jobs:
             welcome/ \
             utils/ \
             _locales/ \
-            -x "*.DS_Store" "*/.git/*"
+            -x "*.DS_Store" "*/.git/*" "*.test.js" "*/.*.swp"
 
       - name: Verify package contents
         run: |

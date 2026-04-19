@@ -22,6 +22,7 @@ class SummarizerUI {
   #currentMode = 'summary';
   #isDarkTheme = false;
   #factInterval = null;
+  #creditDeltaTimer = null;
 
   static #ICONS = {
     brain:    `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
@@ -184,6 +185,7 @@ class SummarizerUI {
       <div class="ytai-header-left">
         <div class="ytai-header-logo">${SummarizerUI.#ICONS.sparkle}</div>
         <span class="ytai-header-title">${panelTitle}</span>
+        <span class="ytai-auth-badge" id="ytaiAuthBadge"></span>
       </div>
     `;
 
@@ -371,6 +373,7 @@ class SummarizerUI {
     }
 
     globalThis.PodcastPlayer?.stop?.();
+    this.refreshFooterProviderLabel();
     document.dispatchEvent(new CustomEvent('ytai:request-summary', { detail: { mode, forceRefresh: false } }));
   }
 
@@ -459,9 +462,249 @@ class SummarizerUI {
     content.querySelector('.ytai-start-btn')?.addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('ytai:request-summary', { detail: { mode: this.#currentMode, forceRefresh: false } }));
     });
+    this.refreshFooterProviderLabel();
   }
 
   // ─── API key prompt ───────────────────────────────────────────────
+
+  updateAuthBadge(session) {
+    const badge = this.#panelRoot?.querySelector('#ytaiAuthBadge');
+    if (!badge) return;
+    if (!session?.user) {
+      badge.textContent = '';
+      badge.title = '';
+      return;
+    }
+    const meta = session.user.user_metadata || {};
+    const name = meta.full_name || meta.name || session.user.email || '';
+    const initial = (name || 'U')[0].toUpperCase();
+    badge.textContent = initial;
+    badge.title = name;
+  }
+
+  /**
+   * Update the credit counter in the panel header.
+   * @param {number} credits - remaining credits (-1 = unlimited/pro)
+   * @param {string} [plan] - 'free' | 'pro'
+   */
+  updateCredits(credits, plan) {
+    let el = this.#panelRoot?.querySelector('#ytaiCreditBadge');
+    if (!el) {
+      const headerLeft = this.#panelRoot?.querySelector('.ytai-header-left');
+      if (!headerLeft) return;
+      el = document.createElement('span');
+      el.id = 'ytaiCreditBadge';
+      el.className = 'ytai-credit-badge';
+      headerLeft.appendChild(el);
+    }
+
+    if (plan === 'pro' && typeof credits === 'number' && credits >= 0) {
+      el.textContent = `${credits}`;
+      el.className = credits <= 50
+        ? 'ytai-credit-badge ytai-credit-low'
+        : 'ytai-credit-badge ytai-credit-pro';
+      el.title = `Pro \u2014 ${credits} credits remaining this month`;
+    } else if (plan === 'pro') {
+      el.textContent = 'PRO';
+      el.className = 'ytai-credit-badge ytai-credit-pro';
+      el.title = 'Pro plan';
+    } else if (typeof credits === 'number') {
+      el.textContent = `${credits}`;
+      el.className = credits <= 1
+        ? 'ytai-credit-badge ytai-credit-low'
+        : 'ytai-credit-badge';
+      el.title = `${credits} credit${credits !== 1 ? 's' : ''} remaining`;
+    } else {
+      el.textContent = '';
+    }
+  }
+
+  /**
+   * Flashes a transient "−N credits" indicator next to the badge so the user
+   * sees exactly how much a cost-weighted call consumed (matches CFO plan
+   * cost→credits mapping in `_shared/pricing.ts`).
+   * @param {number} creditsUsed
+   */
+  showCreditsUsed(creditsUsed) {
+    const n = Number(creditsUsed);
+    if (!Number.isFinite(n) || n <= 0) return;
+    const badge = this.#panelRoot?.querySelector('#ytaiCreditBadge');
+    if (!badge) return;
+    let delta = this.#panelRoot.querySelector('#ytaiCreditDelta');
+    if (!delta) {
+      delta = document.createElement('span');
+      delta.id = 'ytaiCreditDelta';
+      delta.className = 'ytai-credit-delta';
+      badge.insertAdjacentElement('afterend', delta);
+    }
+    const isTR = this.#uiLang() === 'tr';
+    delta.textContent = isTR
+      ? `\u2212${n} kredi`
+      : `\u2212${n} credit${n !== 1 ? 's' : ''}`;
+    delta.title = isTR
+      ? 'Bu i\u015flemin tahmini maliyetine g\u00F6re d\u00FC\u015f\u00FClen kredi'
+      : 'Credits deducted proportional to this call\u2019s estimated cost';
+    delta.classList.remove('is-hidden');
+    delta.classList.add('is-visible');
+    if (this.#creditDeltaTimer) clearTimeout(this.#creditDeltaTimer);
+    this.#creditDeltaTimer = setTimeout(() => {
+      delta.classList.remove('is-visible');
+      delta.classList.add('is-hidden');
+    }, 4000);
+  }
+
+  /**
+   * Show upgrade prompt when credits are exhausted — monthly/yearly pricing cards.
+   */
+  showUpgradePrompt() {
+    this.#stopFactRotation();
+    const content = this.#panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    const isTR = this.#uiLang() === 'tr';
+    const title = isTR ? 'Kredi Bitti' : 'Credits Exhausted';
+    const desc = isTR
+      ? 'Pro\u2019ya y\u00FCkselterek s\u0131n\u0131rs\u0131z \u00F6zet, sohbet ve analiz al\u0131n \u2014 veya kendi API anahtar\u0131n\u0131z\u0131 kullan\u0131n.'
+      : 'Upgrade to Pro for unlimited summaries, chat, and analysis \u2014 or use your own API key.';
+    const monthLabel = isTR ? 'Ayl\u0131k' : 'Monthly';
+    const yearLabel = isTR ? 'Y\u0131ll\u0131k' : 'Yearly';
+    const saveLabel = isTR ? '%33 tasarruf' : 'Save 33%';
+    const byokLabel = isTR ? 'Kendi Anahtar\u0131m\u0131 Kullan' : 'Use My Own Key';
+
+    content.innerHTML = `
+      <div class="ytai-upgrade-prompt">
+        <div class="ytai-upgrade-icon">
+          <svg viewBox="0 0 24 24" width="40" height="40"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.83-3.23 9.36-7 10.57-3.77-1.21-7-5.74-7-10.57V6.3l7-3.12zM11 7v6h2V7h-2zm0 8v2h2v-2h-2z" fill="currentColor"/></svg>
+        </div>
+        <div class="ytai-upgrade-title">${this.#escapeHtml(title)}</div>
+        <div class="ytai-upgrade-desc">${this.#escapeHtml(desc)}</div>
+        <div class="ytai-pricing-cards">
+          <button class="ytai-pricing-card" data-plan="monthly">
+            <div class="ytai-pricing-period">${this.#escapeHtml(monthLabel)}</div>
+            <div class="ytai-pricing-price">\u20AC4.99<span>/mo</span></div>
+          </button>
+          <button class="ytai-pricing-card ytai-pricing-popular" data-plan="yearly">
+            <div class="ytai-pricing-badge">${this.#escapeHtml(saveLabel)}</div>
+            <div class="ytai-pricing-period">${this.#escapeHtml(yearLabel)}</div>
+            <div class="ytai-pricing-price">\u20AC39.99<span>/yr</span></div>
+            <div class="ytai-pricing-equiv">\u20AC3.33/mo</div>
+          </button>
+        </div>
+        <button class="ytai-btn ytai-btn-secondary ytai-byok-btn">
+          ${SummarizerUI.#ICONS.settings}
+          <span>${this.#escapeHtml(byokLabel)}</span>
+        </button>
+      </div>`;
+
+    content.querySelectorAll('.ytai-pricing-card').forEach(card => {
+      card.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: 'openCheckout', plan: card.dataset.plan }).catch(() => {});
+      });
+    });
+
+    content.querySelector('.ytai-byok-btn')?.addEventListener('click', () => {
+      chrome.storage.session.set({ ytai_show_byok: true }).catch(() => {});
+      chrome.runtime.sendMessage({ action: 'openSettings' }).catch(() => {});
+    });
+  }
+
+  /**
+   * Pre-flight rejection prompt: user has SOME credits but not enough for this
+   * specific action (typically a long video whose estimated cost exceeds the
+   * remaining balance). Shows the same Monthly/Yearly + BYOK CTAs as
+   * `showUpgradePrompt` but with a video-length-aware message and
+   * "estimated N / available M" context.
+   */
+  showInsufficientCreditsPrompt({ estimated = null, available = null } = {}) {
+    this.#stopFactRotation();
+    const content = this.#panelRoot?.querySelector('.ytai-content');
+    if (!content) return;
+
+    const isTR = this.#uiLang() === 'tr';
+    const title = isTR ? 'Yeterli Krediniz Yok' : 'Not Enough Credits';
+    const hasEstimate = typeof estimated === 'number' && typeof available === 'number';
+    const desc = hasEstimate
+      ? (isTR
+          ? `Bu video i\u00E7in yakla\u015F\u0131k ${estimated} kredi gerekiyor, sizde ${available} kredi var. Daha k\u0131sa bir video deneyin veya Pro\u2019ya y\u00FCkseltin.`
+          : `This video needs about ${estimated} credits but you have ${available}. Try a shorter video or upgrade to Pro.`)
+      : (isTR
+          ? 'Bu video \u00E7ok uzun \u2014 mevcut kredinizle tamamlanam\u0131yor. Daha k\u0131sa bir video deneyin veya Pro\u2019ya y\u00FCkseltin.'
+          : 'This video is too long for your current balance. Try a shorter video or upgrade to Pro.');
+    const monthLabel = isTR ? 'Ayl\u0131k' : 'Monthly';
+    const yearLabel = isTR ? 'Y\u0131ll\u0131k' : 'Yearly';
+    const saveLabel = isTR ? '%33 tasarruf' : 'Save 33%';
+    const byokLabel = isTR ? 'Kendi Anahtar\u0131m\u0131 Kullan' : 'Use My Own Key';
+
+    content.innerHTML = `
+      <div class="ytai-upgrade-prompt ytai-insufficient-prompt">
+        <div class="ytai-upgrade-icon">
+          <svg viewBox="0 0 24 24" width="40" height="40"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-13h2v6h-2V7zm0 8h2v2h-2v-2z" fill="currentColor"/></svg>
+        </div>
+        <div class="ytai-upgrade-title">${this.#escapeHtml(title)}</div>
+        <div class="ytai-upgrade-desc">${this.#escapeHtml(desc)}</div>
+        <div class="ytai-pricing-cards">
+          <button class="ytai-pricing-card" data-plan="monthly">
+            <div class="ytai-pricing-period">${this.#escapeHtml(monthLabel)}</div>
+            <div class="ytai-pricing-price">\u20AC4.99<span>/mo</span></div>
+          </button>
+          <button class="ytai-pricing-card ytai-pricing-popular" data-plan="yearly">
+            <div class="ytai-pricing-badge">${this.#escapeHtml(saveLabel)}</div>
+            <div class="ytai-pricing-period">${this.#escapeHtml(yearLabel)}</div>
+            <div class="ytai-pricing-price">\u20AC39.99<span>/yr</span></div>
+            <div class="ytai-pricing-equiv">\u20AC3.33/mo</div>
+          </button>
+        </div>
+        <button class="ytai-btn ytai-btn-secondary ytai-byok-btn">
+          ${SummarizerUI.#ICONS.settings}
+          <span>${this.#escapeHtml(byokLabel)}</span>
+        </button>
+      </div>`;
+
+    content.querySelectorAll('.ytai-pricing-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: 'openCheckout', plan: card.dataset.plan }).catch(() => {});
+      });
+    });
+
+    content.querySelector('.ytai-byok-btn')?.addEventListener('click', () => {
+      chrome.storage.session.set({ ytai_show_byok: true }).catch(() => {});
+      chrome.runtime.sendMessage({ action: 'openSettings' }).catch(() => {});
+    });
+  }
+
+  /**
+   * Show "Manage Subscription" link for Pro users in the header actions area.
+   */
+  showManageSubscription() {
+    if (this.#panelRoot?.querySelector('.ytai-manage-sub-btn')) return;
+    const actions = this.#panelRoot?.querySelector('.ytai-header-actions');
+    if (!actions) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'ytai-icon-btn ytai-manage-sub-btn';
+    btn.title = this.#uiLang() === 'tr' ? 'Aboneli\u011Fi Y\u00F6net' : 'Manage Subscription';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" fill="currentColor"/></svg>';
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const origHTML = btn.innerHTML;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" class="ytai-spin"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="31 31"/></svg>';
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'openPortal' });
+        if (res?.error) console.warn('[YTAI] Portal error:', res.error);
+      } catch (err) {
+        console.warn('[YTAI] Portal failed:', err?.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
+    });
+    actions.insertBefore(btn, actions.firstChild);
+  }
+
+  dismissManageSubscriptionButton() {
+    this.#panelRoot?.querySelector('.ytai-manage-sub-btn')?.remove();
+  }
 
   showApiKeyPrompt() {
     const content = this.#panelRoot?.querySelector('.ytai-content');
@@ -661,7 +904,8 @@ class SummarizerUI {
         try {
           const s = await StorageHelper.getSettings();
           s.podcastVolume = v;
-          await StorageHelper.saveSettings(s);
+          const out = await StorageHelper.saveSettings(s);
+          if (!out?.ok) { /* ignore persistence failure for volume */ }
         } catch { /* ignore */ }
       }, 300);
     });
@@ -674,7 +918,7 @@ class SummarizerUI {
     });
   }
 
-  showPodcastKeyPrompt() {
+  showPodcastKeyPrompt(isManagedUser = false) {
     const content = this.#panelRoot?.querySelector('.ytai-content');
     if (!content) return;
 
@@ -691,10 +935,18 @@ class SummarizerUI {
     }
 
     const isTR = uiLang === 'tr';
+    const managedNote = isManagedUser
+      ? `<div class="ytai-ready-desc" style="max-width:300px;margin-bottom:8px;opacity:0.8;font-size:12px">
+          ${isTR
+            ? '⚡ Google girişiniz özetler ve sohbet içindir. Podcast ayrı bir Gemini API anahtarı gerektirir (ücretsiz).'
+            : '⚡ Your Google sign-in covers summaries and chat. Podcast requires a separate Gemini API key (free).'}
+         </div>`
+      : '';
     content.innerHTML = `
       <div class="ytai-podcast-setup">
         <div class="ytai-podcast-icon">🎙️</div>
         <div class="ytai-ready-title">${isTR ? 'AI Podcast Kurulumu' : 'AI Podcast Setup'}</div>
+        ${managedNote}
         <div class="ytai-ready-desc" style="max-width:300px">
           ${isTR
             ? 'Podcast özelliği Google Gemini TTS kullanır. Ücretsiz Gemini API anahtarı gerekiyor.'
@@ -739,7 +991,12 @@ class SummarizerUI {
       try {
         const currentSettings = await StorageHelper.getSettings();
         currentSettings.geminiApiKey = key;
-        await StorageHelper.saveSettings(currentSettings);
+        const out = await StorageHelper.saveSettings(currentSettings);
+        if (!out?.ok) {
+          errorEl.textContent = out.message || (isTR ? 'Kaydedilemedi.' : 'Failed to save. Try again.');
+          errorEl.style.display = 'block';
+          return;
+        }
         document.dispatchEvent(new CustomEvent('ytai:request-podcast'));
       } catch {
         errorEl.textContent = isTR ? 'Kaydedilemedi.' : 'Failed to save. Try again.';
@@ -949,15 +1206,55 @@ class SummarizerUI {
 
   #updateProviderLabelEl(el) {
     if (!el) return;
-    chrome.storage?.local?.get?.({ provider: 'groq' }, (r) => {
-      if (el) el.textContent = r.provider === 'ollama' ? 'Powered by Ollama Cloud' : 'Powered by Groq';
+    const setByProvider = (provider) => {
+      if (!el) return;
+      el.textContent = provider === 'ollama' ? 'Powered by Ollama Cloud' : 'Powered by Groq';
+    };
+    const auth = globalThis.SupabaseAuth;
+    const run = async () => {
+      let session = null;
+      if (auth) {
+        try { session = await auth.getSession(); } catch { session = null; }
+      }
+      let hasByok = false;
+      let provider = 'groq';
+      try {
+        hasByok = await StorageHelper.hasAnyByokApiKey();
+        const s = await StorageHelper.getSettings();
+        provider = s.provider || 'groq';
+      } catch {
+        provider = 'groq';
+      }
+      if (!el) return;
+      if (session) {
+        if (hasByok) {
+          el.textContent = provider === 'ollama' ? 'Your Ollama key' : 'Your Groq key';
+        } else {
+          el.textContent = 'Cloud AI';
+        }
+      } else {
+        setByProvider(provider);
+      }
+    };
+    run().catch(() => {
+      chrome.storage?.local?.get?.({ provider: 'groq' }, (r) => {
+        setByProvider(r?.provider || 'groq');
+      });
     });
+  }
+
+  /** Re-sync footer label after settings or auth change (panel may already exist). */
+  refreshFooterProviderLabel() {
+    const label = this.#panelRoot?.querySelector('.ytai-provider-label');
+    if (label) this.#updateProviderLabelEl(label);
   }
 
   updateProviderLabel(provider) {
     const label = this.#panelRoot?.querySelector('.ytai-provider-label');
     if (!label) return;
-    if (provider) {
+    if (provider === 'managed') {
+      label.textContent = 'Managed AI';
+    } else if (provider) {
       label.textContent = provider === 'ollama' ? 'Powered by Ollama Cloud' : 'Powered by Groq';
     } else {
       this.#updateProviderLabelEl(label);

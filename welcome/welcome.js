@@ -13,20 +13,32 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'YouTube AI Summarizer',
       subtitle: 'Get instant AI-powered summaries, key points, and detailed analysis for any YouTube video.',
       step1chip: 'Step 1 of 3',
-      step1title: 'Choose Your AI Provider',
-      step1desc: 'Both providers are free to start. You can switch anytime in settings.',
+      step1title: 'Get Started',
+      step1desc: 'Sign in for free AI summaries or bring your own API key.',
+      googleCardTitle: 'Sign in with Google',
+      googleCardDesc: 'Get 5 free AI-powered summaries — no API key needed.',
+      googleF1: '5 free video summaries',
+      googleF2: 'No API key required',
+      googleF3: 'Upgrade anytime for unlimited',
+      byokCardTitle: 'Use My Own API Key',
+      byokCardDesc: 'Free forever with your own Groq or Ollama Cloud key.',
+      byokF1: 'Unlimited free usage',
+      byokF2: 'Groq or Ollama Cloud',
+      byokF3: 'Requires API key setup',
+      signingIn: 'Signing in with Google…',
+      signInSuccess: 'Welcome! Redirecting…',
+      signInError: 'Sign-in failed. Click to try again.',
+      signInCancel: 'Sign-in was cancelled. Click to try again.',
+      signInTechDetails: 'Diagnostic details (for support)',
+      signInTimeoutHint:
+        'If you use two-step verification (2FA), keep the sign-in window visible until you finish — switching away for too long can time out. Try again and complete the prompt without leaving Chrome for long.',
       groqName: 'Groq',
-      groqDesc: 'Ultra-fast inference on LPU chips. Best for speed.',
-      groqF1: 'Llama 3.3 70B, Llama 4 Scout',
-      groqF2: 'Fastest response times',
-      groqF3: 'Free tier: 14K req/day',
+      groqDesc: 'Ultra-fast inference. Best for speed.',
       ollamaName: 'Ollama Cloud',
-      ollamaDesc: 'Gemini 3 Flash & massive open-source models. Free.',
-      ollamaF1: 'Gemini 3 Flash — Recommended',
-      ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B',
-      ollamaF3: 'Free tier available',
+      ollamaDesc: 'Gemini 3 Flash & open-source models.',
       recommended: 'Recommended',
       continue: 'Continue',
+      back: 'Back',
       step2chip: 'Step 2 of 3',
       step2titleGroq: 'Enter Your Groq API Key',
       step2titleOllama: 'Enter Your Ollama API Key',
@@ -62,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       privacyPolicy: 'Privacy Policy',
       langLabel: 'Language',
       heroKicker: 'Chrome extension',
-      rail1: 'Provider',
+      rail1: 'Account',
       rail2: 'API key',
       rail3: 'Start',
     },
@@ -70,20 +82,32 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'YouTube AI Özetleyici',
       subtitle: 'Herhangi bir YouTube videosu için anında AI destekli özetler, anahtar noktalar ve detaylı analizler alın.',
       step1chip: 'Adım 1 / 3',
-      step1title: 'AI Sağlayıcınızı Seçin',
-      step1desc: 'Her iki sağlayıcı da ücretsiz olarak başlar. İstediğiniz zaman ayarlardan değiştirebilirsiniz.',
+      step1title: 'Başlayın',
+      step1desc: 'Ücretsiz AI özetleri için giriş yapın veya kendi API anahtarınızı kullanın.',
+      googleCardTitle: 'Google ile Giriş Yap',
+      googleCardDesc: '5 ücretsiz AI destekli özet alın — API anahtarı gerekmez.',
+      googleF1: '5 ücretsiz video özeti',
+      googleF2: 'API anahtarı gerekmez',
+      googleF3: 'Sınırsız için yükseltin',
+      byokCardTitle: 'Kendi API Anahtarımı Kullan',
+      byokCardDesc: 'Groq veya Ollama Cloud anahtarınızla sonsuza kadar ücretsiz.',
+      byokF1: 'Sınırsız ücretsiz kullanım',
+      byokF2: 'Groq veya Ollama Cloud',
+      byokF3: 'API anahtarı kurulumu gerekli',
+      signingIn: 'Google ile giriş yapılıyor…',
+      signInSuccess: 'Hoş geldiniz! Yönlendiriliyor…',
+      signInError: 'Giriş başarısız. Tekrar denemek için tıklayın.',
+      signInCancel: 'Giriş iptal edildi. Tekrar denemek için tıklayın.',
+      signInTechDetails: 'Tanılama ayrıntıları (destek için)',
+      signInTimeoutHint:
+        'İki adımlı doğrulama (2FA) kullanıyorsanız, giriş penceresini bitene kadar açık tutun — uzun süre başka uygulamaya geçmek zaman aşımına yol açabilir. Tekrar deneyin ve Chrome’da işlemi kesintisiz tamamlayın.',
       groqName: 'Groq',
-      groqDesc: 'LPU çiplerinde ultra hızlı çıkarım. Hız için en iyisi.',
-      groqF1: 'Llama 3.3 70B, Llama 4 Scout',
-      groqF2: 'En hızlı yanıt süreleri',
-      groqF3: 'Ücretsiz: günlük 14K istek',
+      groqDesc: 'Ultra hızlı çıkarım. Hız için en iyisi.',
       ollamaName: 'Ollama Cloud',
-      ollamaDesc: 'Gemini 3 Flash ve devasa açık kaynak modeller. Ücretsiz.',
-      ollamaF1: 'Gemini 3 Flash — Önerilen',
-      ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B',
-      ollamaF3: 'Ücretsiz paket mevcut',
+      ollamaDesc: 'Gemini 3 Flash ve açık kaynak modeller.',
       recommended: 'Önerilen',
       continue: 'Devam Et',
+      back: 'Geri',
       step2chip: 'Adım 2 / 3',
       step2titleGroq: 'Groq API Anahtarınızı Girin',
       step2titleOllama: 'Ollama API Anahtarınızı Girin',
@@ -119,21 +143,22 @@ document.addEventListener('DOMContentLoaded', () => {
       privacyPolicy: 'Gizlilik Politikası',
       langLabel: 'Dil',
       heroKicker: 'Chrome uzantısı',
-      rail1: 'Sağlayıcı',
+      rail1: 'Hesap',
       rail2: 'API anahtarı',
       rail3: 'Başla',
     },
     es: {
       title: 'YouTube AI Summarizer',
       subtitle: 'Obtén resúmenes instantáneos con IA, puntos clave y análisis detallados de cualquier video de YouTube.',
-      step1chip: 'Paso 1 de 3',
-      step1title: 'Elige tu proveedor de IA',
-      step1desc: 'Ambos proveedores son gratuitos para empezar. Puedes cambiar en cualquier momento.',
-      groqName: 'Groq', groqDesc: 'Inferencia ultrarrápida en chips LPU. Lo mejor para velocidad.',
-      groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'Tiempos de respuesta más rápidos', groqF3: 'Gratis: 14K solicitudes/día',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash y modelos masivos de código abierto. Gratis.',
-      ollamaF1: 'Gemini 3 Flash — Recomendado', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'Plan gratuito disponible',
-      recommended: 'Recomendado', continue: 'Continuar',
+      step1chip: 'Paso 1 de 3', step1title: 'Comenzar', step1desc: 'Inicia sesión para resúmenes gratuitos o usa tu propia clave API.',
+      googleCardTitle: 'Iniciar sesión con Google', googleCardDesc: 'Obtén 5 resúmenes gratuitos — sin clave API.',
+      googleF1: '5 resúmenes de video gratis', googleF2: 'Sin clave API necesaria', googleF3: 'Actualiza para ilimitado',
+      byokCardTitle: 'Usar mi propia clave API', byokCardDesc: 'Gratis para siempre con tu clave Groq u Ollama.',
+      byokF1: 'Uso gratuito ilimitado', byokF2: 'Groq u Ollama Cloud', byokF3: 'Requiere configuración de clave',
+      signingIn: 'Iniciando sesión con Google…', signInSuccess: '¡Bienvenido! Redirigiendo…', signInError: 'Error al iniciar sesión. Haz clic para reintentar.', signInCancel: 'Inicio de sesión cancelado.',
+      groqName: 'Groq', groqDesc: 'Inferencia ultrarrápida. Lo mejor para velocidad.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash y modelos de código abierto.',
+      recommended: 'Recomendado', continue: 'Continuar', back: 'Atrás',
       step2chip: 'Paso 2 de 3', step2titleGroq: 'Ingresa tu clave API de Groq', step2titleOllama: 'Ingresa tu clave API de Ollama',
       step2descGroq: 'Toma 30 segundos. Crea una cuenta gratuita y genera una clave.', step2descOllama: 'Crea una cuenta en ollama.com y genera una clave API.',
       inst1Groq: 'Visita <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -151,10 +176,15 @@ document.addEventListener('DOMContentLoaded', () => {
     fr: {
       title: 'YouTube AI Summarizer',
       subtitle: 'Obtenez des résumés instantanés par IA, des points clés et des analyses détaillées pour toute vidéo YouTube.',
-      step1chip: 'Étape 1 sur 3', step1title: 'Choisissez votre fournisseur IA', step1desc: 'Les deux fournisseurs sont gratuits pour commencer. Vous pouvez changer à tout moment.',
-      groqName: 'Groq', groqDesc: 'Inférence ultra-rapide sur puces LPU.', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'Temps de réponse les plus rapides', groqF3: 'Gratuit: 14K requêtes/jour',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash et modèles open-source massifs. Gratuit.', ollamaF1: 'Gemini 3 Flash — Recommandé', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'Offre gratuite disponible',
-      recommended: 'Recommandé', continue: 'Continuer',
+      step1chip: 'Étape 1 sur 3', step1title: 'Commencer', step1desc: 'Connectez-vous pour des résumés gratuits ou utilisez votre propre clé API.',
+      googleCardTitle: 'Se connecter avec Google', googleCardDesc: 'Obtenez 5 résumés gratuits — aucune clé API requise.',
+      googleF1: '5 résumés vidéo gratuits', googleF2: 'Aucune clé API requise', googleF3: 'Passez à illimité',
+      byokCardTitle: 'Utiliser ma propre clé API', byokCardDesc: 'Gratuit pour toujours avec votre clé Groq ou Ollama.',
+      byokF1: 'Utilisation gratuite illimitée', byokF2: 'Groq ou Ollama Cloud', byokF3: 'Configuration de clé requise',
+      signingIn: 'Connexion avec Google…', signInSuccess: 'Bienvenue ! Redirection…', signInError: 'Échec de connexion. Cliquez pour réessayer.', signInCancel: 'Connexion annulée.',
+      groqName: 'Groq', groqDesc: 'Inférence ultra-rapide sur puces LPU.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash et modèles open-source.',
+      recommended: 'Recommandé', continue: 'Continuer', back: 'Retour',
       step2chip: 'Étape 2 sur 3', step2titleGroq: 'Entrez votre clé API Groq', step2titleOllama: 'Entrez votre clé API Ollama',
       step2descGroq: 'Cela prend 30 secondes. Créez un compte gratuit et générez une clé.', step2descOllama: 'Créez un compte sur ollama.com et générez une clé API.',
       inst1Groq: 'Visitez <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -172,10 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     de: {
       title: 'YouTube AI Summarizer',
       subtitle: 'Erhalten Sie sofortige KI-gestützte Zusammenfassungen, Kernpunkte und detaillierte Analysen für jedes YouTube-Video.',
-      step1chip: 'Schritt 1 von 3', step1title: 'Wählen Sie Ihren KI-Anbieter', step1desc: 'Beide Anbieter sind kostenlos. Sie können jederzeit wechseln.',
-      groqName: 'Groq', groqDesc: 'Ultraschnelle Inferenz auf LPU-Chips.', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'Schnellste Antwortzeiten', groqF3: 'Kostenlos: 14K Anfragen/Tag',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash und massive Open-Source-Modelle. Kostenlos.', ollamaF1: 'Gemini 3 Flash — Empfohlen', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'Kostenloser Plan verfügbar',
-      recommended: 'Empfohlen', continue: 'Weiter',
+      step1chip: 'Schritt 1 von 3', step1title: 'Loslegen', step1desc: 'Melden Sie sich an für kostenlose KI-Zusammenfassungen oder verwenden Sie Ihren eigenen API-Schlüssel.',
+      googleCardTitle: 'Mit Google anmelden', googleCardDesc: 'Erhalten Sie 5 kostenlose Zusammenfassungen — kein API-Schlüssel nötig.',
+      googleF1: '5 kostenlose Video-Zusammenfassungen', googleF2: 'Kein API-Schlüssel erforderlich', googleF3: 'Jederzeit auf unbegrenzt upgraden',
+      byokCardTitle: 'Eigenen API-Schlüssel verwenden', byokCardDesc: 'Für immer kostenlos mit Ihrem Groq- oder Ollama-Schlüssel.',
+      byokF1: 'Unbegrenzte kostenlose Nutzung', byokF2: 'Groq oder Ollama Cloud', byokF3: 'API-Schlüssel-Einrichtung erforderlich',
+      signingIn: 'Anmeldung mit Google…', signInSuccess: 'Willkommen! Weiterleitung…', signInError: 'Anmeldung fehlgeschlagen. Klicken Sie zum Wiederholen.', signInCancel: 'Anmeldung abgebrochen.',
+      groqName: 'Groq', groqDesc: 'Ultraschnelle Inferenz auf LPU-Chips.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash und Open-Source-Modelle.',
+      recommended: 'Empfohlen', continue: 'Weiter', back: 'Zurück',
       step2chip: 'Schritt 2 von 3', step2titleGroq: 'Geben Sie Ihren Groq API-Schlüssel ein', step2titleOllama: 'Geben Sie Ihren Ollama API-Schlüssel ein',
       step2descGroq: 'Dauert 30 Sekunden. Erstellen Sie ein kostenloses Konto.', step2descOllama: 'Erstellen Sie ein Konto auf ollama.com.',
       inst1Groq: 'Besuchen Sie <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -193,10 +228,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ja: {
       title: 'YouTube AI Summarizer',
       subtitle: 'YouTubeの動画をAIで即座に要約。キーポイントと詳細分析も。',
-      step1chip: 'ステップ 1/3', step1title: 'AIプロバイダーを選択', step1desc: '両方のプロバイダーは無料で始められます。設定からいつでも変更可能。',
-      groqName: 'Groq', groqDesc: 'LPUチップによる超高速推論。', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: '最速の応答時間', groqF3: '無料: 1日14Kリクエスト',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flashと大規模オープンソースモデル。無料。', ollamaF1: 'Gemini 3 Flash — おすすめ', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: '無料プランあり',
-      recommended: 'おすすめ', continue: '次へ',
+      step1chip: 'ステップ 1/3', step1title: '始めましょう', step1desc: '無料AIサマリーにサインインするか、自分のAPIキーを使用します。',
+      googleCardTitle: 'Googleでサインイン', googleCardDesc: '5つの無料AIサマリー — APIキー不要。',
+      googleF1: '5つの無料ビデオサマリー', googleF2: 'APIキー不要', googleF3: '無制限にアップグレード',
+      byokCardTitle: '自分のAPIキーを使用', byokCardDesc: 'GroqまたはOllamaキーで永久無料。',
+      byokF1: '無制限の無料使用', byokF2: 'GroqまたはOllama Cloud', byokF3: 'APIキーの設定が必要',
+      signingIn: 'Googleでサインイン中…', signInSuccess: 'ようこそ！リダイレクト中…', signInError: 'サインインに失敗しました。再試行するにはクリック。', signInCancel: 'サインインがキャンセルされました。',
+      groqName: 'Groq', groqDesc: 'LPUチップによる超高速推論。',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flashとオープンソースモデル。',
+      recommended: 'おすすめ', continue: '次へ', back: '戻る',
       step2chip: 'ステップ 2/3', step2titleGroq: 'Groq APIキーを入力', step2titleOllama: 'Ollama APIキーを入力',
       step2descGroq: '30秒で完了。無料アカウントを作成してキーを生成。', step2descOllama: 'ollama.comでアカウントを作成しAPIキーを生成。',
       inst1Groq: '<a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>にアクセス',
@@ -214,10 +254,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ko: {
       title: 'YouTube AI Summarizer',
       subtitle: 'YouTube 동영상의 AI 요약, 핵심 포인트, 상세 분석을 즉시 받아보세요.',
-      step1chip: '1단계 / 3', step1title: 'AI 제공업체 선택', step1desc: '두 제공업체 모두 무료로 시작할 수 있습니다.',
-      groqName: 'Groq', groqDesc: 'LPU 칩의 초고속 추론.', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: '가장 빠른 응답 시간', groqF3: '무료: 일 14K 요청',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash 및 대규모 오픈소스 모델. 무료.', ollamaF1: 'Gemini 3 Flash — 추천', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: '무료 플랜 이용 가능',
-      recommended: '추천', continue: '계속',
+      step1chip: '1단계 / 3', step1title: '시작하기', step1desc: '무료 AI 요약을 위해 로그인하거나 자신의 API 키를 사용하세요.',
+      googleCardTitle: 'Google로 로그인', googleCardDesc: '5개의 무료 AI 요약 — API 키 필요 없음.',
+      googleF1: '5개 무료 비디오 요약', googleF2: 'API 키 필요 없음', googleF3: '무제한으로 업그레이드',
+      byokCardTitle: '내 API 키 사용', byokCardDesc: 'Groq 또는 Ollama 키로 영원히 무료.',
+      byokF1: '무제한 무료 사용', byokF2: 'Groq 또는 Ollama Cloud', byokF3: 'API 키 설정 필요',
+      signingIn: 'Google로 로그인 중…', signInSuccess: '환영합니다! 리디렉션 중…', signInError: '로그인 실패. 다시 시도하려면 클릭.', signInCancel: '로그인이 취소되었습니다.',
+      groqName: 'Groq', groqDesc: 'LPU 칩의 초고속 추론.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash 및 오픈소스 모델.',
+      recommended: '추천', continue: '계속', back: '뒤로',
       step2chip: '2단계 / 3', step2titleGroq: 'Groq API 키 입력', step2titleOllama: 'Ollama API 키 입력',
       step2descGroq: '30초면 됩니다. 무료 계정을 만들고 키를 생성하세요.', step2descOllama: 'ollama.com에서 계정을 만들고 API 키를 생성하세요.',
       inst1Groq: '<a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> 방문',
@@ -235,10 +280,15 @@ document.addEventListener('DOMContentLoaded', () => {
     zh: {
       title: 'YouTube AI Summarizer',
       subtitle: '为任何YouTube视频获取即时AI摘要、关键要点和详细分析。',
-      step1chip: '第1步 / 共3步', step1title: '选择您的AI提供商', step1desc: '两个提供商都可免费开始使用。随时可在设置中更改。',
-      groqName: 'Groq', groqDesc: 'LPU芯片上的超快推理。', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: '最快的响应时间', groqF3: '免费: 每天14K请求',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash和大型开源模型。免费。', ollamaF1: 'Gemini 3 Flash — 推荐', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: '免费计划可用',
-      recommended: '推荐', continue: '继续',
+      step1chip: '第1步 / 共3步', step1title: '开始使用', step1desc: '登录以获取免费AI摘要或使用您自己的API密钥。',
+      googleCardTitle: '使用Google登录', googleCardDesc: '获取5个免费AI摘要 — 无需API密钥。',
+      googleF1: '5个免费视频摘要', googleF2: '无需API密钥', googleF3: '随时升级为无限制',
+      byokCardTitle: '使用我自己的API密钥', byokCardDesc: '使用您的Groq或Ollama密钥永久免费。',
+      byokF1: '无限免费使用', byokF2: 'Groq或Ollama Cloud', byokF3: '需要API密钥设置',
+      signingIn: '正在使用Google登录…', signInSuccess: '欢迎！正在跳转…', signInError: '登录失败。点击重试。', signInCancel: '登录已取消。',
+      groqName: 'Groq', groqDesc: 'LPU芯片上的超快推理。',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash和开源模型。',
+      recommended: '推荐', continue: '继续', back: '返回',
       step2chip: '第2步 / 共3步', step2titleGroq: '输入您的Groq API密钥', step2titleOllama: '输入您的Ollama API密钥',
       step2descGroq: '只需30秒。创建免费账户并生成密钥。', step2descOllama: '在ollama.com创建账户并生成API密钥。',
       inst1Groq: '访问 <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -256,10 +306,15 @@ document.addEventListener('DOMContentLoaded', () => {
     pt: {
       title: 'YouTube AI Summarizer',
       subtitle: 'Obtenha resumos instantâneos com IA, pontos-chave e análises detalhadas de qualquer vídeo do YouTube.',
-      step1chip: 'Passo 1 de 3', step1title: 'Escolha seu provedor de IA', step1desc: 'Ambos os provedores são gratuitos. Você pode trocar a qualquer momento.',
-      groqName: 'Groq', groqDesc: 'Inferência ultrarrápida em chips LPU.', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'Tempos de resposta mais rápidos', groqF3: 'Grátis: 14K requisições/dia',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash e modelos massivos de código aberto. Grátis.', ollamaF1: 'Gemini 3 Flash — Recomendado', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'Plano gratuito disponível',
-      recommended: 'Recomendado', continue: 'Continuar',
+      step1chip: 'Passo 1 de 3', step1title: 'Começar', step1desc: 'Faça login para resumos gratuitos ou use sua própria chave API.',
+      googleCardTitle: 'Entrar com Google', googleCardDesc: 'Obtenha 5 resumos gratuitos — sem chave API.',
+      googleF1: '5 resumos de vídeo grátis', googleF2: 'Sem chave API necessária', googleF3: 'Atualize para ilimitado',
+      byokCardTitle: 'Usar minha própria chave API', byokCardDesc: 'Grátis para sempre com sua chave Groq ou Ollama.',
+      byokF1: 'Uso gratuito ilimitado', byokF2: 'Groq ou Ollama Cloud', byokF3: 'Configuração de chave necessária',
+      signingIn: 'Entrando com Google…', signInSuccess: 'Bem-vindo! Redirecionando…', signInError: 'Falha no login. Clique para tentar novamente.', signInCancel: 'Login cancelado.',
+      groqName: 'Groq', groqDesc: 'Inferência ultrarrápida em chips LPU.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash e modelos de código aberto.',
+      recommended: 'Recomendado', continue: 'Continuar', back: 'Voltar',
       step2chip: 'Passo 2 de 3', step2titleGroq: 'Digite sua chave API do Groq', step2titleOllama: 'Digite sua chave API do Ollama',
       step2descGroq: 'Leva 30 segundos. Crie uma conta gratuita e gere uma chave.', step2descOllama: 'Crie uma conta no ollama.com e gere uma chave API.',
       inst1Groq: 'Visite <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -277,10 +332,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ar: {
       title: 'YouTube AI Summarizer',
       subtitle: 'احصل على ملخصات فورية بالذكاء الاصطناعي والنقاط الرئيسية والتحليل المفصل لأي فيديو يوتيوب.',
-      step1chip: 'الخطوة 1 من 3', step1title: 'اختر مزود الذكاء الاصطناعي', step1desc: 'كلا المزودين مجانيان. يمكنك التبديل في أي وقت.',
-      groqName: 'Groq', groqDesc: 'استدلال فائق السرعة على شرائح LPU.', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'أسرع أوقات استجابة', groqF3: 'مجاني: 14K طلب/يوم',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash ونماذج مفتوحة المصدر. مجاني.', ollamaF1: 'Gemini 3 Flash — موصى به', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'خطة مجانية متاحة',
-      recommended: 'موصى به', continue: 'متابعة',
+      step1chip: 'الخطوة 1 من 3', step1title: 'ابدأ الآن', step1desc: 'سجل دخولك للحصول على ملخصات مجانية أو استخدم مفتاح API الخاص بك.',
+      googleCardTitle: 'تسجيل الدخول بـ Google', googleCardDesc: 'احصل على 5 ملخصات مجانية — بدون مفتاح API.',
+      googleF1: '5 ملخصات فيديو مجانية', googleF2: 'لا يلزم مفتاح API', googleF3: 'ترقية للاستخدام غير المحدود',
+      byokCardTitle: 'استخدام مفتاح API الخاص بي', byokCardDesc: 'مجاني للأبد مع مفتاح Groq أو Ollama.',
+      byokF1: 'استخدام مجاني غير محدود', byokF2: 'Groq أو Ollama Cloud', byokF3: 'يتطلب إعداد مفتاح API',
+      signingIn: 'جارٍ تسجيل الدخول بـ Google…', signInSuccess: 'مرحباً! جارٍ التحويل…', signInError: 'فشل تسجيل الدخول. انقر للمحاولة مرة أخرى.', signInCancel: 'تم إلغاء تسجيل الدخول.',
+      groqName: 'Groq', groqDesc: 'استدلال فائق السرعة على شرائح LPU.',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash ونماذج مفتوحة المصدر.',
+      recommended: 'موصى به', continue: 'متابعة', back: 'رجوع',
       step2chip: 'الخطوة 2 من 3', step2titleGroq: 'أدخل مفتاح Groq API', step2titleOllama: 'أدخل مفتاح Ollama API',
       step2descGroq: 'يستغرق 30 ثانية. أنشئ حساباً مجانياً.', step2descOllama: 'أنشئ حساباً على ollama.com.',
       inst1Groq: 'زر <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>',
@@ -298,10 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
     hi: {
       title: 'YouTube AI Summarizer',
       subtitle: 'किसी भी YouTube वीडियो का तुरंत AI सारांश, मुख्य बिंदु और विस्तृत विश्लेषण प्राप्त करें।',
-      step1chip: 'चरण 1 / 3', step1title: 'अपना AI प्रदाता चुनें', step1desc: 'दोनों प्रदाता मुफ़्त हैं। आप कभी भी बदल सकते हैं।',
-      groqName: 'Groq', groqDesc: 'LPU चिप्स पर अल्ट्रा-फास्ट इनफ़रेंस।', groqF1: 'Llama 3.3 70B, Llama 4 Scout', groqF2: 'सबसे तेज़ प्रतिक्रिया समय', groqF3: 'मुफ़्त: 14K अनुरोध/दिन',
-      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash और बड़े ओपन-सोर्स मॉडल। मुफ़्त।', ollamaF1: 'Gemini 3 Flash — अनुशंसित', ollamaF2: 'DeepSeek V3.2 671B, Qwen3-Next 80B', ollamaF3: 'मुफ़्त योजना उपलब्ध',
-      recommended: 'अनुशंसित', continue: 'जारी रखें',
+      step1chip: 'चरण 1 / 3', step1title: 'शुरू करें', step1desc: 'मुफ़्त AI सारांश के लिए साइन इन करें या अपनी API कुंजी का उपयोग करें।',
+      googleCardTitle: 'Google से साइन इन', googleCardDesc: '5 मुफ़्त AI सारांश प्राप्त करें — API कुंजी की आवश्यकता नहीं।',
+      googleF1: '5 मुफ़्त वीडियो सारांश', googleF2: 'API कुंजी आवश्यक नहीं', googleF3: 'असीमित के लिए अपग्रेड करें',
+      byokCardTitle: 'अपनी API कुंजी का उपयोग करें', byokCardDesc: 'अपनी Groq या Ollama कुंजी से हमेशा मुफ़्त।',
+      byokF1: 'असीमित मुफ़्त उपयोग', byokF2: 'Groq या Ollama Cloud', byokF3: 'API कुंजी सेटअप आवश्यक',
+      signingIn: 'Google से साइन इन हो रहा है…', signInSuccess: 'स्वागत है! रीडायरेक्ट हो रहा है…', signInError: 'साइन इन विफल। पुनः प्रयास के लिए क्लिक करें।', signInCancel: 'साइन इन रद्द किया गया।',
+      groqName: 'Groq', groqDesc: 'LPU चिप्स पर अल्ट्रा-फास्ट इनफ़रेंस।',
+      ollamaName: 'Ollama Cloud', ollamaDesc: 'Gemini 3 Flash और ओपन-सोर्स मॉडल।',
+      recommended: 'अनुशंसित', continue: 'जारी रखें', back: 'वापस',
       step2chip: 'चरण 2 / 3', step2titleGroq: 'अपनी Groq API कुंजी दर्ज करें', step2titleOllama: 'अपनी Ollama API कुंजी दर्ज करें',
       step2descGroq: '30 सेकंड लगते हैं। मुफ़्त खाता बनाएं।', step2descOllama: 'ollama.com पर खाता बनाएं।',
       inst1Groq: '<a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> पर जाएं',
@@ -359,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const langPicker    = $('#langPicker');
   const langFlagEl    = $('#langCurrentFlag');
   const langLabelEl   = $('#langCurrentLabel');
+  const providerCards = $$('.provider-card');
 
   function applyTranslations() {
     const isRTL = currentLang === 'ar';
@@ -376,22 +442,27 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#step1Title').textContent = t('step1title');
     $('#step1Desc').textContent = t('step1desc');
 
+    $('#googleCardTitle').textContent = t('googleCardTitle');
+    $('#googleCardDesc').textContent = t('googleCardDesc');
+    $('#googleF1').textContent = t('googleF1');
+    $('#googleF2').textContent = t('googleF2');
+    $('#googleF3').textContent = t('googleF3');
+    $('#googleTag').textContent = t('recommended');
+
+    $('#byokCardTitle').textContent = t('byokCardTitle');
+    $('#byokCardDesc').textContent = t('byokCardDesc');
+    $('#byokF1').textContent = t('byokF1');
+    $('#byokF2').textContent = t('byokF2');
+    $('#byokF3').textContent = t('byokF3');
+
     $('#groqName').textContent = t('groqName');
     $('#groqDesc').textContent = t('groqDesc');
-    $('#groqF1').textContent = t('groqF1');
-    $('#groqF2').textContent = t('groqF2');
-    $('#groqF3').textContent = t('groqF3');
-
     $('#ollamaName').textContent = t('ollamaName');
     $('#ollamaDesc').textContent = t('ollamaDesc');
-    $('#ollamaF1').textContent = t('ollamaF1');
-    $('#ollamaF2').textContent = t('ollamaF2');
-    $('#ollamaF3').textContent = t('ollamaF3');
     $('#ollamaTag').textContent = t('recommended');
 
-    $('#step1NextText').textContent = t('continue');
-
     $('#step2Chip').textContent = t('step2chip');
+    $('#step2BackText').textContent = t('back');
     updateStep2ForProvider();
 
     $('#step3Chip').textContent = t('step3chip');
@@ -477,26 +548,169 @@ document.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
   renderLanguageGrid();
 
-  // ── Provider selection ──
-  const providerCards = $$('.provider-card');
+  // ── Path: Google Sign-in or BYOK ──
+  let authPath = null; // 'google' | 'byok'
+  const authStatusEl = $('#authStatus');
+  const googleAuthCard = $('#googleAuthCard');
+  const byokCard = $('#byokCard');
+
+  googleAuthCard.addEventListener('click', handleGoogleSignIn);
+
+  byokCard.addEventListener('click', () => {
+    authPath = 'byok';
+    goToStep(2);
+    updateStep2ForProvider();
+  });
+
+  $('#step2Back').addEventListener('click', () => {
+    authStatusEl.className = 'auth-status hidden';
+    goToStep(1);
+  });
+
+  async function handleGoogleSignIn() {
+    authPath = 'google';
+    googleAuthCard.disabled = true;
+    googleAuthCard.classList.add('is-loading');
+    showAuthStatus(t('signingIn'), 'loading');
+
+    try {
+      const res = await chrome.runtime.sendMessage({ action: 'supabaseSignIn' });
+      if (res?.error) {
+        const isCancelled = /cancelled|user.*cancel/i.test(res.error);
+        showAuthFailure(
+          isCancelled ? t('signInCancel') : t('signInError'),
+          res.error,
+          res.authDebugTail,
+          !isCancelled
+        );
+        googleAuthCard.disabled = false;
+        googleAuthCard.classList.remove('is-loading');
+        return;
+      }
+
+      const user = res.session?.user || {};
+      const meta = user.user_metadata || {};
+      const name = meta.full_name || meta.name || user.email || '';
+      const avatar = meta.avatar_url || meta.picture || '';
+
+      renderAuthStatusSuccess(t('signInSuccess'), name, avatar);
+
+      await chrome.storage.local.set({ onboardingComplete: true, authMethod: 'google' });
+      setTimeout(() => goToStep(3), 1500);
+    } catch (err) {
+      const isCancelled = /cancelled|user.*cancel/i.test(err.message);
+      showAuthFailure(
+        isCancelled ? t('signInCancel') : t('signInError'),
+        err.message,
+        '',
+        !isCancelled
+      );
+      googleAuthCard.disabled = false;
+      googleAuthCard.classList.remove('is-loading');
+    }
+  }
+
+  function sanitizeAuthDebugForUser(text) {
+    if (!text || typeof text !== 'string') return '';
+    return text
+      .replace(/https?:\/\/[^\s\])'"]+/gi, '[URL]')
+      .replace(/chrome-extension:\/\/[^\s\])'"]+/gi, '[extension]')
+      .replace(/\bsb_[a-zA-Z0-9_-]{8,}/g, '[key]');
+  }
+
+  function shouldShowSignInTimeoutHint(technical, debugTail) {
+    const blob = `${technical || ''}\n${debugTail || ''}`.toLowerCase();
+    return blob.includes('authorization page could not be loaded');
+  }
+
+  function showAuthFailure(summary, technical, debugTail, includeDetails) {
+    authStatusEl.className = 'auth-status error';
+    authStatusEl.replaceChildren();
+    const p = document.createElement('p');
+    p.className = 'auth-status-summary';
+    p.textContent = summary;
+    authStatusEl.appendChild(p);
+    if (shouldShowSignInTimeoutHint(technical, debugTail) && t('signInTimeoutHint')) {
+      const hint = document.createElement('p');
+      hint.className = 'auth-status-hint';
+      hint.textContent = t('signInTimeoutHint');
+      authStatusEl.appendChild(hint);
+    }
+    if (includeDetails && (technical || debugTail)) {
+      const det = document.createElement('details');
+      det.open = false;
+      const sum = document.createElement('summary');
+      sum.textContent = t('signInTechDetails');
+      det.appendChild(sum);
+      const pre = document.createElement('pre');
+      pre.className = 'auth-debug-pre';
+      const logLabel = currentLang === 'tr' ? 'günlük' : 'log';
+      let block = sanitizeAuthDebugForUser(technical || '');
+      const tail = sanitizeAuthDebugForUser(debugTail || '');
+      if (tail) {
+        block += (block ? `\n\n--- ${logLabel} ---\n` : '') + tail;
+      }
+      pre.textContent = block;
+      det.appendChild(pre);
+      authStatusEl.appendChild(det);
+    }
+  }
+
+  function showAuthStatus(msg, type, isHtml = false) {
+    if (isHtml) authStatusEl.innerHTML = msg;
+    else authStatusEl.textContent = msg;
+    authStatusEl.className = `auth-status ${type}`;
+  }
+
+  /**
+   * Render the post-sign-in success state via DOM APIs so user-controlled
+   * `avatar` / `name` values cannot break out of attributes into script or
+   * markup. Avoids `innerHTML` with template interpolation.
+   */
+  function renderAuthStatusSuccess(message, name, avatar) {
+    authStatusEl.className = 'auth-status success';
+    authStatusEl.replaceChildren();
+    const msgNode = document.createElement('span');
+    msgNode.className = 'auth-status-summary';
+    msgNode.textContent = message || '';
+    authStatusEl.appendChild(msgNode);
+    if (!name) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'auth-user';
+    if (avatar) {
+      const span = document.createElement('span');
+      span.className = 'auth-avatar';
+      const img = document.createElement('img');
+      img.src = avatar;
+      img.alt = '';
+      img.referrerPolicy = 'no-referrer';
+      span.appendChild(img);
+      wrap.appendChild(span);
+    }
+    const strong = document.createElement('strong');
+    strong.textContent = name;
+    wrap.appendChild(strong);
+    authStatusEl.appendChild(wrap);
+  }
+
+  // ── Provider selection (Step 2 — BYOK path) ──
   providerCards.forEach((card) => {
     card.addEventListener('click', () => {
       providerCards.forEach((c) => c.classList.remove('selected'));
       card.classList.add('selected');
       chosenProvider = card.dataset.provider;
+      updateStep2ForProvider();
     });
-  });
-
-  // ── Step navigation ──
-  $('#step1Next').addEventListener('click', () => {
-    goToStep(2);
-    updateStep2ForProvider();
   });
 
   function updateStep2ForProvider() {
     const step2Title = $('#step2Title');
     const step2Desc  = $('#step2Desc');
     const keyInput   = $('#apiKeyInput');
+
+    providerCards.forEach((c) => {
+      c.classList.toggle('selected', c.dataset.provider === chosenProvider);
+    });
 
     if (chosenProvider === 'ollama') {
       step2Title.textContent = t('step2titleOllama');
@@ -556,14 +770,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (response?.valid) {
+        const enc = StorageHelper.tryObfuscate(key);
+        if (!enc.ok) {
+          showValidation(enc.message, 'error');
+          resetValidateBtn();
+          return;
+        }
         const storageData = {
           provider: chosenProvider,
           onboardingComplete: true
         };
         if (chosenProvider === 'ollama') {
-          storageData.ollamaApiKey = StorageHelper.obfuscate(key);
+          storageData.ollamaApiKey = enc.value;
         } else {
-          storageData.groqApiKey = StorageHelper.obfuscate(key);
+          storageData.groqApiKey = enc.value;
         }
         await chrome.storage.local.set(storageData);
 
@@ -573,8 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showValidation(response?.error || t('invalid'), 'error');
         resetValidateBtn();
       }
-    } catch {
-      showValidation(t('connError'), 'error');
+    } catch (err) {
+      showValidation(err?.message || t('connError'), 'error');
       resetValidateBtn();
     }
   }
@@ -592,6 +812,13 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (sn === num) el.classList.add('is-active');
     });
   }
+
+  stepRailItems.forEach((el) => {
+    el.addEventListener('click', () => {
+      const sn = parseInt(el.dataset.step, 10) || 0;
+      if (sn < currentStep) goToStep(sn);
+    });
+  });
 
   function goToStep(num) {
     const allSteps = [step1, step2, step3];
@@ -617,11 +844,25 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.tabs.create({ url }).catch(() => window.open(url, '_blank'));
   });
 
-  // ── Already configured? ──
-  chrome.storage.local.get(['groqApiKey', 'ollamaApiKey', 'provider', 'onboardingComplete'], (data) => {
-    const hasKey = (data.provider === 'ollama' && data.ollamaApiKey) ||
-                   (data.provider !== 'ollama' && data.groqApiKey);
-    if (hasKey && data.onboardingComplete) goToStep(3);
+  // ── Already configured? Check BYOK keys + Supabase session ──
+  chrome.storage.local.get(['groqApiKey', 'ollamaApiKey', 'provider', 'onboardingComplete', 'authMethod'], async (data) => {
+    const hasBYOK = (data.provider === 'ollama' && data.ollamaApiKey) ||
+                    (data.provider !== 'ollama' && data.groqApiKey);
+
+    if (hasBYOK && data.onboardingComplete) {
+      goToStep(3);
+      return;
+    }
+
+    if (data.authMethod === 'google' && data.onboardingComplete) {
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'supabaseGetSession' });
+        if (res?.session) {
+          goToStep(3);
+          return;
+        }
+      } catch { /* session expired, stay on step 1 */ }
+    }
   });
 
   function showValidation(msg, type) {

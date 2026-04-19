@@ -20,6 +20,26 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.0.1',
+      date: '2026-04-17',
+      changes: [
+        { type: 'fixed',    text: 'c201_credit_overdraft' },
+        { type: 'fixed',    text: 'c201_tts_pricing' },
+        { type: 'improved', text: 'c201_error_messages' },
+        { type: 'improved', text: 'c201_privacy_redesign' },
+        { type: 'new',      text: 'c201_production_live' },
+      ]
+    },
+    {
+      version: '2.0.0',
+      date: '2026-04-12',
+      changes: [
+        { type: 'new', text: 'c200_freemium' },
+        { type: 'improved', text: 'c200_chat' },
+        { type: 'changed', text: 'c200_backend' },
+      ]
+    },
+    {
       version: '1.8.1',
       date: '2026-04-04',
       changes: [
@@ -117,6 +137,16 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c201_credit_overdraft: 'Credit check before managed AI runs: long videos now warn you upfront if you need more credits, instead of starting and failing partway through',
+      c201_tts_pricing: 'Podcast audio (Gemini TTS) billing now follows actual token usage from the provider, so your balance always matches real usage',
+      c201_error_messages: 'Clearer managed-AI messages when something goes wrong — low credits, rate limits, and provider issues each explain what you can do next',
+      c201_privacy_redesign: 'Privacy Policy redesigned with dark-mode support, at-a-glance guarantees, and a side-by-side BYOK vs Managed AI summary',
+      c201_production_live: 'Managed AI is fully available: sign in with Google for cloud features, and subscribe to Pro through Stripe when you need more',
+
+      c200_freemium: 'Sign in with Google for managed AI (cloud summaries, chat, podcast) with free credits or Pro — or keep using your own API keys (BYOK)',
+      c200_chat: 'Video chat answers stay grounded in the transcript — fewer generic assistant replies when you greet or ask how to get help',
+      c200_backend: 'Faster, more reliable managed AI pipeline (Supabase Edge + Stripe Pro); extension version 2.0.0 for Chrome Web Store',
+
       c181_version_labels: 'Settings popup and What’s New show the live version from manifest.json (no stale hardcoded label)',
       c181_store_bundle: 'Store package includes update/ assets; manifest bumped for Chrome Web Store resubmit',
 
@@ -166,6 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c201_credit_overdraft: 'Yönetilen AI çalışmadan önce kredi kontrolü: uzun videolarda yetersiz krediniz varsa iş başlamadan uyarı alırsınız; yarıda kesilme olmaz',
+      c201_tts_pricing: 'Podcast sesi (Gemini TTS) artık sağlayıcının gerçek token kullanımına göre hesaplanıyor; bakiyeniz kullanımla her zaman tutarlı',
+      c201_error_messages: 'Yönetilen AI hata mesajları netleşti — yetersiz kredi, hız sınırı ve servis kesintilerinde ne yapabileceğiniz yazıyor',
+      c201_privacy_redesign: 'Gizlilik politikası yenilendi: karanlık mod desteği, tek bakışta güven rozetleri ve BYOK vs Yönetilen AI karşılaştırması',
+      c201_production_live: 'Yönetilen AI tam kullanıma açık: bulut özellikler için Google ile giriş yapın; ihtiyaç duyduğunuzda Stripe üzerinden Pro’ya abone olun',
+
+      c200_freemium: 'Google ile giriş: yönetilen yapay zeka (bulut özet, sohbet, podcast) — ücretsiz krediler veya Pro; isterseniz kendi API anahtarınızla (BYOK) devam',
+      c200_chat: 'Video sohbeti yanıtları transkripte bağlı kalır — selam veya “nasıl yardım” sorularında boş asistan cümleleri azaltıldı',
+      c200_backend: 'Daha güvenilir yönetilen AI hattı (Supabase Edge + Stripe Pro); Chrome Web Store için sürüm 2.0.0',
 
       c181_version_labels: 'Ayarlar popup’ı ve Neler Yeni, manifest.json’daki canlı sürümü gösterir (sabit metin yok)',
       c181_store_bundle: 'Mağaza paketine update/ dosyaları dahil; Chrome Web Store yeniden yükleme için manifest sürümü yükseltildi',
@@ -544,22 +584,43 @@ document.addEventListener('DOMContentLoaded', () => {
     return html;
   }
 
-  // ── Render current version ──
-  const currentVersion = CHANGELOG[0];
-  const manifestVersion = chrome.runtime?.getManifest?.()?.version;
-
-  if (manifestVersion) {
-    $('#versionPill').textContent = `v${manifestVersion}`;
-    const matchingEntry = CHANGELOG.find((e) => e.version === manifestVersion);
-    const cardEntry = matchingEntry || currentVersion;
-    $('#currentChangelog').innerHTML = buildChangelogCard(cardEntry, true);
-  } else {
-    $('#currentChangelog').innerHTML = buildChangelogCard(currentVersion, true);
+  /**
+   * Sort CHANGELOG newest-first by (date DESC, semver DESC) so that out-of-order
+   * array entries still render correctly. Non-mutating — produces a new array.
+   */
+  function sortedChangelog() {
+    const toSemver = (v) => String(v || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
+    const cmpSemver = (a, b) => {
+      const [am, ai, ap] = toSemver(a);
+      const [bm, bi, bp] = toSemver(b);
+      return bm - am || bi - ai || bp - ap;
+    };
+    return [...CHANGELOG].sort((a, b) => {
+      const dateDiff = String(b.date).localeCompare(String(a.date));
+      if (dateDiff !== 0) return dateDiff;
+      return cmpSemver(a.version, b.version);
+    });
   }
 
-  // ── Render previous versions ──
+  const SORTED = sortedChangelog();
+  const manifestVersion = chrome.runtime?.getManifest?.()?.version;
+
+  /**
+   * Pick the entry to highlight as "latest". Preference order:
+   *   1. Entry whose version === manifest.version (so the user sees exactly what they installed).
+   *   2. First entry in the date-sorted list (the newest we know about).
+   * Returning a single object keeps downstream rendering and dedup trivial.
+   */
+  const currentEntry =
+    (manifestVersion && SORTED.find((e) => e.version === manifestVersion)) ||
+    SORTED[0];
+
+  $('#versionPill').textContent = `v${manifestVersion || currentEntry.version}`;
+  $('#currentChangelog').innerHTML = buildChangelogCard(currentEntry, true);
+
+  // ── Render previous versions (exclude whatever is shown as "current") ──
   const historyList = $('#historyList');
-  const previousVersions = CHANGELOG.slice(1);
+  const previousVersions = SORTED.filter((e) => e.version !== currentEntry.version);
 
   if (previousVersions.length > 0) {
     previousVersions.forEach(entry => {

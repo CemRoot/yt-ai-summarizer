@@ -3,8 +3,7 @@
  * Handles Groq API calls, onboarding, and cross-component messaging
  */
 
-// Import utilities (only storage.js needed — API calls are handled locally in this file)
-importScripts('utils/storage.js');
+importScripts('utils/storage.js', 'utils/auth-debug-log.js', 'utils/supabase-auth.js', 'utils/api-client.js');
 
 // Production uninstall page: hosted on developer domain (Vercel). Source file in
 // repo: docs/uninstall.html — copy to portfolio public/yt-ai-summarizer/ when it changes.
@@ -16,6 +15,32 @@ const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
 /** @see https://ai.google.dev/gemini-api/docs/speech-generation — preview TTS model id for generateContent */
 const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
 const MAX_RETRIES = 3;
+
+/**
+ * When Edge `check-credits` returns a new plan/credits snapshot, persist to
+ * `chrome.storage.local` and bump `ytai_panel_auth_sync_nonce` so open YouTube
+ * tabs run `#refreshPanelAuthAndCredits` without F5 (e.g. after Stripe Pro upgrade
+ * while popup calls `checkCredits` but the panel still read stale `credits: 0`).
+ * @param {object|undefined|null} data
+ */
+async function syncManagedCreditsToStorageIfChanged(data) {
+  if (!data || data.error || typeof data.plan !== 'string') return;
+  try {
+    const prev = await StorageHelper.getSettings();
+    const prevPlan = String(prev.userPlan || 'anonymous').toLowerCase();
+    const nextPlan = String(data.plan || 'free').toLowerCase();
+    const prevCred = typeof prev.credits === 'number' ? prev.credits : -999_000;
+    const nextCred = typeof data.credits === 'number' ? data.credits : prevCred;
+    if (prevPlan === nextPlan && prevCred === nextCred) return;
+    const r = await StorageHelper.saveSettings({
+      credits: data.credits,
+      userPlan: data.plan,
+    });
+    if (r?.ok !== false) await StorageHelper.bumpPanelAuthSyncNonce();
+  } catch (e) {
+    console.warn('[YTAI] syncManagedCreditsToStorageIfChanged:', e?.message || e);
+  }
+}
 
 /**
  * Language-aware system prompts.
@@ -190,20 +215,35 @@ try {
 /**
  * Handle messages from content scripts and popup
  */
+/**
+ * Serialize an Error (including typed ApiError) into a plain object the
+ * content script can consume. Propagates known structured fields
+ * (errorCode, upgradeUrl, estimatedCredits/availableCredits for
+ * INSUFFICIENT_CREDITS pre-flight) so the UI can show targeted messages.
+ */
+function serializeError(err) {
+  const resp = { error: err?.message || 'Unknown error' };
+  if (err?.code) resp.errorCode = err.code;
+  if (err?.upgradeUrl) resp.upgradeUrl = err.upgradeUrl;
+  if (typeof err?.estimatedCredits === 'number') resp.estimated_credits = err.estimatedCredits;
+  if (typeof err?.availableCredits === 'number') resp.available_credits = err.availableCredits;
+  return resp;
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return;
 
   if (message.action === 'summarizeAll') {
     handleSummarizeAll(message.data, sender.tab?.id)
       .then(sendResponse)
-      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+      .catch((err) => sendResponse(serializeError(err)));
     return true;
   }
 
   if (message.action === 'summarize') {
     handleSummarize(message.data, sender.tab?.id)
       .then(sendResponse)
-      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+      .catch((err) => sendResponse(serializeError(err)));
     return true;
   }
 
@@ -217,14 +257,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'generatePodcast') {
     handleGeneratePodcast(message.data, sender.tab?.id)
       .then(sendResponse)
-      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+      .catch((err) => sendResponse(serializeError(err)));
     return true;
   }
 
   if (message.action === 'chatWithVideo') {
     handleChatWithVideo(message.data)
       .then(sendResponse)
-      .catch((err) => sendResponse({ error: err?.message || 'Unknown error' }));
+      .catch((err) => sendResponse(serializeError(err)));
     return true;
   }
 
@@ -253,6 +293,151 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ─── Supabase Auth actions ──────────────────────────────────────
+
+  if (message.action === 'supabaseSignIn') {
+    SupabaseAuth.getInstance().signIn()
+      .then(async (session) => {
+        try {
+          const fingerprint = await StorageHelper.getPersistentAuthDeviceId();
+          await ApiClient.getInstance().callAuthCallback(fingerprint);
+        } catch (e) {
+          console.warn('[YTAI] auth-callback failed after sign-in:', e?.message || e);
+          AuthDebugLogger.log('warn', 'postSignIn', 'auth-callback failed', e?.message || String(e)).catch(() => {});
+        }
+        const credits = await ApiClient.getInstance().checkCredits().catch((e) => {
+          console.warn('[YTAI] checkCredits failed after sign-in:', e?.message || e);
+          AuthDebugLogger.log('warn', 'postSignIn', 'checkCredits failed', e?.message || String(e)).catch(() => {});
+          return null;
+        });
+        const cachedSession = StorageHelper.sanitizeSessionForCache(session);
+        chrome.storage.session.set({ ytai_popup_cache: { session: cachedSession, credits } }).catch(() => {});
+        await StorageHelper.bumpPanelAuthSyncNonce().catch(() => {});
+        sendResponse({ session, credits });
+      })
+      .catch(async (err) => {
+        const msg = err?.message || 'Sign in failed';
+        // Do not AuthDebugLogger.log here: signIn() already recorded the failure (avoids duplicate tail + Errors UI noise).
+        const tail = await AuthDebugLogger.getTail(25);
+        sendResponse({
+          error: msg,
+          authDebugTail: AuthDebugLogger.formatTail(tail),
+        });
+      });
+    return true;
+  }
+
+  if (message.action === 'getAuthDebugLog') {
+    AuthDebugLogger.getTail(message.limit || 40)
+      .then((entries) => sendResponse({ tail: AuthDebugLogger.formatTail(entries), entries }))
+      .catch(() => sendResponse({ tail: '', entries: [] }));
+    return true;
+  }
+
+  if (message.action === 'supabaseSignOut') {
+    SupabaseAuth.getInstance().signOut()
+      .then(async () => {
+        chrome.storage.session.remove('ytai_popup_cache').catch(() => {});
+        await StorageHelper.bumpPanelAuthSyncNonce().catch(() => {});
+        sendResponse({ ok: true });
+      })
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+
+  if (message.action === 'supabaseGetSession') {
+    SupabaseAuth.getInstance().getSession()
+      .then(async (session) => {
+        if (!session) {
+          chrome.storage.session.remove('ytai_popup_cache').catch(() => {});
+          sendResponse({ session: null, credits: null });
+          return;
+        }
+        try {
+          const fingerprint = await StorageHelper.getPersistentAuthDeviceId();
+          await ApiClient.getInstance().callAuthCallback(fingerprint);
+        } catch (e) {
+          console.warn('[YTAI] auth-callback failed on getSession:', e?.message || e);
+        }
+        const credits = await ApiClient.getInstance().checkCredits().catch((e) => {
+          console.warn('[YTAI] checkCredits failed on getSession:', e?.message || e);
+          return null;
+        });
+        const cachedSession = StorageHelper.sanitizeSessionForCache(session);
+        chrome.storage.session.set({ ytai_popup_cache: { session: cachedSession, credits } }).catch(() => {});
+        void syncManagedCreditsToStorageIfChanged(credits);
+        sendResponse({ session, credits });
+      })
+      .catch(() => sendResponse({ session: null, credits: null }));
+    return true;
+  }
+
+  if (message.action === 'checkCredits') {
+    ApiClient.getInstance().checkCredits()
+      .then((data) => {
+        sendResponse(data);
+        void syncManagedCreditsToStorageIfChanged(data);
+      })
+      .catch((err) => sendResponse({ error: err?.message || 'Failed' }));
+    return true;
+  }
+
+  if (message.action === 'openCheckout') {
+    (async () => {
+      try {
+        const session = await SupabaseAuth.getInstance().getSession();
+        const userId = session?.user?.id || '';
+        const email = session?.user?.email || '';
+        const plan = message.plan || 'yearly';
+
+        let links = {};
+        try {
+          const cred = await ApiClient.getInstance().checkCredits();
+          if (cred?.checkout_monthly) links.monthly = cred.checkout_monthly;
+          if (cred?.checkout_yearly) links.yearly = cred.checkout_yearly;
+        } catch { /* use fallback */ }
+
+        let url = links[plan] || links.yearly;
+        if (!url) {
+          sendResponse({ error: 'Checkout link unavailable. Please try again.' });
+          return;
+        }
+        const params = new URLSearchParams();
+        if (userId) params.set('client_reference_id', userId);
+        if (email) params.set('prefilled_email', email);
+        const qs = params.toString();
+        if (qs) url += `?${qs}`;
+        await chrome.tabs.create({ url });
+        sendResponse({ ok: true });
+      } catch (err) {
+        sendResponse({ error: err?.message || 'Failed to open checkout' });
+      }
+    })();
+    return true;
+  }
+
+  if (message.action === 'openPortal') {
+    (async () => {
+      try {
+        const session = await SupabaseAuth.getInstance().getSession();
+        if (!session) {
+          sendResponse({ error: 'Not signed in' });
+          return;
+        }
+        const data = await ApiClient.getInstance().createPortalSession();
+        if (data?.url) {
+          await chrome.tabs.create({ url: data.url });
+          sendResponse({ ok: true });
+        } else {
+          sendResponse({ error: data?.error || 'No portal URL returned' });
+        }
+      } catch (err) {
+        sendResponse({ error: err?.message || 'Failed to open portal' });
+      }
+    })();
+    return true;
+  }
+
   return false;
 });
 
@@ -266,16 +451,51 @@ async function handleSummarize(data, tabId) {
     throw new Error('EMPTY_TRANSCRIPT');
   }
 
-  const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) {
-    throw new Error('INVALID_API_KEY');
-  }
-
   function sendProgress(text, progress) {
     if (tabId) {
       chrome.tabs.sendMessage(tabId, { action: 'progress', text, progress }).catch(() => {});
     }
   }
+
+  // ── Try managed mode first ───────────────────────────────────────
+  const managed = await getManagedMode();
+
+  if (managed.managed) {
+    sendProgress('Preparing managed AI...', 0.3);
+    try {
+      sendProgress('AI is analyzing...', 0.5);
+      const edgeResult = await ApiClient.getInstance().summarize({
+        videoId,
+        transcript,
+        action: mode || 'summary',
+        language: language || 'auto',
+      });
+      sendProgress('Done!', 1);
+      return {
+        content: edgeResult.result || edgeResult.content || '',
+        model: edgeResult.provider || 'managed',
+        provider: 'managed',
+        credits_remaining: edgeResult.credits_remaining,
+        credits_used: edgeResult.credits_used,
+        plan: managed.credits?.plan || 'pro',
+      };
+    } catch (err) {
+      if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS' || err?.code === 'RATE_LIMITED' || err?.code === 'AI_QUOTA_EXCEEDED') {
+        const { apiKey } = await getProviderConfig();
+        if (apiKey) {
+          sendProgress('Switching to your API key...', 0.25);
+        } else {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // ── BYOK fallback ───────────────────────────────────────────────
+  const { provider, apiKey, model } = await getProviderConfig();
+  await requireByokApiKeyForProvider(managed, provider, apiKey);
 
   sendProgress('Preparing AI request...', 0.3);
 
@@ -319,10 +539,47 @@ async function handleSummarize(data, tabId) {
 }
 
 /**
+ * Bearer tokens in `fetch` headers must be ISO-8859-1; Unicode (e.g. Turkish ı, emoji) throws an opaque DOMException.
+ * @param {string} apiKey
+ * @param {'groq'|'ollama'} provider
+ */
+function assertBearerKeyLatin1(apiKey, provider) {
+  if (typeof apiKey !== 'string' || apiKey.length === 0) return;
+  const label = provider === 'ollama' ? 'Ollama' : 'Groq';
+  for (let i = 0; i < apiKey.length; i += 1) {
+    if (apiKey.charCodeAt(i) > 0xff) {
+      throw new Error(
+        `API_KEY_HEADER: ${label} API key contains a character that cannot be used in HTTP headers (non-Latin). `
+        + 'Remove letters like Turkish ı/ş, emoji, or other Unicode; use only the plain characters from your provider.'
+      );
+    }
+  }
+}
+
+/** Turn fetch / header errors into a short user-facing string for validate-key UI. */
+function friendlyApiKeyOrRequestError(err, provider = 'groq') {
+  const raw = String(err?.message || err || '');
+  if (raw.startsWith('API_KEY_HEADER:')) {
+    return raw.slice('API_KEY_HEADER:'.length).trim();
+  }
+  if (
+    /non ISO-8859-1|ISO-8859-1 code point|headers.*RequestInit|WorkerGlobalScope.*fetch|Invalid value.*Headers?/i.test(raw)
+  ) {
+    const who = provider === 'ollama' ? 'Ollama' : 'Groq';
+    return (
+      `${who} key contains characters that cannot be sent in a secure request (Unicode letters, emoji, or odd symbols). `
+      + 'Use only Latin letters, digits, and punctuation as shown in the key from your provider.'
+    );
+  }
+  return raw || 'Unknown error';
+}
+
+/**
  * Make a Groq API call with retry logic
  */
 async function callGroqAPI(apiKey, model, messages, retryCount = 0, maxTokens = 2048) {
   try {
+    assertBearerKeyLatin1(apiKey, 'groq');
     const response = await fetch(GROQ_API_BASE, {
       method: 'POST',
       headers: {
@@ -365,6 +622,7 @@ async function callGroqAPI(apiKey, model, messages, retryCount = 0, maxTokens = 
       model: data.model
     };
   } catch (error) {
+    if (String(error?.message || '').startsWith('API_KEY_HEADER:')) throw error;
     if (
       !['RATE_LIMITED', 'INVALID_API_KEY'].includes(error?.message) &&
       !error?.message?.startsWith('API_ERROR') &&
@@ -383,6 +641,7 @@ async function callGroqAPI(apiKey, model, messages, retryCount = 0, maxTokens = 
  */
 async function callOllamaAPI(apiKey, model, messages, retryCount = 0, maxTokens = 2048) {
   try {
+    assertBearerKeyLatin1(apiKey, 'ollama');
     const response = await fetch(OLLAMA_API_BASE, {
       method: 'POST',
       headers: {
@@ -428,6 +687,7 @@ async function callOllamaAPI(apiKey, model, messages, retryCount = 0, maxTokens 
       model: data.model || model
     };
   } catch (error) {
+    if (String(error?.message || '').startsWith('API_KEY_HEADER:')) throw error;
     if (
       !['RATE_LIMITED', 'INVALID_API_KEY'].includes(error?.message) &&
       !error?.message?.startsWith('API_ERROR') &&
@@ -465,8 +725,117 @@ async function getProviderConfig() {
 }
 
 /**
+ * Determine if the current session supports managed AI (Edge Function).
+ * Returns { managed: true, session } or { managed: false }.
+ */
+async function getManagedMode() {
+  try {
+    const session = await SupabaseAuth.getInstance().getSession();
+    if (!session) return { managed: false };
+    let credits = null;
+    try {
+      credits = await ApiClient.getInstance().checkCredits();
+    } catch (e) { /* credits check failed */ }
+    if (credits && credits.can_use) {
+      return { managed: true, session, credits };
+    }
+    return { managed: false, credits };
+  } catch (outerErr) {
+    return { managed: false };
+  }
+}
+
+/**
+ * When managed AI is off and the user has no BYOK key, pick NO_CREDITS / RATE_LIMITED / INVALID_API_KEY.
+ * Mirrors summarize paths — chat previously skipped this and misreported exhausted credits as invalid key.
+ * @param {{ credits?: { rate_limited?: boolean, can_use?: boolean, credits?: number } }} mode
+ */
+function buildNoByokKeyError(mode) {
+  if (mode.credits?.rate_limited) {
+    const e = new Error('Too many requests. Please wait before trying again.');
+    e.code = 'RATE_LIMITED';
+    return e;
+  }
+  if (mode.credits && mode.credits.can_use === false && mode.credits.credits <= 0) {
+    const e = new Error('Free credits exhausted.');
+    e.code = 'NO_CREDITS';
+    return e;
+  }
+  return new Error('INVALID_API_KEY');
+}
+
+/**
+ * BYOK path: require a key for the *selected* text provider. If another provider’s key exists
+ * but this one is empty, throw PROVIDER_KEY_MISSING (clear UX) instead of NO_CREDITS from
+ * {@link buildNoByokKeyError}.
+ * @param {{ credits?: object }} mode from {@link getManagedMode}
+ * @param {'groq'|'ollama'} provider
+ * @param {string|undefined} apiKey
+ */
+async function requireByokApiKeyForProvider(mode, provider, apiKey) {
+  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
+  if (key) {
+    if (provider === 'groq' && !key.startsWith('gsk_')) {
+      const e = new Error(
+        'Groq API keys must start with gsk_. Paste a valid key in extension settings or switch provider.'
+      );
+      e.code = 'API_KEY_INVALID';
+      throw e;
+    }
+    return;
+  }
+  let hasOther = false;
+  try {
+    hasOther = await StorageHelper.hasAnyByokApiKey();
+  } catch { /* ignore */ }
+  if (hasOther) {
+    const e = new Error(
+      provider === 'groq'
+        ? 'Groq API key is missing. Add your Groq key in Settings, or switch to Ollama Cloud if you use that key.'
+        : 'Ollama Cloud API key is missing. Add your key in Settings, or switch to Groq if you use that provider.'
+    );
+    e.code = 'PROVIDER_KEY_MISSING';
+    throw e;
+  }
+  throw buildNoByokKeyError(mode);
+}
+
+/**
+ * Parse Edge Function summarize response (uses === delimiters).
+ */
+function parseManagedResponse(text) {
+  const result = { summary: '', keypoints: '', detailed: '' };
+  if (!text) return result;
+
+  const delimiters = [
+    { key: 'summary',   tag: '===SUMMARY===' },
+    { key: 'keypoints', tag: '===KEYPOINTS===' },
+    { key: 'detailed',  tag: '===DETAILED===' }
+  ];
+
+  const positions = delimiters
+    .map(d => ({ ...d, pos: text.indexOf(d.tag) }))
+    .filter(d => d.pos !== -1)
+    .sort((a, b) => a.pos - b.pos);
+
+  if (positions.length >= 2) {
+    for (let i = 0; i < positions.length; i++) {
+      const start = positions[i].pos + positions[i].tag.length;
+      const end = i + 1 < positions.length ? positions[i + 1].pos : text.length;
+      result[positions[i].key] = text.substring(start, end).trim();
+    }
+    return result;
+  }
+
+  return parseCombinedResponse(text);
+}
+
+/**
  * Handle combined summarize request — generates Summary, Key Points, and
  * Detailed Analysis in a SINGLE API call to avoid rate-limiting.
+ *
+ * Routing: authenticated + credits → managed AI (Edge Function);
+ * otherwise → BYOK (Groq/Ollama direct).
  */
 async function handleSummarizeAll(data, tabId) {
   const { transcript, language, videoId } = data;
@@ -475,16 +844,57 @@ async function handleSummarizeAll(data, tabId) {
     throw new Error('EMPTY_TRANSCRIPT');
   }
 
-  const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) {
-    throw new Error('INVALID_API_KEY');
-  }
-
   function sendProgress(text, progress) {
     if (tabId) {
       chrome.tabs.sendMessage(tabId, { action: 'progress', text, progress }).catch(() => {});
     }
   }
+
+  // ── Try managed mode first ───────────────────────────────────────
+  const mode = await getManagedMode();
+
+  if (mode.managed) {
+    sendProgress('Preparing managed AI...', 0.2);
+
+    try {
+      sendProgress('AI is analyzing...', 0.5);
+      const edgeResult = await ApiClient.getInstance().summarize({
+        videoId,
+        transcript,
+        action: 'summary',
+        language: language || 'auto',
+      });
+
+      sendProgress('Done!', 1);
+      const sections = parseManagedResponse(edgeResult.result);
+
+      return {
+        summary: sections.summary,
+        keypoints: sections.keypoints,
+        detailed: sections.detailed,
+        model: edgeResult.provider,
+        provider: 'managed',
+        credits_remaining: edgeResult.credits_remaining,
+        credits_used: edgeResult.credits_used,
+        plan: mode?.credits?.plan || 'pro',
+      };
+    } catch (err) {
+      if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS' || err?.code === 'RATE_LIMITED' || err?.code === 'AI_QUOTA_EXCEEDED') {
+        const { apiKey } = await getProviderConfig();
+        if (apiKey) {
+          sendProgress('Switching to your API key...', 0.25);
+        } else {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // ── BYOK fallback (original flow) ────────────────────────────────
+  const { provider, apiKey, model } = await getProviderConfig();
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 
   sendProgress('Preparing AI request...', 0.2);
 
@@ -573,21 +983,11 @@ function hostLabel(voice) {
 }
 
 async function handleGeneratePodcast(data, tabId) {
-  const { summaryText, language } = data;
+  const { summaryText, language, videoId } = data;
 
   if (!summaryText || summaryText.trim().length === 0) {
     throw new Error('No summary available to generate podcast.');
   }
-
-  const settings = await StorageHelper.getSettings();
-  const geminiKey = settings.geminiApiKey;
-  if (!geminiKey) throw new Error('GEMINI_KEY_MISSING');
-  if (typeof geminiKey !== 'string' || !/^AIza[A-Za-z0-9_-]{30,}$/.test(geminiKey)) {
-    throw new Error('GEMINI_KEY_MISSING');
-  }
-
-  const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) throw new Error('INVALID_API_KEY');
 
   const voices = pickVoicePair();
 
@@ -596,6 +996,109 @@ async function handleGeneratePodcast(data, tabId) {
       chrome.tabs.sendMessage(tabId, { action: 'podcastProgress', text, progress }).catch(() => {});
     }
   }
+
+  // ── Try managed mode first ───────────────────────────────────────
+  const mode = await getManagedMode();
+
+  if (mode.managed) {
+    sendProgress('Writing podcast script (Cloud AI)...', 0.2);
+
+    const api = ApiClient.getInstance();
+
+    let scriptRes;
+    try {
+      scriptRes = await api.summarize({
+        videoId: videoId || 'podcast',
+        transcript: summaryText,
+        language: language || 'auto',
+        action: 'podcast',
+      });
+    } catch (apiErr) {
+      throw apiErr;
+    }
+
+    if (scriptRes.error) {
+      const err = new Error(scriptRes.error);
+      if (scriptRes.errorCode) err.code = scriptRes.errorCode;
+      if (scriptRes.upgrade_url) err.upgradeUrl = scriptRes.upgrade_url;
+      throw err;
+    }
+
+    let dialogue;
+    try {
+      let raw = (scriptRes.result || '').trim();
+      raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      dialogue = JSON.parse(raw);
+    } catch {
+      const match = (scriptRes.result || '').match(/\[[\s\S]*\]/);
+      if (match) {
+        try { dialogue = JSON.parse(match[0]); } catch { /* ignore */ }
+      }
+    }
+
+    if (!Array.isArray(dialogue) || dialogue.length < 4) {
+      throw new Error('Failed to generate podcast script. Please try again.');
+    }
+
+    // Step 2: TTS via managed backend
+    sendProgress('Generating audio (Cloud TTS)...', 0.5);
+
+    const ttsTranscript = dialogue.map(line => {
+      const name = line.speaker === 'A' ? 'Alex' : (line.speaker === 'B' ? 'Sam' : line.speaker);
+      return `${name}: ${line.text}`;
+    }).join('\n');
+
+    let ttsRes;
+    try {
+      ttsRes = await api.summarize({
+        videoId: videoId || 'podcast-tts',
+        transcript: 'tts',
+        action: 'podcast-tts',
+        podcastDialogue: ttsTranscript,
+        voiceA: voices.a.name,
+        voiceB: voices.b.name,
+      });
+    } catch (ttsErr) {
+      throw ttsErr;
+    }
+
+    if (ttsRes.error) {
+      throw new Error(ttsRes.error);
+    }
+    if (!ttsRes.audioBase64) throw new Error('Managed TTS returned no audio data.');
+
+    sendProgress('Podcast ready!', 1);
+    return {
+      dialogue,
+      audioBase64: ttsRes.audioBase64,
+      model: scriptRes.provider || 'managed',
+      provider: 'managed',
+      voices,
+      credits_remaining: ttsRes.credits_remaining,
+      credits_used: ttsRes.credits_used,
+    };
+  }
+
+  // ── BYOK fallback ───────────────────────────────────────────────
+  if (mode.credits?.rate_limited) {
+    const e = new Error('Too many requests. Please wait before trying again.');
+    e.code = 'RATE_LIMITED';
+    throw e;
+  }
+  if (mode.credits && mode.credits.can_use === false && mode.credits.credits <= 0) {
+    const e = new Error('Free credits exhausted.');
+    e.code = 'NO_CREDITS';
+    throw e;
+  }
+  const settings = await StorageHelper.getSettings();
+  const geminiKey = settings.geminiApiKey;
+  if (!geminiKey) throw new Error('GEMINI_KEY_MISSING');
+  if (typeof geminiKey !== 'string' || !/^AIza[A-Za-z0-9_-]{30,}$/.test(geminiKey)) {
+    throw new Error('GEMINI_KEY_MISSING');
+  }
+
+  const { provider, apiKey, model } = await getProviderConfig();
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 
   sendProgress('Writing podcast script...', 0.2);
 
@@ -705,48 +1208,84 @@ Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
 }
 
 /**
- * Handle chat with video using the transcript as context
+ * Handle chat with video using the transcript as context.
+ * Managed mode routes through Edge `summarize` with action=chat.
  */
 async function handleChatWithVideo(data) {
-  const { transcript, language, question, history } = data;
+  const { transcript, language, question, history, videoId } = data;
 
   if (!transcript || transcript.trim().length === 0) {
     throw new Error('EMPTY_TRANSCRIPT');
   }
 
-  const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) {
-    throw new Error('INVALID_API_KEY');
+  // ── Try managed mode ─────────────────────────────────────────────
+  const mode = await getManagedMode();
+
+  if (mode.managed) {
+    try {
+      const chatHistory = (history || []).slice(-10).map(m => ({
+        role: m.role === 'ai' ? 'assistant' : m.role,
+        content: m.text
+      }));
+
+      const edgeResult = await ApiClient.getInstance().summarize({
+        videoId: videoId || '',
+        transcript,
+        action: 'chat',
+        language: language || 'auto',
+        chatMessage: question,
+        chatHistory,
+      });
+
+      return {
+        answer: edgeResult.result,
+        model: edgeResult.provider,
+        provider: 'managed',
+        credits_remaining: edgeResult.credits_remaining,
+        credits_used: edgeResult.credits_used,
+        plan: mode?.credits?.plan || 'pro',
+      };
+    } catch (err) {
+      if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS' || err?.code === 'RATE_LIMITED' || err?.code === 'AI_QUOTA_EXCEEDED') {
+        const { apiKey } = await getProviderConfig();
+        if (!apiKey) throw err;
+      } else {
+        throw err;
+      }
+    }
   }
+
+  // ── BYOK fallback ────────────────────────────────────────────────
+  const { provider, apiKey, model } = await getProviderConfig();
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 
   const languageInstruction = buildLanguageInstruction(language, transcript);
 
-  // Restrict transcript context if it's too large to leave room for output and history
   const maxChars = 80000;
   let contextTranscript = transcript;
   if (transcript.length > maxChars) {
     contextTranscript = transcript.substring(0, maxChars) + '\n... [Transcript truncated]';
   }
 
-  const systemPrompt = `You are a helpful AI assistant specialized in analyzing a YouTube video. 
-You are provided with the video's transcript below.
-You must answer the user's questions based strictly on the provided transcript.
-If the answer is not in the transcript, politely say that you don't know or the video does not mention it.
-Do your best to provide detailed and accurate information.
-Use markdown formatting where appropriate (e.g., bold for keywords, lists for points).
+  const systemPrompt = `You are a transcript-only analyst for this ONE YouTube video — not a general chatbot.
+
+Rules:
+- Answer strictly from the transcript below. If it is not there, say the video does not mention it.
+- Never reply with empty generic assistant lines as your whole answer (e.g. "How can I help?", "Size nasıl yardımcı olabilirim?", "Merhaba! Size nasıl yardımcı olabilirim?"). Every reply must be grounded in the transcript.
+- If the user only greets or asks how you can help: briefly acknowledge if needed, then 1–3 sentences on what the video covers (from the transcript), then ask one concrete question about that content.
+- Use markdown where appropriate (bold, lists).
+
 ${languageInstruction}
 
 --- VIDEO TRANSCRIPT ---
 ${contextTranscript}
 ------------------------`;
 
-  // Construct message history
   const messages = [
     { role: 'system', content: systemPrompt }
   ];
 
   if (history && history.length > 0) {
-    // Keep only last 10 messages to avoid context window overflows
     const recentHistory = history.slice(-10);
     for (const msg of recentHistory) {
       if (msg.role === 'user' || msg.role === 'ai') {
@@ -937,7 +1476,7 @@ async function validateKey(apiKey, provider = 'groq') {
     ]);
     return { valid: true, model: result.model };
   } catch (error) {
-    return { valid: false, error: error?.message || 'Unknown error' };
+    return { valid: false, error: friendlyApiKeyOrRequestError(error, provider) };
   }
 }
 
@@ -1150,4 +1689,17 @@ chrome.runtime.onInstalled.addListener((details) => {
   } catch {
     // Ignore
   }
+
+  // Proactively cache session for instant popup render
+  _warmPopupCache();
 });
+
+async function _warmPopupCache() {
+  try {
+    const session = await SupabaseAuth.getInstance().getSession();
+    if (!session) return;
+    const credits = await ApiClient.getInstance().checkCredits().catch(() => null);
+    const cachedSession = StorageHelper.sanitizeSessionForCache(session);
+    chrome.storage.session.set({ ytai_popup_cache: { session: cachedSession, credits } }).catch(() => {});
+  } catch { /* ignore */ }
+}

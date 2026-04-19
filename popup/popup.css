@@ -155,6 +155,54 @@ body {
   white-space: nowrap;
 }
 
+.popup-pro-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.popup-pro-plan {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+/* Do not use `.popup-pro-plan:hover` alone — Yearly also has `.popup-pro-plan` and would get a light background while text stays white. */
+.popup-pro-plan:hover:not(.popup-pro-plan-recommended) {
+  background: var(--surface);
+  border-color: var(--text-muted);
+}
+
+.popup-pro-plan:active {
+  transform: scale(0.97);
+}
+
+.popup-pro-plan-recommended {
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  box-shadow: 0 1px 2px rgba(91, 33, 182, 0.25);
+}
+
+.popup-pro-plan-recommended:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  box-shadow: 0 2px 8px rgba(91, 33, 182, 0.35);
+}
+
+.popup-pro-plan-recommended:active {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+}
+
 .popup-version {
   flex-shrink: 0;
   font-size: 10px;
@@ -754,3 +802,155 @@ select:focus {
   color: var(--border-strong);
   user-select: none;
 }
+
+/* ── Managed AI card (Google-authenticated users) ── */
+.managed-ai-card {
+  border-left: 3px solid var(--accent);
+}
+.managed-ai-info {
+  margin-top: 8px;
+}
+.managed-ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--accent-faint, rgba(59,130,246,0.06));
+  border-radius: var(--radius-xs);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+.managed-ai-badge svg {
+  flex-shrink: 0;
+}
+.managed-ai-hint {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* ── Account card ── */
+.account-card { position: relative; }
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition);
+}
+.btn-google:hover {
+  background: var(--surface-2);
+  box-shadow: var(--shadow-card);
+}
+.btn-google:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.account-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.account-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.account-email {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-plan {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.account-plan .badge-pro {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.account-plan .badge-free {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.account-plan .badge-cancelled {
+  color: var(--danger, #e53e3e);
+  font-weight: 600;
+}
+
+.account-credits {
+  font-size: 12px;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: var(--accent-faint);
+  border-radius: var(--radius-xs);
+}
+
+.account-card .account-pro-upgrade {
+  width: 100%;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.account-card .account-pro-upgrade .popup-pro-plan {
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 11px;
+  border-radius: var(--radius-xs);
+}
+
+.account-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 11.5px;
+}
+
+.hidden { display: none !important; }

@@ -18,6 +18,8 @@ const ui = globalThis.SummarizerUI;
 const storage = globalThis.StorageHelper;
 const tx = globalThis.TranscriptExtractor;
 const player = globalThis.PodcastPlayer;
+const auth = globalThis.SupabaseAuth;
+const deviceFp = globalThis.DeviceFingerprint;
 
 if (!ui || !storage || !tx || !player) {
   console.error('[YTAI] Content script deps missing — check script order in manifest.json', {
@@ -26,6 +28,63 @@ if (!ui || !storage || !tx || !player) {
     tx: !!tx,
     player: !!player
   });
+}
+
+/**
+ * Returns true if user has access to AI (either BYOK key or active Supabase session).
+ * Caches session result for 30s to avoid repeated async calls.
+ */
+let _sessionCache = { session: null, ts: 0 };
+
+/**
+ * After chrome://extensions Reload, this tab still runs the OLD content script;
+ * chrome.runtime APIs throw "Extension context invalidated" until the user refreshes the tab.
+ */
+function ytaiExtensionContextValid() {
+  try {
+    return typeof chrome !== 'undefined' && !!chrome.runtime?.id;
+  } catch {
+    return false;
+  }
+}
+
+/** True when extension was reloaded / disabled and this content script is stale. */
+function ytaiShouldSilenceStaleExtensionError(err) {
+  const chunks = [];
+  if (err && typeof err === 'object') {
+    if (err.message) chunks.push(String(err.message));
+    if (err.stack) chunks.push(String(err.stack));
+  } else {
+    chunks.push(String(err));
+  }
+  const blob = chunks.join(' ').toLowerCase();
+  return (
+    blob.includes('extension context invalidated')
+    || blob.includes('context invalidated')
+    || blob.includes('receiving end does not exist')
+  );
+}
+
+function ytaiLogInitFailure(label, err) {
+  if (ytaiShouldSilenceStaleExtensionError(err)) return;
+  console.error(`[YTAI] ${label} failed`, err);
+}
+
+async function hasAccess() {
+  const hasKey = await storage.hasAnyByokApiKey();
+  if (hasKey) return true;
+  if (auth) {
+    const now = Date.now();
+    if (_sessionCache.session && (now - _sessionCache.ts) < 30000) return true;
+    try {
+      const session = await auth.getSession();
+      if (session) {
+        _sessionCache = { session, ts: now };
+        return true;
+      }
+    } catch { /* no session */ }
+  }
+  return false;
 }
 
 class SummarizerController {
@@ -38,7 +97,7 @@ class SummarizerController {
   #chatCache = null;      // { videoId, messages: [] }
   #summaryCacheByVideo = new Map();
   #chatCacheByVideo = new Map();
-  /** Ayrı pipeline bayrakları: sekme değişince diğer iş arka planda sürer, UI doğru sekmede kalır */
+  /** Separate pipeline flags: switching tabs keeps the other jobs running in the background while the UI stays on the correct tab. */
   #summaryBusy = false;
   #podcastBusy = false;
   #chatBusy = false;
@@ -49,7 +108,7 @@ class SummarizerController {
     SummarizerController.#instance = this;
     this.#bindEvents();
     this.#setupNavigationListeners();
-    this.initialize().catch((e) => console.error('[YTAI] initialize failed', e));
+    this.initialize().catch((e) => ytaiLogInitFailure('initialize', e));
   }
 
   static getInstance() {
@@ -83,29 +142,46 @@ class SummarizerController {
 
     // Listen for messages from service worker / popup
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (sender.id !== chrome.runtime.id) return;
+      try {
+        if (!ytaiExtensionContextValid()) return false;
+        if (sender.id !== chrome.runtime.id) return false;
 
-      if (message.action === 'settingsUpdated') {
-        this.initialize().catch((e) => console.error('[YTAI] initialize (settings) failed', e));
-        sendResponse({ ok: true });
-      } else if (message.action === 'triggerSummary') {
-        ui.autoOpen();
-        this.requestSummary(message.mode || 'summary', true).catch(() => {});
-        sendResponse({ ok: true });
-      } else if (message.action === 'progress') {
-        if (this.#isTextResultMode(ui.getCurrentMode())) {
-          ui.showLoading(message.text, message.progress);
+        if (message.action === 'settingsUpdated') {
+          this.initialize()
+            .then(() => { ui.refreshFooterProviderLabel?.(); })
+            .catch((e) => ytaiLogInitFailure('initialize (settings)', e));
+          sendResponse({ ok: true });
+        } else if (message.action === 'triggerSummary') {
+          ui.autoOpen();
+          this.requestSummary(message.mode || 'summary', true).catch(() => {});
+          sendResponse({ ok: true });
+        } else if (message.action === 'progress') {
+          if (this.#isTextResultMode(ui.getCurrentMode())) {
+            ui.showLoading(message.text, message.progress);
+          }
+          sendResponse({ ok: true });
+        } else if (message.action === 'podcastProgress') {
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showPodcastLoading(message.text);
+          }
+          sendResponse({ ok: true });
         }
-        sendResponse({ ok: true });
-      } else if (message.action === 'podcastProgress') {
-        if (ui.getCurrentMode() === 'podcast') {
-          ui.showPodcastLoading(message.text);
-        }
-        sendResponse({ ok: true });
+      } catch (err) {
+        ytaiLogInitFailure('onMessage', err);
       }
-
       return false;
     });
+
+    const panelAuthKey = typeof storage?.getPanelAuthSyncStorageKey === 'function'
+      ? storage.getPanelAuthSyncStorageKey()
+      : '';
+    if (panelAuthKey && typeof chrome.storage?.onChanged?.addListener === 'function') {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local' || !changes[panelAuthKey]) return;
+        if (!ytaiExtensionContextValid()) return;
+        this.#refreshPanelAuthAndCredits().catch((e) => ytaiLogInitFailure('panelAuthStorageSync', e));
+      });
+    }
   }
 
   // ─── Navigation ────────────────────────────────────────────────────
@@ -113,6 +189,7 @@ class SummarizerController {
   #setupNavigationListeners() {
     // Method 1: YouTube's custom SPA navigation event (most reliable)
     document.addEventListener('yt-navigate-finish', () => {
+      if (!ytaiExtensionContextValid()) return;
       if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
       } else {
@@ -122,6 +199,7 @@ class SummarizerController {
 
     // Method 2: Browser back/forward
     window.addEventListener('popstate', () => {
+      if (!ytaiExtensionContextValid()) return;
       if (this.#isYoutubeVideoPage()) {
         this.#debouncedInitialize();
       } else {
@@ -132,6 +210,7 @@ class SummarizerController {
     // Method 3: URL polling (catches pushState navigations not covered above)
     let lastUrl = window.location.href;
     setInterval(() => {
+      if (!ytaiExtensionContextValid()) return;
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl;
@@ -147,13 +226,17 @@ class SummarizerController {
   #debouncedInitialize() {
     clearTimeout(this.#initTimeout);
     this.#initTimeout = setTimeout(() => {
+      if (!ytaiExtensionContextValid()) return;
       this.#currentVideoId = null; // force re-init on SPA nav
-      this.initialize().catch((e) => console.error('[YTAI] initialize (nav) failed', e));
+      this.initialize().catch((e) => ytaiLogInitFailure('initialize (nav)', e));
     }, 800);
   }
 
-  /** YouTube watch page, Shorts, or embed — extension should activate */
+  /** YouTube watch page, Shorts, or embed — extension should activate.
+   *  Excludes music.youtube.com (different DOM, no transcript support). */
   #isYoutubeVideoPage() {
+    const host = window.location.hostname || '';
+    if (host === 'music.youtube.com') return false;
     const raw = window.location.pathname || '/';
     const p = raw.replace(/\/+$/, '') || '/';
     return p === '/watch' || p.startsWith('/shorts/') || /^\/embed\/[a-zA-Z0-9_-]{11}/.test(p);
@@ -206,14 +289,7 @@ class SummarizerController {
     this.#podcastCache = null;
     this.#chatCache = null;
     player.destroy();
-
-    if (ui.getCurrentMode?.() === 'chat') {
-      ui.showChatUI([], {
-        disabled: true,
-        helperText: this.#chatHelperText(),
-        noticeMessage: this.#getErrorPresentation('NOT_ON_VIDEO_PAGE').message
-      });
-    }
+    ui.togglePanel(false);
   }
 
   async #whenBodyReady() {
@@ -226,12 +302,21 @@ class SummarizerController {
   // ─── Initialization ────────────────────────────────────────────────
 
   async initialize() {
+    if (!ytaiExtensionContextValid()) return;
     if (!ui || !storage || !tx || !player) return;
     if (!this.#isYoutubeVideoPage()) {
       this.#enterNonWatchState();
       return;
     }
 
+    try {
+      await this.#initializeBody();
+    } catch (err) {
+      ytaiLogInitFailure('initialize', err);
+    }
+  }
+
+  async #initializeBody() {
     if (!(await this.#whenBodyReady())) {
       console.error('[YTAI] document.body missing — cannot mount panel');
       return;
@@ -239,8 +324,25 @@ class SummarizerController {
 
     const videoId = tx.getVideoId();
 
-    // Mount floating button + panel on any watch / Shorts / embed page (even if ID not parsed yet)
     ui.init();
+
+    // Pass auth session + credits to UI (non-blocking)
+    if (auth) {
+      auth.getSession()
+        .then((session) => {
+          ui.updateAuthBadge?.(session);
+          if (session) {
+            chrome.runtime.sendMessage({ action: 'checkCredits' })
+              .then(async (cred) => {
+                if (cred && !cred.error) {
+                  await this.#applyManagedCreditsSnapshot(cred);
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
 
     if (!videoId) {
       if (ui.isPanelOpen() && ui.getCurrentMode() === 'chat') {
@@ -252,7 +354,19 @@ class SummarizerController {
       }
       return;
     }
-    if (videoId === this.#currentVideoId) return;
+
+    if (videoId === this.#currentVideoId) {
+      const canUseAI = await hasAccess();
+      if (ui.isPanelOpen()) {
+        if (canUseAI) {
+          if (ui.getCurrentMode() === 'chat') this.requestChat();
+          else this.onPanelOpen();
+        } else {
+          ui.showApiKeyPrompt();
+        }
+      }
+      return;
+    }
 
     this.#currentVideoId = videoId;
     this.#summaryBusy = false;
@@ -265,13 +379,13 @@ class SummarizerController {
     this.#chatCache = this.#chatCacheByVideo.get(videoId) || null;
     player.destroy();
 
-    const hasKey = await storage.hasApiKey();
-    if (!hasKey && ui.isPanelOpen()) {
+    const canUseAI = await hasAccess();
+    if (!canUseAI && ui.isPanelOpen()) {
       ui.showApiKeyPrompt();
     }
 
     const settings = await storage.getSettings();
-    if (settings.autoRun && hasKey) {
+    if (settings.autoRun && canUseAI) {
       ui.autoOpen();
       const cached = await storage.getCachedSummary(videoId, settings.defaultMode || 'summary');
       if (cached?.content) {
@@ -288,6 +402,107 @@ class SummarizerController {
     if (ui.isPanelOpen()) {
       if (ui.getCurrentMode() === 'chat') this.requestChat();
       else this.onPanelOpen();
+    }
+  }
+
+  /** Persist managed-user credit snapshot so early gates match the badge after refresh. */
+  async #applyManagedCreditsSnapshot(cred) {
+    if (!cred || cred.error) return;
+    await storage.saveSettings({ credits: cred.credits, userPlan: cred.plan });
+    ui.updateCredits(cred.credits, cred.plan);
+    if (cred.plan === 'pro') ui.showManageSubscription?.();
+  }
+
+  /**
+   * BYOK: always allow. If local `credits` is exhausted (0), refresh from Edge before blocking summarize/chat.
+   */
+  /**
+   * If the Edge path will not run (no credits / not can_use), we need the *selected* provider’s key.
+   * Avoids a long transcript fetch then a misleading NO_CREDITS when another provider’s key is saved.
+   * @returns {Promise<{ ok: true } | { ok: false, mapped: { title: string, message: string, retryable: boolean } }>}
+   */
+  async #assertSelectedProviderTextKey() {
+    const api = globalThis.ApiClient;
+    let managedOk = false;
+    if (auth && api && typeof api.checkCredits === 'function') {
+      const live = await api.checkCredits().catch(() => null);
+      if (live?.can_use) managedOk = true;
+    }
+    if (managedOk) return { ok: true };
+
+    const s = await storage.getSettings();
+    const provider = s.provider || 'groq';
+    const key = String(provider === 'ollama' ? (s.ollamaApiKey || '') : (s.groqApiKey || '')).trim();
+    if (key) {
+      if (provider === 'groq' && !key.startsWith('gsk_')) {
+        return { ok: false, mapped: this.#getErrorPresentation('API_KEY_INVALID') };
+      }
+      return { ok: true };
+    }
+    return { ok: false, mapped: this.#getErrorPresentation('PROVIDER_KEY_MISSING') };
+  }
+
+  async #ensureManagedCreditsNotExhausted() {
+    const hasKey = await storage.hasAnyByokApiKey();
+    if (hasKey) return true;
+
+    const savedSettings = await storage.getSettings();
+    const cc = savedSettings?.credits;
+    if (cc === undefined || cc === null || cc > 0 || cc === -1) return true;
+
+    const api = globalThis.ApiClient;
+    if (!auth || !api || typeof api.checkCredits !== 'function') {
+      ui.showUpgradePrompt();
+      ui.updateCredits(0, 'free');
+      return false;
+    }
+
+    const live = await api.checkCredits().catch(() => null);
+    if (!live || live.error) {
+      ui.showUpgradePrompt();
+      ui.updateCredits(0, 'free');
+      return false;
+    }
+
+    await this.#applyManagedCreditsSnapshot(live);
+    if (live.can_use === false) {
+      ui.showUpgradePrompt();
+      return false;
+    }
+    return true;
+  }
+
+  /** After popup/welcome sign-in or sign-out: sync header badge + credits without F5. */
+  async #refreshPanelAuthAndCredits() {
+    if (!ytaiExtensionContextValid()) return;
+    _sessionCache = { session: null, ts: 0 };
+    if (!auth) return;
+    if (typeof auth.invalidateSessionCache === 'function') auth.invalidateSessionCache();
+    try {
+      const session = await auth.getSession();
+      ui.updateAuthBadge?.(session);
+      if (session) {
+        const cred = await chrome.runtime.sendMessage({ action: 'checkCredits' }).catch(() => null);
+        if (cred && !cred.error) {
+          await this.#applyManagedCreditsSnapshot(cred);
+          if (cred.plan !== 'pro') ui.dismissManageSubscriptionButton?.();
+        }
+      } else {
+        ui.dismissManageSubscriptionButton?.();
+        ui.updateCredits(null, 'free');
+      }
+    } catch (err) {
+      ytaiLogInitFailure('refreshPanelAuthAndCredits', err);
+    }
+    try { ui.refreshFooterProviderLabel?.(); } catch { /* ignore */ }
+    // Header is refreshed; the body could still be showing a stale `showApiKeyPrompt` — re-render it via `hasAccess()`.
+    try {
+      if (ui.isPanelOpen() && tx.getVideoId()) {
+        if (ui.getCurrentMode() === 'chat') this.requestChat();
+        else this.onPanelOpen();
+      }
+    } catch (e) {
+      ytaiLogInitFailure('refreshPanelBodyAfterAuth', e);
     }
   }
 
@@ -318,8 +533,8 @@ class SummarizerController {
       return;
     }
 
-    const hasKey = await storage.hasApiKey();
-    if (!hasKey) { ui.showApiKeyPrompt(); return; }
+    const canUseAI = await hasAccess();
+    if (!canUseAI) { ui.showApiKeyPrompt(); return; }
 
     // 3) Persistent cache
     if (!forceRefresh) {
@@ -334,7 +549,16 @@ class SummarizerController {
       }
     }
 
-    // 4) Start generating
+    // 4) Early credit gate — avoid transcript extraction if credits exhausted (refresh if local cache is stale)
+    if (!(await this.#ensureManagedCreditsNotExhausted())) return;
+    const providerGate = await this.#assertSelectedProviderTextKey();
+    if (!providerGate.ok) {
+      const { mapped } = providerGate;
+      ui.showError(mapped.title, mapped.message, mapped.retryable);
+      return;
+    }
+
+    // 5) Start generating
     this.#summaryBusy = true;
     ui.showLoading(null, 0);
 
@@ -354,7 +578,9 @@ class SummarizerController {
       });
 
       if (!response) throw new Error('API_ERROR: No response from extension. Please reload the page.');
-      if (response.error) throw new Error(response.error);
+      if (response.error) {
+        throw this.#errorFromSwResponse(response);
+      }
 
       this.#combinedCache = {
         videoId,
@@ -365,6 +591,12 @@ class SummarizerController {
       this.#summaryCacheByVideo.set(videoId, this.#combinedCache);
 
       if (response.provider) ui.updateProviderLabel(response.provider);
+
+      if (response.credits_remaining !== undefined) {
+        ui.updateCredits(response.credits_remaining, response.plan || (response.credits_remaining > 100 ? 'pro' : 'free'));
+        await storage.saveSettings({ credits: response.credits_remaining });
+      }
+      if (response.credits_used) ui.showCreditsUsed(response.credits_used);
 
       for (const m of ['summary', 'keypoints', 'detailed']) {
         if (response[m]) {
@@ -379,7 +611,7 @@ class SummarizerController {
 
     } catch (error) {
       if (this.#isTextResultMode(ui.getCurrentMode())) {
-        this.#handleError(error);
+        void this.#handleError(error).catch((e) => ytaiLogInitFailure('handleError', e));
       }
     } finally {
       this.#summaryBusy = false;
@@ -387,6 +619,52 @@ class SummarizerController {
   }
 
   // ─── Podcast ──────────────────────────────────────────────────────
+
+  /**
+   * Align with service-worker `getManagedMode`: valid session + `checkCredits().can_use`.
+   * Session-only checks in the content script miss Pro users when `getSession` is stale;
+   * BYOK Gemini setup must not appear for managed podcast.
+   *
+   * Conservative: if `checkCredits()` fails transiently (null/error), we return false to
+   * match service-worker `getManagedMode` — otherwise users with no Gemini BYOK key see
+   * a misleading "Writing podcast script…" spinner that fails later with `GEMINI_KEY_MISSING`.
+   */
+  async #canUseManagedPodcast() {
+    // globalThis.ApiClient is the singleton INSTANCE (see utils/api-client.js), not the class — no .getInstance().
+    const api = globalThis.ApiClient;
+    if (!auth || !api || typeof api.checkCredits !== 'function') return false;
+
+    let session = await auth.getSession().catch(() => null);
+    if (!session?.access_token) {
+      try {
+        const st = await storage.getAuthState();
+        if (st?.supabaseAccessToken && String(st.supabaseAccessToken).length > 20) {
+          session = await auth.getSession().catch(() => null);
+        }
+      } catch { /* ignore */ }
+    }
+    if (!session?.access_token) return false;
+
+    const credits = await api.checkCredits().catch(() => null);
+    return Boolean(credits?.can_use);
+  }
+
+  /**
+   * True when the user has an active Supabase session regardless of credit state.
+   * Drives the "Your Google sign-in covers summaries and chat; podcast needs a
+   * separate Gemini key" note in `ui.showPodcastKeyPrompt(isManagedUser)` — a
+   * managed user with exhausted credits or a transient `checkCredits` failure
+   * should still see the explanatory note, not the plain BYOK setup screen.
+   */
+  async #hasSupabaseSession() {
+    if (!auth) return false;
+    try {
+      const session = await auth.getSession();
+      return Boolean(session?.access_token);
+    } catch {
+      return false;
+    }
+  }
 
   async requestPodcast() {
     const videoId = tx.getVideoId();
@@ -405,7 +683,12 @@ class SummarizerController {
     }
 
     const settings = await storage.getSettings();
-    if (!settings.geminiApiKey) { ui.showPodcastKeyPrompt(); return; }
+    const canManagedPodcast = await this.#canUseManagedPodcast();
+    if (!settings.geminiApiKey?.trim() && !canManagedPodcast) {
+      const isManagedUser = await this.#hasSupabaseSession();
+      ui.showPodcastKeyPrompt(isManagedUser);
+      return;
+    }
 
     const summaryText = this.#combinedCache?.summary;
     if (!summaryText) {
@@ -432,13 +715,19 @@ class SummarizerController {
       const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'generatePodcast',
-        data: { summaryText: text, language: settings.language || 'auto' }
+        data: { summaryText: text, language: settings.language || 'auto', videoId }
       });
 
       if (!response) throw new Error('No response from extension.');
       if (response.error) {
+        if (response.errorCode) {
+          throw this.#errorFromSwResponse(response);
+        }
         if (response.error === 'GEMINI_KEY_MISSING') {
-          if (ui.getCurrentMode() === 'podcast') ui.showPodcastKeyPrompt();
+          if (ui.getCurrentMode() === 'podcast') {
+            const isManagedUser = await this.#hasSupabaseSession();
+            ui.showPodcastKeyPrompt(isManagedUser);
+          }
           return;
         }
         if (response.error === 'GEMINI_REGION_BLOCKED') {
@@ -453,17 +742,55 @@ class SummarizerController {
           }
           return;
         }
+        if (
+          typeof response.error === 'string'
+          && (response.error.startsWith('GEMINI_QUOTA_EXCEEDED')
+            || response.error.includes('exceeded your current quota'))
+        ) {
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showError(
+              'Gemini quota (podcast audio)',
+              'Managed podcast uses Gemini for text-to-speech. This project’s Gemini key hit quota or billing limits. Enable billing in Google AI Studio or add your own Gemini key under Settings for podcast.',
+              true
+            );
+          }
+          return;
+        }
+        if (typeof response.error === 'string' && response.error.startsWith('GEMINI_API_KEY_INVALID')) {
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showError(
+              'Gemini key (TTS)',
+              'Supabase GEMINI_API_KEY is invalid or not allowed for TTS. Regenerate the key in Google AI Studio and update Edge secrets.',
+              false
+            );
+          }
+          return;
+        }
+        if (typeof response.error === 'string' && response.error.startsWith('GEMINI_TTS_ERROR')) {
+          if (ui.getCurrentMode() === 'podcast') {
+            ui.showError('Podcast audio failed', response.error.replace(/^GEMINI_TTS_ERROR:\s*/i, '').slice(0, 400), true);
+          }
+          return;
+        }
         throw new Error(response.error);
       }
 
       this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
+      if (response.credits_remaining !== undefined) {
+        ui.updateCredits(
+          response.credits_remaining,
+          response.plan || (response.credits_remaining > 100 ? 'pro' : 'free')
+        );
+        await storage.saveSettings({ credits: response.credits_remaining });
+      }
+      if (response.credits_used) ui.showCreditsUsed(response.credits_used);
       if (ui.getCurrentMode() === 'podcast') {
         ui.showPodcastPlayer(this.#podcastCache);
       }
 
     } catch (error) {
       if (ui.getCurrentMode() === 'podcast') {
-        this.#handleError(error);
+        void this.#handleError(error).catch((e) => ytaiLogInitFailure('handleError', e));
       }
     } finally {
       this.#podcastBusy = false;
@@ -497,10 +824,27 @@ class SummarizerController {
     }
     const videoId = ctx.videoId;
 
-    const hasKey = await storage.hasApiKey();
-    if (!hasKey) {
+    const canUseAI = await hasAccess();
+    if (!canUseAI) {
       const chatCache = this.#ensureChatCache(videoId);
       const mapped = this.#getErrorPresentation('API_KEY_MISSING');
+      chatCache.messages.push({ role: 'error', text: mapped.message });
+      ui.addChatMessage('error', mapped.message);
+      return;
+    }
+
+    if (!(await this.#ensureManagedCreditsNotExhausted())) {
+      const chatCache = this.#ensureChatCache(videoId);
+      const mapped = this.#getErrorPresentation('NO_CREDITS');
+      chatCache.messages.push({ role: 'error', text: mapped.message });
+      ui.addChatMessage('error', mapped.message);
+      return;
+    }
+
+    const providerGate = await this.#assertSelectedProviderTextKey();
+    if (!providerGate.ok) {
+      const chatCache = this.#ensureChatCache(videoId);
+      const { mapped } = providerGate;
       chatCache.messages.push({ role: 'error', text: mapped.message });
       ui.addChatMessage('error', mapped.message);
       return;
@@ -527,20 +871,47 @@ class SummarizerController {
           language: settings.language || 'auto',
           videoId,
           question: text,
-          history: chatCache.messages.slice(0, -1)
+          history: chatCache.messages.slice(0, -1),
         }
       });
 
       if (!response) throw new Error('API_ERROR: No response from extension. Please reload.');
-      if (response.error) throw new Error(response.error);
+      if (response.error) {
+        throw this.#errorFromSwResponse(response);
+      }
 
       chatCache.messages.push({ role: 'ai', text: response.answer });
       ui.addChatMessage('ai', response.answer);
 
+      if (response.credits_remaining !== undefined) {
+        ui.updateCredits(response.credits_remaining, response.plan || (response.credits_remaining > 100 ? 'pro' : 'free'));
+        await storage.saveSettings({ credits: response.credits_remaining });
+      }
+      if (response.credits_used) ui.showCreditsUsed(response.credits_used);
+
     } catch (error) {
-      const mapped = this.#getErrorPresentation(this.#normalizeErrorCode(error));
-      chatCache.messages.push({ role: 'error', text: mapped.message });
-      ui.addChatMessage('error', mapped.message);
+      const code = this.#normalizeErrorCode(error);
+      if (code === 'NO_CREDITS' || code === 'INSUFFICIENT_CREDITS') {
+        const hasByok = await storage.hasAnyByokApiKey();
+        if (!hasByok) {
+          if (code === 'INSUFFICIENT_CREDITS') {
+            const estimated = typeof error?.estimatedCredits === 'number' ? error.estimatedCredits : null;
+            const available = typeof error?.availableCredits === 'number' ? error.availableCredits : null;
+            ui.showInsufficientCreditsPrompt({ estimated, available });
+            if (typeof available === 'number') ui.updateCredits(available, 'free');
+          } else {
+            ui.showUpgradePrompt();
+            ui.updateCredits(0, 'free');
+          }
+        }
+        const mapped = this.#getErrorPresentation(code);
+        chatCache.messages.push({ role: 'error', text: mapped.message });
+        ui.addChatMessage('error', mapped.message);
+      } else {
+        const mapped = this.#getErrorPresentation(code);
+        chatCache.messages.push({ role: 'error', text: mapped.message });
+        ui.addChatMessage('error', mapped.message);
+      }
     } finally {
       this.#chatBusy = false;
     }
@@ -559,8 +930,8 @@ class SummarizerController {
       return;
     }
 
-    storage.hasApiKey().then(async (hasKey) => {
-      if (!hasKey) { ui.showApiKeyPrompt(); return; }
+    hasAccess().then(async (canUseAI) => {
+      if (!canUseAI) { ui.showApiKeyPrompt(); return; }
       const cached = await storage.getCachedSummary(videoId, mode);
       if (cached?.content) {
         ui.showResult(cached.content);
@@ -572,21 +943,48 @@ class SummarizerController {
 
   // ─── Error handling ───────────────────────────────────────────────
 
-  #handleError(error) {
-    const mapped = this.#getErrorPresentation(this.#normalizeErrorCode(error));
-    ui.showError(mapped.title, mapped.message, mapped.retryable);
+  /**
+   * Build a typed Error from a service-worker response that carried a
+   * serialized ApiError. Preserves errorCode, upgradeUrl, and the
+   * `estimated_credits` / `available_credits` pre-flight hint so the UI can
+   * show "bu video ~N kredi, sende M var" when appropriate.
+   */
+  #errorFromSwResponse(response) {
+    const err = new Error(response.error || 'Unknown error');
+    if (response.errorCode) err.code = response.errorCode;
+    if (response.upgradeUrl) err.upgradeUrl = response.upgradeUrl;
+    if (typeof response.estimated_credits === 'number') err.estimatedCredits = response.estimated_credits;
+    if (typeof response.available_credits === 'number') err.availableCredits = response.available_credits;
+    return err;
   }
 
   #normalizeErrorCode(error) {
+    const code = error?.code || '';
     const errorMsg = String(error?.message || error || '').trim();
-    if (!errorMsg) return 'UNKNOWN_ERROR';
+    if (!errorMsg && !code) return 'UNKNOWN_ERROR';
+
+    if (code === 'INSUFFICIENT_CREDITS' || errorMsg === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
+    if (code === 'NO_CREDITS' || errorMsg === 'NO_CREDITS') return 'NO_CREDITS';
+    if (code === 'PROVIDER_KEY_MISSING' || errorMsg === 'PROVIDER_KEY_MISSING') {
+      return 'PROVIDER_KEY_MISSING';
+    }
+    if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
+    if (code === 'GEMINI_KEY_INVALID') return 'GEMINI_MANAGED_TTS_KEY';
+    if (code === 'RATE_LIMITED') return 'MANAGED_RATE_LIMIT';
+    if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
 
     if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
-    // Keep NO_VIDEO_ID for compatibility with any legacy throw sites.
     if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
     if (errorMsg === 'API_KEY_MISSING') return 'API_KEY_MISSING';
     if (errorMsg === 'INVALID_API_KEY' || errorMsg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
     if (errorMsg === 'RATE_LIMITED' || errorMsg === 'GEMINI_RATE_LIMITED') return 'PROVIDER_RATE_LIMIT';
+
+    if (
+      errorMsg.startsWith('GEMINI_QUOTA_EXCEEDED')
+      || /exceeded your current quota|Resource exhausted|GEMINI_QUOTA/i.test(errorMsg)
+    ) {
+      return 'AI_QUOTA_EXCEEDED';
+    }
 
     if (
       errorMsg === 'NO_TRANSCRIPT'
@@ -617,8 +1015,56 @@ class SummarizerController {
     return 'UNKNOWN_ERROR';
   }
 
+  async #handleError(error) {
+    const code = this.#normalizeErrorCode(error);
+    if (code === 'NO_CREDITS') {
+      if (await storage.hasAnyByokApiKey()) {
+        ui.showReadyPrompt();
+        return;
+      }
+      ui.showUpgradePrompt();
+      ui.updateCredits(0, 'free');
+      return;
+    }
+    if (code === 'INSUFFICIENT_CREDITS') {
+      const estimated = typeof error?.estimatedCredits === 'number' ? error.estimatedCredits : null;
+      const available = typeof error?.availableCredits === 'number' ? error.availableCredits : null;
+      if (await storage.hasAnyByokApiKey()) {
+        ui.showReadyPrompt();
+        return;
+      }
+      ui.showInsufficientCreditsPrompt({ estimated, available });
+      if (typeof available === 'number') ui.updateCredits(available, 'free');
+      return;
+    }
+    const mapped = this.#getErrorPresentation(code);
+    ui.showError(mapped.title, mapped.message, mapped.retryable);
+  }
+
+  /* original #handleError removed — replaced by the method above */
+
   #getErrorPresentation(errorCode) {
     const errorMap = {
+      NO_CREDITS: {
+        title: 'Credits Exhausted',
+        message: 'Your free credits are used up. Upgrade to Pro or use your own API key.',
+        retryable: false
+      },
+      INSUFFICIENT_CREDITS: {
+        title: 'Not Enough Credits',
+        message: 'This video needs more credits than you have. Upgrade to Pro, use your own API key, or try a shorter video.',
+        retryable: false
+      },
+      MANAGED_RATE_LIMIT: {
+        title: 'Rate Limited',
+        message: 'Too many requests on managed AI. Wait a moment or use your own API key.',
+        retryable: true
+      },
+      SESSION_EXPIRED: {
+        title: 'Session Expired',
+        message: 'Your session has expired. Please sign in again from Settings.',
+        retryable: false
+      },
       NOT_ON_VIDEO_PAGE: {
         title: 'Open a Video',
         message: 'You are not on a YouTube video page. Open a video to use Chat.',
@@ -637,6 +1083,12 @@ class SummarizerController {
       API_KEY_MISSING: {
         title: 'API Key Required',
         message: 'Please add your API key in Settings to use Chat.',
+        retryable: false
+      },
+      PROVIDER_KEY_MISSING: {
+        title: 'Provider API Key Missing',
+        message:
+          'The AI provider you selected has no API key saved. Open Settings, paste the key for that provider, or switch to the provider whose key you already added.',
         retryable: false
       },
       API_KEY_INVALID: {
@@ -658,6 +1110,18 @@ class SummarizerController {
         title: 'Network Issue',
         message: 'Network connection issue detected. Check your connection and try again.',
         retryable: true
+      },
+      AI_QUOTA_EXCEEDED: {
+        title: 'AI quota limit',
+        message:
+          'Managed fallback (Google Gemini) hit quota or billing limits. Open Google AI Studio → billing / API key, or set platform primary to a working model. Podcast TTS also uses Gemini.',
+        retryable: true
+      },
+      GEMINI_MANAGED_TTS_KEY: {
+        title: 'Gemini key (podcast audio)',
+        message:
+          'Supabase GEMINI_API_KEY failed for TTS (invalid key or no access). Regenerate in Google AI Studio and update Edge secrets, or use your own Gemini key in Settings for podcast.',
+        retryable: false
       },
       UNKNOWN_ERROR: {
         title: chrome.i18n?.getMessage('errorGeneric') || 'Error',

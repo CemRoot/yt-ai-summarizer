@@ -52,18 +52,18 @@ class TranscriptExtractor {
     const cfg = globalThis.__YTAI_TRANSCRIPT_RUNTIME_CONFIG || {};
     const effectiveDelays = Array.isArray(cfg.retryDelaysMs) && cfg.retryDelaysMs.length > 0
       ? cfg.retryDelaysMs
-      : [300, 800, 1500];
+      : [600, 1500, 3000, 4000];
     return {
       retryDelaysMs: effectiveDelays,
       maxAttempts: Number.isInteger(cfg.maxAttempts) && cfg.maxAttempts > 0
         ? cfg.maxAttempts
-        : 3,
+        : 4,
       readinessTimeoutMs: Number.isInteger(cfg.readinessTimeoutMs) && cfg.readinessTimeoutMs > 0
         ? cfg.readinessTimeoutMs
-        : 2500,
+        : 5000,
       readinessPollMs: Number.isInteger(cfg.readinessPollMs) && cfg.readinessPollMs > 0
         ? cfg.readinessPollMs
-        : 200
+        : 250
     };
   }
 
@@ -578,7 +578,12 @@ class TranscriptExtractor {
     const retryCfg = this.#getRuntimeConfig();
 
     const cached = await StorageHelper.getCachedTranscript(videoId);
-    await this.#waitForTranscriptReadiness(requestCtx, preferredLang);
+
+    try {
+      await this.#waitForTranscriptReadiness(requestCtx, preferredLang);
+    } catch (readinessErr) {
+      this.#debugLog('readiness gate timed out, proceeding to retry loop:', readinessErr.message);
+    }
 
     let lastError = null;
     const attempts = Math.max(1, retryCfg.maxAttempts);

@@ -3,82 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy Policy for YouTube AI Summarizer — no telemetry, local-first storage, and your own API keys.">
-  <meta name="theme-color" content="#f6f7f9">
+  <meta name="description" content="Privacy Policy for YouTube AI Summarizer v2.0.1 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
+  <meta name="theme-color" content="#eceef2">
   <title>Privacy Policy — YouTube AI Summarizer</title>
   <link rel="icon" href="icons/icon16.png" sizes="16x16" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f6f7f9;
+      --bg-base: #eceef2;
+      --bg-page: linear-gradient(165deg, #eef0f4 0%, #e4e7ec 45%, #ebeff5 100%);
       --surface: #ffffff;
-      --text: #0f0f0f;
+      --surface-elevated: #fafbfc;
+      --surface-tint: #f6f7f9;
+      --text: #0d0d0d;
+      --text-secondary: #3c4043;
       --muted: #5f6368;
       --dim: #80868b;
-      --border: #e8eaed;
-      --accent: #065fd4;
-      --accent-hover: #0550b3;
-      --radius: 12px;
-      --shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 2px 8px rgba(60, 64, 67, 0.06);
+      --border: #dadce0;
+      --border-subtle: rgba(0, 0, 0, 0.06);
+      /* YouTube-aligned brand */
+      --brand: #ff0000;
+      --brand-dark: #cc0000;
+      --brand-soft: rgba(255, 0, 0, 0.09);
+      --brand-softer: rgba(255, 0, 0, 0.05);
+      /* Links: familiar "YouTube blue" */
+      --link: #065fd4;
+      --link-hover: #044aa3;
+      --accent-green: #0f9d58;
+      --accent-green-soft: rgba(15, 157, 88, 0.1);
+      --radius-sm: 10px;
+      --radius: 14px;
+      --radius-lg: 18px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+      --shadow-header: 0 8px 32px rgba(0, 0, 0, 0.06), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --toc-width: 220px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-base: #0b0c0e;
+        --bg-page: linear-gradient(165deg, #0d0f12 0%, #0b0c0e 48%, #101216 100%);
+        --surface: #15171c;
+        --surface-elevated: #1b1e24;
+        --surface-tint: #181a20;
+        --text: #f5f6f8;
+        --text-secondary: #c8ccd2;
+        --muted: #9aa0a6;
+        --dim: #6b7280;
+        --border: #2a2e36;
+        --border-subtle: rgba(255, 255, 255, 0.06);
+        --brand-soft: rgba(255, 64, 64, 0.18);
+        --brand-softer: rgba(255, 64, 64, 0.09);
+        --link: #8ab4f8;
+        --link-hover: #a9c5fb;
+        --accent-green: #34d399;
+        --accent-green-soft: rgba(52, 211, 153, 0.12);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-header: 0 10px 36px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      color-scheme: light dark;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .toc a, .card, .contact-links a { transition: none; }
+    }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
+      font-family: var(--font);
+      background: var(--bg-base);
+      background-image: var(--bg-page);
       color: var(--text);
       font-size: 15px;
       line-height: 1.65;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
 
     .shell {
-      max-width: 1040px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 28px 20px 64px;
+      padding: 32px 22px 72px;
       display: grid;
-      grid-template-columns: 200px minmax(0, 1fr);
-      gap: 40px;
+      grid-template-columns: var(--toc-width) minmax(0, 1fr);
+      gap: 36px;
       align-items: start;
     }
 
-    .toc {
+    .toc-wrap {
       position: sticky;
-      top: 24px;
-      padding-top: 8px;
+      top: 28px;
+    }
+    .toc-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 18px 14px 20px;
     }
     .toc-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.11em;
       text-transform: uppercase;
       color: var(--dim);
-      margin-bottom: 14px;
+      margin: 0 8px 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .toc {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     .toc a {
       display: block;
-      padding: 8px 10px;
-      margin: 0 -10px;
-      border-radius: 8px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
       font-size: 13px;
       font-weight: 500;
       color: var(--muted);
       text-decoration: none;
       border-left: 3px solid transparent;
-      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      margin-left: -1px;
+      transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
     }
     .toc a:hover {
       color: var(--text);
-      background: rgba(6, 95, 212, 0.06);
+      background: var(--surface-elevated);
+    }
+    .toc a:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: 2px;
     }
     .toc a.active {
-      color: var(--accent);
-      background: rgba(6, 95, 212, 0.08);
-      border-left-color: var(--accent);
+      color: var(--brand-dark);
+      background: var(--brand-softer);
+      border-left-color: var(--brand);
       font-weight: 600;
     }
 
@@ -87,114 +157,203 @@
     .doc-header {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px 28px 26px;
-      margin-bottom: 28px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-header);
+      padding: 0;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .doc-header-top {
+      height: 4px;
+      background: linear-gradient(90deg, var(--brand) 0%, #ff4040 50%, var(--brand-dark) 100%);
+    }
+    .doc-header-inner {
+      padding: 28px 30px 26px;
+    }
+    .doc-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 14px;
+    }
+    .doc-eyebrow::before {
+      content: '';
+      width: 22px;
+      height: 2px;
+      background: var(--brand);
+      border-radius: 1px;
     }
     .doc-brand {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 20px;
     }
     .doc-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 11px;
-      background: linear-gradient(180deg, #fff 0%, #f1f3f4 100%);
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #fff 0%, #f5f5f5 100%);
       border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
-    .doc-logo svg { display: block; width: 24px; height: 24px; }
+    .doc-logo svg { display: block; width: 28px; height: 28px; }
+    .doc-title-block { flex: 1; min-width: 0; }
     .doc-header h1 {
-      font-size: 1.65rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.25;
+      font-size: clamp(1.5rem, 4vw, 1.85rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 10px;
     }
     .doc-lead {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      max-width: 52ch;
-      margin-bottom: 18px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.62;
+      max-width: 62ch;
+      font-weight: 400;
     }
+    .doc-lead strong { color: var(--text); font-weight: 600; }
     .doc-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px 20px;
-      font-size: 13px;
-      color: var(--dim);
+      gap: 10px;
+      margin-top: 22px;
     }
-    .doc-meta span strong {
-      color: var(--muted);
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
       font-weight: 600;
-      margin-right: 6px;
+      color: var(--text-secondary);
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+    }
+    .meta-pill svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+    .meta-pill--version {
+      background: var(--brand-soft);
+      border-color: rgba(255, 0, 0, 0.15);
+      color: var(--brand-dark);
     }
 
     .section {
-      scroll-margin-top: 20px;
-      margin-bottom: 16px;
+      scroll-margin-top: 24px;
+      margin-bottom: 14px;
     }
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px 26px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 26px 28px;
     }
     .card h2 {
-      font-size: 1.05rem;
+      font-size: 1.0625rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 14px;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      color: var(--text);
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
     }
     .card h2 .num {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: rgba(6, 95, 212, 0.1);
-      color: var(--accent);
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, var(--brand) 0%, var(--brand-dark) 100%);
+      color: #fff;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(255, 0, 0, 0.25);
     }
-    .card p { color: var(--muted); margin-bottom: 12px; font-size: 14px; }
+    .card p {
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      font-size: 14.5px;
+      line-height: 1.68;
+    }
     .card p:last-child { margin-bottom: 0; }
+    .card .spaced-top { margin-top: 1rem; }
+    .card .spaced-top-sm { margin-top: 0.85rem; }
     .card ul {
-      margin: 0 0 0 1.15rem;
-      color: var(--muted);
-      font-size: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text-secondary);
+      font-size: 14.5px;
+      line-height: 1.68;
     }
-    .card li { margin-bottom: 10px; }
+    .card li {
+      margin-bottom: 12px;
+      padding-left: 1.15rem;
+      position: relative;
+    }
     .card li:last-child { margin-bottom: 0; }
+    .card li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand);
+      opacity: 0.85;
+    }
     .card li strong, .card p strong { color: var(--text); font-weight: 600; }
     .card a {
-      color: var(--accent);
+      color: var(--link);
       text-decoration: none;
       font-weight: 500;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
-    .card a:hover { text-decoration: underline; color: var(--accent-hover); }
+    .card a:hover {
+      color: var(--link-hover);
+      border-bottom-color: rgba(6, 95, 212, 0.35);
+    }
+    .card a:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
 
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
     .chip {
       font-size: 12px;
       font-weight: 500;
-      color: var(--muted);
-      background: var(--bg);
+      color: var(--text-secondary);
+      background: var(--surface-elevated);
       border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      line-height: 1.35;
     }
     .chip code {
       font-family: ui-monospace, 'SF Mono', Consolas, monospace;
@@ -203,110 +362,326 @@
     }
     .inline-code {
       font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-      font-size: 13px;
-      background: var(--bg);
+      font-size: 12.5px;
+      background: var(--surface-tint);
       border: 1px solid var(--border);
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 6px;
       color: var(--text);
     }
 
-    .contact-card {
-      border-color: rgba(6, 95, 212, 0.22);
-      background: linear-gradient(165deg, #fff 0%, #f6f8ff 100%);
+    /* At-a-glance trust-signal grid */
+    .glance {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 22px;
     }
-    .contact-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .glance-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 108px;
+    }
+    .glance-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--accent-green-soft);
+      color: var(--accent-green);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .glance-icon svg { width: 18px; height: 18px; }
+    .glance-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .glance-sub {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    @media (max-width: 860px) {
+      .glance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 480px) {
+      .glance { grid-template-columns: 1fr; }
+    }
+
+    /* Mode comparison (BYOK vs Managed) */
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .mode-card {
+      background: var(--surface-tint);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .mode-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .mode-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .mode-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--brand-softer);
+      color: var(--brand-dark);
+      border: 1px solid rgba(255, 0, 0, 0.18);
+    }
+    .mode-badge.mode-badge--green {
+      background: var(--accent-green-soft);
+      color: var(--accent-green);
+      border-color: rgba(15, 157, 88, 0.22);
+    }
+    @media (prefers-color-scheme: dark) {
+      .mode-badge { color: #ff7676; border-color: rgba(255, 64, 64, 0.3); }
+      .mode-badge.mode-badge--green { color: #5be3a7; border-color: rgba(52, 211, 153, 0.3); }
+    }
+    .mode-card ul { padding-left: 0; }
+    .mode-card li {
+      font-size: 13.5px;
+      line-height: 1.55;
+      margin-bottom: 8px;
+    }
+    .mode-card li:last-child { margin-bottom: 0; }
+    @media (max-width: 680px) {
+      .modes { grid-template-columns: 1fr; }
+    }
+
+    .contact-card {
+      border-color: rgba(255, 0, 0, 0.18);
+      background: linear-gradient(165deg, #fff 0%, #fff8f8 38%, #fff 100%);
+      box-shadow: var(--shadow-md);
+    }
+    .contact-card h2 { border-bottom-color: rgba(255, 0, 0, 0.1); }
+    .contact-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     .contact-links a {
       display: inline-flex;
       align-items: center;
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--surface);
       font-size: 13px;
       font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
     }
-    .contact-links a:hover { border-color: var(--accent); }
+    .contact-links a:hover {
+      border-color: var(--brand);
+      color: var(--brand-dark);
+      box-shadow: 0 2px 12px rgba(255, 0, 0, 0.12);
+    }
+    .contact-links a:focus-visible {
+      outline: 2px solid var(--link);
+      outline-offset: 2px;
+    }
 
     .site-footer {
-      margin-top: 36px;
-      padding-top: 20px;
+      margin-top: 40px;
+      padding: 24px 20px 0;
       border-top: 1px solid var(--border);
       text-align: center;
       font-size: 12px;
       color: var(--dim);
+      line-height: 1.5;
     }
-    .site-footer a { color: var(--muted); font-weight: 500; }
+    .site-footer a {
+      color: var(--muted);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .site-footer a:hover {
+      color: var(--link);
+      border-bottom-color: rgba(6, 95, 212, 0.3);
+    }
 
-    @media (max-width: 820px) {
-      .shell { grid-template-columns: 1fr; gap: 20px; padding-top: 16px; }
-      .toc {
+    @media (max-width: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 20px 16px 56px;
+      }
+      .toc-wrap {
         position: static;
-        display: flex;
+      }
+      .toc-panel {
+        padding: 14px 12px 16px;
+      }
+      .toc {
+        flex-direction: row;
         flex-wrap: wrap;
         gap: 6px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border);
       }
-      .toc-label { width: 100%; margin-bottom: 8px; }
+      .toc-label {
+        width: 100%;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+      }
       .toc a {
         border-left: none;
         border-radius: 999px;
-        padding: 6px 12px;
-        margin: 0;
-        background: var(--surface);
+        padding: 7px 12px;
+        margin-left: 0;
+        background: var(--surface-elevated);
         border: 1px solid var(--border);
         font-size: 12px;
       }
       .toc a.active {
-        border-color: var(--accent);
-        background: rgba(6, 95, 212, 0.08);
+        border: 1px solid rgba(255, 0, 0, 0.35);
+        background: var(--brand-softer);
+        color: var(--brand-dark);
       }
-      .doc-header { padding: 22px 18px; }
+      .doc-header-inner { padding: 22px 18px 20px; }
+      .doc-brand { flex-direction: column; align-items: center; text-align: center; }
+      .doc-title-block { display: flex; flex-direction: column; align-items: center; }
+      .doc-lead { text-align: center; max-width: 100%; }
+      .doc-meta { justify-content: center; }
       .card { padding: 20px 18px; }
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <nav class="toc" aria-label="Table of contents">
-      <div class="toc-label">On this page</div>
-      <a href="#data-access">Data we access</a>
-      <a href="#data-usage">How data is used</a>
-      <a href="#storage">Storage &amp; retention</a>
-      <a href="#third-party">Third-party services</a>
-      <a href="#sharing">Data sharing</a>
-      <a href="#permissions">Permissions</a>
-      <a href="#rights">Your rights</a>
-      <a href="#children">Children’s privacy</a>
-      <a href="#compliance">Compliance</a>
-      <a href="#contact">Contact</a>
-    </nav>
+    <div class="toc-wrap">
+      <div class="toc-panel">
+        <div class="toc-label">On this page</div>
+        <nav class="toc" aria-label="Table of contents">
+          <a href="#overview">Operating modes</a>
+          <a href="#data-access">Data we access</a>
+          <a href="#data-usage">How data is used</a>
+          <a href="#storage">Storage &amp; retention</a>
+          <a href="#third-party">Third-party services</a>
+          <a href="#sharing">Data sharing</a>
+          <a href="#permissions">Permissions</a>
+          <a href="#rights">Your rights</a>
+          <a href="#children">Children’s privacy</a>
+          <a href="#compliance">Compliance</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </div>
 
     <main class="main">
       <header class="doc-header">
-        <div class="doc-brand">
-          <div class="doc-logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        <div class="doc-header-top" aria-hidden="true"></div>
+        <div class="doc-header-inner">
+          <p class="doc-eyebrow">Privacy &amp; legal</p>
+          <div class="doc-brand">
+            <div class="doc-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+            </div>
+            <div class="doc-title-block">
+              <h1>Privacy Policy</h1>
+              <p class="doc-lead">YouTube AI Summarizer — how we handle data. v2 offers <strong>optional managed AI</strong> (Google sign-in + our Supabase backend) alongside <strong>bring-your-own-key (BYOK)</strong>. We do not run ads or analytics telemetry in the extension.</p>
+            </div>
           </div>
-          <div>
-            <h1>Privacy Policy</h1>
-            <p class="doc-lead" style="margin-bottom:0;margin-top:6px;">YouTube AI Summarizer — how we handle data. No telemetry, no publisher servers; your keys and choices stay on your device.</p>
+          <div class="doc-meta">
+            <span class="meta-pill">Last updated · April 17, 2026</span>
+            <span class="meta-pill meta-pill--version">Extension v2.0.1</span>
           </div>
-        </div>
-        <div class="doc-meta">
-          <span><strong>Last updated</strong> April 6, 2026</span>
-          <span><strong>Extension version</strong> v1.8.2</span>
         </div>
       </header>
+
+      <section class="glance" aria-label="At a glance">
+        <div class="glance-card">
+          <span class="glance-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.2 8 10 4.6-.8 8-5 8-10V6l-8-4z"/><path d="m9 12 2 2 4-4"/></svg>
+          </span>
+          <div class="glance-title">No ads, no telemetry</div>
+          <div class="glance-sub">The extension ships without analytics SDKs, tracking pixels, or cross-site profiling.</div>
+        </div>
+        <div class="glance-card">
+          <span class="glance-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <div class="glance-title">Keys stay local (BYOK)</div>
+          <div class="glance-sub">Your API keys are obfuscated in <span class="inline-code">chrome.storage</span>. We never receive them.</div>
+        </div>
+        <div class="glance-card">
+          <span class="glance-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M12 19v2"/><path d="m5 5 1.4 1.4"/><path d="m17.6 17.6 1.4 1.4"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="m5 19 1.4-1.4"/><path d="m17.6 6.4 1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+          </span>
+          <div class="glance-title">Transparent by design</div>
+          <div class="glance-sub">Network calls only fire when you click a feature — Summary, Chat, or Podcast.</div>
+        </div>
+        <div class="glance-card">
+          <span class="glance-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 17-5-5 5-5"/><path d="m17 17 5-5-5-5"/><path d="m14 4-4 16"/></svg>
+          </span>
+          <div class="glance-title">Open-source client</div>
+          <div class="glance-sub">Client code is MIT-licensed on GitHub — audit the exact bytes that ship.</div>
+        </div>
+      </section>
+
+      <div class="section" id="overview">
+        <div class="card">
+          <h2><span class="num">0</span> Operating modes</h2>
+          <p>You choose how AI requests are made. You can use BYOK without signing in, or use managed AI without BYOK keys, subject to credits and plan limits.</p>
+          <div class="modes">
+            <div class="mode-card">
+              <div class="mode-head">
+                <span class="mode-name">BYOK — Bring your own key</span>
+                <span class="mode-badge mode-badge--green">Local-first</span>
+              </div>
+              <ul>
+                <li>Transcripts and prompts are sent <strong>directly from your browser</strong> to AI hosts you enabled (Groq, Ollama Cloud, Google Gemini for TTS).</li>
+                <li>Your API keys live in <span class="inline-code">chrome.storage.local</span> (obfuscated) — the publisher never receives them.</li>
+                <li>No Google sign-in, no server-side account, no Stripe.</li>
+              </ul>
+            </div>
+            <div class="mode-card">
+              <div class="mode-head">
+                <span class="mode-name">Managed AI — Optional</span>
+                <span class="mode-badge">Account required</span>
+              </div>
+              <ul>
+                <li>Sign in with <strong>Google</strong> via <strong>Supabase Auth</strong> to get free credits.</li>
+                <li>Transcript excerpts are processed by Edge Functions that call server-side AI (DeepSeek / Gemini) with publisher-held keys.</li>
+                <li><strong>Stripe</strong> handles optional paid plans only when you open a checkout link.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="section" id="data-access">
         <div class="card">
           <h2><span class="num">1</span> Data we access</h2>
           <ul>
             <li><strong>YouTube transcripts</strong> — Captions for the video on the tab you are viewing are read only when you start a summary, chat, or podcast flow. We do not scrape unrelated pages.</li>
-            <li><strong>Your API keys</strong> (Groq, Ollama Cloud, Google Gemini for TTS) — Stored locally for authentication to those services only.</li>
-            <li><strong>Extension preferences</strong> — Provider, model, language, cache toggles, and defaults. All stored locally.</li>
+            <li><strong>BYOK: your API keys</strong> (Groq, Ollama Cloud, Google Gemini for TTS) — Stored <strong>locally</strong> in the extension (obfuscated). Used only to authenticate to those providers when you use BYOK.</li>
+            <li><strong>Managed AI: Google account</strong> — If you sign in, Supabase receives standard OAuth tokens from Google. We use Google’s identifiers to create your app account. We do not receive your Google password.</li>
+            <li><strong>Device identifier for abuse prevention</strong> — For managed sign-in, the extension derives a <strong>browser/device fingerprint</strong> (FingerprintJS-based) and a <strong>persistent local ID</strong> (<span class="inline-code">chrome.storage.local</span>). A fingerprint value is sent to our backend during auth registration so we can limit free-tier abuse (e.g. many accounts on one device). This is not used for advertising.</li>
+            <li><strong>Extension preferences</strong> — Provider, model, language, cache toggles, theme, and similar settings. Stored locally; some flags also affect which network paths run (BYOK vs managed).</li>
           </ul>
         </div>
       </div>
@@ -314,47 +689,66 @@
       <div class="section" id="data-usage">
         <div class="card">
           <h2><span class="num">2</span> How data is used</h2>
+          <p><strong>BYOK path</strong></p>
           <ul>
-            <li><strong>Summaries</strong> — Transcript text is sent to <strong>your</strong> chosen AI provider (Groq or Ollama Cloud) to generate summary, key points, and detailed analysis. Responses return to your browser only.</li>
-            <li><strong>Chat</strong> — When you use the Chat tab, your messages, a slice of transcript context, and recent conversation history are sent to the same provider to generate replies. Nothing is logged by us; we do not operate a backend.</li>
-            <li><strong>Podcast</strong> — A generated script may be sent to <strong>Google Gemini TTS</strong> to produce audio, which is played in the browser and may be cached locally per your settings.</li>
-            <li><strong>API keys</strong> — Used only to authenticate to the provider you selected. They are not transmitted to the extension author or unrelated third parties.</li>
-            <li>We do <strong>not</strong> collect your name, email, account identifiers, full browsing history, or IP address for our own purposes.</li>
+            <li><strong>Summaries</strong> — Transcript text is sent to <strong>your</strong> chosen AI provider (Groq or Ollama Cloud) to generate summary, key points, and detailed analysis. Responses return to your browser.</li>
+            <li><strong>Chat</strong> — Your messages, transcript context, and recent conversation history go to that same provider. The extension publisher does not proxy those requests.</li>
+            <li><strong>Podcast</strong> — A generated script may be sent to <strong>Google Gemini TTS</strong> (using your key when in BYOK mode) to produce audio, played in the browser and optionally cached locally.</li>
+            <li><strong>API keys</strong> — Used only to authenticate to the vendors you configured. They are not sent to the extension author.</li>
           </ul>
+          <p class="spaced-top"><strong>Managed AI path</strong></p>
+          <ul>
+            <li><strong>Auth &amp; credits</strong> — Your session JWT and fingerprint are sent to Supabase Edge Functions (e.g. <span class="inline-code">auth-callback</span>, <span class="inline-code">check-credits</span>) to create/update your account, enforce free-tier and Pro limits, and return checkout links when applicable.</li>
+            <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>DeepSeek</strong> and <strong>Google Gemini</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Results return to your browser.</li>
+            <li><strong>Billing</strong> — If you subscribe, <strong>Stripe</strong> processes payment; we store subscription status in our database as needed to unlock Pro features. Opening checkout uses Stripe-hosted pages (and may set Stripe cookies under their domain).</li>
+          </ul>
+          <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your full browsing history. For managed users, account email and usage metadata may exist on Supabase as described above; IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
         </div>
       </div>
 
       <div class="section" id="storage">
         <div class="card">
           <h2><span class="num">3</span> Storage &amp; retention</h2>
-          <p>Settings and optional caches are stored with Chrome’s <span class="inline-code">chrome.storage.local</span> API. The extension does not send that data to publisher-controlled servers.</p>
+          <p><strong>On your device</strong> — Settings, optional caches, BYOK keys (obfuscated), OAuth session tokens, persistent device id, and fingerprint cache use Chrome’s <span class="inline-code">chrome.storage.local</span> / session APIs as applicable. BYOK secrets are not uploaded to our servers.</p>
           <div class="chips">
             <span class="chip">Summaries: optional LRU cache (max 20 videos)</span>
             <span class="chip">Transcripts: optional; off by default</span>
-            <span class="chip">API keys: obfuscated locally (not plaintext)</span>
-            <span class="chip">Chat: in-memory for the current page session</span>
+            <span class="chip">BYOK keys: obfuscated locally</span>
+            <span class="chip">Chat (BYOK): in-memory for the current page session</span>
+            <span class="chip">Managed: Supabase session in local storage</span>
           </div>
-          <p style="margin-top:14px;">Clear data anytime via the panel trash control or <strong>Clear Cache</strong> in extension settings. Uninstalling the extension removes extension storage.</p>
+          <p class="spaced-top"><strong>On our backend (managed users only)</strong> — Supabase may store account row (e.g. credits, subscription flags), device fingerprint associations for abuse prevention, and usage records needed to enforce limits. Retention follows operational need and provider capabilities; contact us for deletion requests (see §7).</p>
+          <p class="spaced-top">Clear local cache anytime via the panel trash control or <strong>Clear Cache</strong> in extension settings. <strong>Sign out</strong> clears the managed session from the extension. Uninstalling the extension removes extension storage on that browser profile.</p>
         </div>
       </div>
 
       <div class="section" id="third-party">
         <div class="card">
           <h2><span class="num">4</span> Third-party services</h2>
-          <p>Depending on your settings, requests may go to:</p>
+          <p><strong>Always declared in the extension</strong> (see §6) — network calls only happen when you use a feature that needs them.</p>
+          <p class="spaced-top-sm"><strong>BYOK AI vendors</strong></p>
           <ul>
             <li><strong>Groq</strong> — <a href="https://groq.com" target="_blank" rel="noopener noreferrer">groq.com</a> · <a href="https://groq.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy policy</a></li>
             <li><strong>Ollama Cloud</strong> — <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">ollama.com</a> · <a href="https://ollama.com/terms" target="_blank" rel="noopener noreferrer">Terms</a></li>
-            <li><strong>Google Gemini (TTS)</strong> — <a href="https://ai.google.dev" target="_blank" rel="noopener noreferrer">ai.google.dev</a> · <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer">AI terms</a></li>
+            <li><strong>Google Gemini</strong> (e.g. TTS in BYOK podcast flows) — <a href="https://ai.google.dev" target="_blank" rel="noopener noreferrer">ai.google.dev</a> · <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer">AI terms</a></li>
           </ul>
-          <p>We do not embed analytics, ads, or cross-site trackers in the extension.</p>
+          <p class="spaced-top-sm"><strong>Managed AI &amp; billing</strong></p>
+          <ul>
+            <li><strong>Supabase</strong> — Auth, PostgreSQL, and Edge Functions for our project (<span class="inline-code">smvnsfznxctkegjbckmt.supabase.co</span>, as declared in the manifest). <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">Supabase privacy</a></li>
+            <li><strong>Google</strong> — Google OAuth when you choose managed sign-in. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google privacy policy</a></li>
+            <li><strong>Stripe</strong> — Payments and Customer Portal when you upgrade. <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Stripe privacy</a></li>
+            <li><strong>DeepSeek</strong> — Server-side text generation for managed summaries/chat when our Edge Function calls their API. See DeepSeek’s current privacy terms on <a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a>.</li>
+            <li><strong>Google Gemini</strong> — Also used from our servers for parts of managed generation/TTS per deployment configuration.</li>
+          </ul>
+          <p class="spaced-top-sm">We do not embed analytics SDKs, ads, or cross-site trackers in the extension.</p>
         </div>
       </div>
 
       <div class="section" id="sharing">
         <div class="card">
           <h2><span class="num">5</span> Data sharing</h2>
-          <p>We do <strong>not</strong> sell your data. We do not share it for advertising or profiling. Data leaves your browser only when <strong>you</strong> trigger a feature that calls a third-party API you configured (see above).</p>
+          <p>We do <strong>not</strong> sell your personal information and do not share it for advertising or profiling.</p>
+          <p class="spaced-top-sm">Data leaves your device when <strong>you</strong> use a feature: (a) <strong>BYOK</strong> — direct calls to AI vendors you configured; (b) <strong>Managed AI</strong> — calls to our Supabase Edge Functions and, from there, to AI/billing providers as needed to perform the service.</p>
         </div>
       </div>
 
@@ -363,16 +757,19 @@
           <h2><span class="num">6</span> Permissions</h2>
           <p><strong>Chrome extension permissions</strong></p>
           <div class="chips">
-            <span class="chip"><code>storage</code> — keys &amp; settings locally</span>
+            <span class="chip"><code>storage</code> — settings, session, keys, caches locally</span>
             <span class="chip"><code>activeTab</code> — access the current tab when you use the extension</span>
+            <span class="chip"><code>identity</code> — Google OAuth redirect for Supabase sign-in (managed AI)</span>
           </div>
-          <p style="margin-top:14px;"><strong>Host access</strong> (declared in the manifest)</p>
+          <p class="spaced-top"><strong>Host access</strong> (declared in the manifest)</p>
           <div class="chips">
             <span class="chip">youtube.com / youtu.be</span>
             <span class="chip">api.groq.com</span>
             <span class="chip">ollama.com</span>
             <span class="chip">generativelanguage.googleapis.com</span>
+            <span class="chip">*.supabase.co (project API + Auth)</span>
           </div>
+          <p class="spaced-top">Checkout and Customer Portal links open in the browser under <strong>Stripe</strong>’s domain (not listed as a static host permission because links are created at runtime from your account/checkout configuration).</p>
         </div>
       </div>
 
@@ -380,11 +777,12 @@
         <div class="card">
           <h2><span class="num">7</span> Your rights</h2>
           <ul>
-            <li>Delete cached content and reset options from the extension UI.</li>
-            <li>Revoke <strong>Groq</strong> keys at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a></li>
-            <li>Revoke <strong>Ollama</strong> keys at <a href="https://ollama.com/settings/keys" target="_blank" rel="noopener noreferrer">ollama.com/settings/keys</a></li>
-            <li>Revoke <strong>Gemini</strong> keys at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a></li>
-            <li>Remove the extension to delete its stored data from your browser.</li>
+            <li>Delete cached content and reset options from the extension UI; use <strong>Sign out</strong> for managed AI.</li>
+            <li><strong>BYOK:</strong> Revoke <strong>Groq</strong> keys at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a>; <strong>Ollama</strong> at <a href="https://ollama.com/settings/keys" target="_blank" rel="noopener noreferrer">ollama.com/settings/keys</a>; <strong>Gemini</strong> at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a>.</li>
+            <li><strong>Google (managed):</strong> Remove the app’s access from your Google Account security settings if you wish to disconnect OAuth.</li>
+            <li><strong>Stripe:</strong> Manage payment methods and invoices via the Customer Portal link shown in the extension when available, or Stripe’s account email flows.</li>
+            <li>Remove the extension to delete its <strong>local</strong> stored data from your browser profile.</li>
+            <li>For copies, correction, or deletion of <strong>server-side</strong> managed account data where applicable, contact us (§10) and we will assist within reasonable limits and provider tools.</li>
           </ul>
         </div>
       </div>
@@ -399,8 +797,9 @@
       <div class="section" id="compliance">
         <div class="card">
           <h2><span class="num">9</span> Compliance &amp; safety</h2>
-          <p>Open-source codebase (MIT). Architecture uses modular ES classes and a single storage helper for settings — you can review behavior on <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">GitHub</a>. Runtime diagnostics use <span class="inline-code">console.error</span> only for serious failures (e.g. missing dependencies), not routine logging or analytics.</p>
-          <p style="margin-top:12px;">When this policy changes, we update the <strong>Last updated</strong> date above. Continued use after an update means you accept the revised policy.</p>
+          <p>Open-source extension codebase (MIT) — you can review client behavior on <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">GitHub</a>. Server-side Edge Function source lives in the same repository under <span class="inline-code">backend/supabase/functions</span> for transparency of managed-AI flows (deployment config and secrets are not in the repo).</p>
+          <p class="spaced-top-sm">The extension does not ship analytics or ads. Diagnostic messages may appear in the browser extension context (e.g. console) when something fails; they are not used for cross-site tracking.</p>
+          <p class="spaced-top-sm">When this policy changes, we update the <strong>Last updated</strong> date above. Continued use after an update means you accept the revised policy.</p>
         </div>
       </div>
 
@@ -416,7 +815,7 @@
       </div>
 
       <footer class="site-footer">
-        YouTube AI Summarizer · v1.8.2 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
+        YouTube AI Summarizer · v2.0.1 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
       </footer>
     </main>
   </div>

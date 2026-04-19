@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  PRODUCTION IS NOT THIS REPO: Chrome opens UNINSTALL_FEEDBACK_URL on your portfolio domain
+  (cemkoyluoglu.codes). Editing this file does not change what users see until you copy it to
+  your portfolio project (My-Site/public/yt-ai-summarizer/uninstall.html) and redeploy.
+  See README § "Uninstall feedback URL (custom domain)".
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -40,6 +46,16 @@
       overflow-x: hidden;
     }
 
+    /* Nöron ağı: düşük düğüm sayısı + O(n²) komşuluk; GPU’da tek 2D canvas */
+    #neural-bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .bg-grid {
       position: fixed;
       inset: 0;
@@ -48,7 +64,7 @@
         linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
       background-size: 60px 60px;
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
 
     .bg-glow {
@@ -60,12 +76,12 @@
       height: 500px;
       background: radial-gradient(ellipse, rgba(255,0,0,0.06) 0%, transparent 70%);
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
 
     .wrap {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       max-width: 680px;
       margin: 0 auto;
       padding: 48px 24px 80px;
@@ -378,6 +394,7 @@
   </style>
 </head>
 <body>
+  <canvas id="neural-bg" aria-hidden="true"></canvas>
   <div class="bg-grid"></div>
   <div class="bg-glow"></div>
 
@@ -412,7 +429,7 @@
           </div>
           <div class="stat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            Groq, Ollama &amp; Gemini
+            BYOK (Groq, Ollama, Gemini) or managed AI
           </div>
           <div class="stat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -500,6 +517,177 @@
     </div>
   </div>
 
+  <script>
+    (function () {
+      var canvas = document.getElementById('neural-bg');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced || !ctx) return;
+
+      var w = 0;
+      var h = 0;
+      var dpr = 1;
+      var nodes = [];
+      var raf = 0;
+      var mx = -1e4;
+      var my = -1e4;
+
+      var NODE_COUNT = 68;
+      var LINK_DIST = 132;
+      var LINK_DIST_SQ = LINK_DIST * LINK_DIST;
+      var REPULSE_R = 172;
+      var REPULSE_RSQ = REPULSE_R * REPULSE_R;
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (nodes.length === 0) {
+          for (var i = 0; i < NODE_COUNT; i++) {
+            nodes.push({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              vx: (Math.random() - 0.5) * 0.35,
+              vy: (Math.random() - 0.5) * 0.35
+            });
+          }
+        } else {
+          for (var j = 0; j < nodes.length; j++) {
+            var n = nodes[j];
+            n.x = Math.min(w, Math.max(0, n.x));
+            n.y = Math.min(h, Math.max(0, n.y));
+          }
+        }
+      }
+
+      function onPointer(clientX, clientY) {
+        mx = clientX;
+        my = clientY;
+      }
+
+      window.addEventListener('mousemove', function (e) {
+        onPointer(e.clientX, e.clientY);
+      }, { passive: true });
+      window.addEventListener('mouseleave', function () {
+        mx = -1e4;
+        my = -1e4;
+      });
+      window.addEventListener(
+        'touchmove',
+        function (e) {
+          if (e.touches.length) onPointer(e.touches[0].clientX, e.touches[0].clientY);
+        },
+        { passive: true }
+      );
+      window.addEventListener('touchend', function () {
+        mx = -1e4;
+        my = -1e4;
+      });
+
+      function step() {
+        if (document.hidden) {
+          raf = requestAnimationFrame(step);
+          return;
+        }
+
+        var i;
+        var j;
+        var n;
+        var dx;
+        var dy;
+        var dsq;
+        var d;
+        var f;
+
+        for (i = 0; i < nodes.length; i++) {
+          n = nodes[i];
+          n.vx += (Math.random() - 0.5) * 0.018;
+          n.vy += (Math.random() - 0.5) * 0.018;
+          n.vx *= 0.985;
+          n.vy *= 0.985;
+
+          dx = n.x - mx;
+          dy = n.y - my;
+          dsq = dx * dx + dy * dy;
+          if (dsq > 0 && dsq < REPULSE_RSQ) {
+            d = Math.sqrt(dsq);
+            f = ((REPULSE_R - d) / REPULSE_R) * 3.6;
+            n.vx += (dx / d) * f * 0.14;
+            n.vy += (dy / d) * f * 0.14;
+          }
+
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0) {
+            n.x = 0;
+            n.vx *= -0.45;
+          } else if (n.x > w) {
+            n.x = w;
+            n.vx *= -0.45;
+          }
+          if (n.y < 0) {
+            n.y = 0;
+            n.vy *= -0.45;
+          } else if (n.y > h) {
+            n.y = h;
+            n.vy *= -0.45;
+          }
+        }
+
+        ctx.clearRect(0, 0, w, h);
+
+        ctx.lineWidth = 1.35;
+        for (i = 0; i < nodes.length; i++) {
+          var a = nodes[i];
+          for (j = i + 1; j < nodes.length; j++) {
+            var b = nodes[j];
+            dx = a.x - b.x;
+            dy = a.y - b.y;
+            dsq = dx * dx + dy * dy;
+            if (dsq >= LINK_DIST_SQ) continue;
+            d = Math.sqrt(dsq);
+            var t = 1 - d / LINK_DIST;
+            var midx = (a.x + b.x) * 0.5;
+            var midy = (a.y + b.y) * 0.5;
+            var mdx = mx - midx;
+            var mdy = my - midy;
+            var nearMouse = mdx * mdx + mdy * mdy < 280 * 280;
+            var alpha = t * (nearMouse ? 0.36 : 0.16);
+            ctx.strokeStyle = 'rgba(255,88,88,' + alpha + ')';
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+
+        for (i = 0; i < nodes.length; i++) {
+          n = nodes[i];
+          ctx.fillStyle = 'rgba(255,255,255,0.38)';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,200,200,0.55)';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 0.9, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        raf = requestAnimationFrame(step);
+      }
+
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      raf = requestAnimationFrame(step);
+    })();
+  </script>
   <script>
     (function () {
       var form = document.getElementById('uninstallForm');

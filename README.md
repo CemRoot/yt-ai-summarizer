@@ -1,504 +1,511 @@
+<div align="center">
+
+<img src="icons/icon128.png" alt="YouTube AI Summarizer" width="96" height="96" />
+
 # YouTube AI Summarizer
 
-> **Stop watching. Start reading.** Summarize any YouTube video for free with your own AI — no subscriptions, no hidden fees.
+### Stop watching. Start reading.
 
-[![CI](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml)
-![Manifest Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.manifest_version&label=manifest&prefix=v&color=blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.version&label=version&color=orange)
+**Turn any YouTube video into a 30-second read — summary, key points, detailed analysis, a two-host AI podcast, and a transcript-grounded chat. Free managed credits with Google sign-in, or bring your own API keys. No ads. No trackers. No 45-minute videos with 3 minutes of useful content.**
 
----
+<br />
 
-## What It Does
+<a href="https://chromewebstore.google.com/detail/dkbgkfeobjailmeiaidmapifohkjpgji">
+  <img alt="Install on Chrome Web Store" src="https://img.shields.io/badge/Install%20on%20Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" />
+</a>
+&nbsp;
+<a href="https://cemkoyluoglu.codes/yt-ai-summarizer/">
+  <img alt="Product site" src="https://img.shields.io/badge/Product%20site-cemkoyluoglu.codes-111?style=for-the-badge&logo=vercel&logoColor=white" />
+</a>
+&nbsp;
+<a href="privacy-policy.html">
+  <img alt="Privacy policy" src="https://img.shields.io/badge/Privacy-policy-0f766e?style=for-the-badge&logo=letsencrypt&logoColor=white" />
+</a>
 
-Turn any YouTube video into a concise, actionable summary in seconds. Bring your own AI key, choose your language, and get:
+<br /><br />
 
-- **Summary** — Full picture in 3–5 clean paragraphs
-- **Key Points** — 5–10 evidence-backed takeaways as a numbered list
-- **Detailed Analysis** — Section-by-section breakdown with names, dates, data preserved
-- **🎙️ AI Podcast** — Two-host NotebookLM-style audio conversation with Gemini TTS, volume control, and WAV download
-- **💬 Chat** — Ask follow-up questions about the video and get AI answers grounded in the transcript
+<a href="https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml">
+  <img alt="CI" src="https://github.com/CemRoot/yt-ai-summarizer/actions/workflows/ci.yml/badge.svg?branch=main" />
+</a>
+<img alt="Manifest V3" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.manifest_version&label=manifest&prefix=v&color=blue" />
+<img alt="Version" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FCemRoot%2Fyt-ai-summarizer%2Fmain%2Fmanifest.json&query=%24.version&label=release&color=orange" />
+<img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e" />
+<img alt="Chrome" src="https://img.shields.io/badge/Chrome-%E2%89%A5%20111-4285F4?logo=googlechrome&logoColor=white" />
 
-Summary, Key Points, and Detailed are generated in a **single API call** — no rate limit issues.
+</div>
 
----
-
-## Features
-
-| Feature | Details |
-|---------|---------|
-| **Dual AI Provider** | Choose between **Groq** (ultra-fast) or **Ollama Cloud** (flexible models). Switch anytime. |
-| **20+ Languages** | Output in English, Türkçe, Español, Français, Deutsch, 日本語, 한국어, 中文 and more — regardless of video language. |
-| **Modern UI/UX** | Seamless YouTube integration, underline-style tabs, smooth animations, Inter font. |
-| **Dark & Light Mode** | Automatically matches YouTube's theme + system preference. |
-| **Onboarding Flow** | Step-by-step welcome page with provider selection and guided API key setup. |
-| **First-Visit Tooltip** | Animated "Hey! I'm here" bubble guides new users to the button. |
-| **One-Click Copy** | Copy any analysis to clipboard instantly. |
-| **Auto-Summarize** | Optional: generate summaries automatically when you open a video. |
-| **Smart Caching (LRU)** | In-memory + persistent storage with LRU eviction (max 20 videos). Tab switching is instant — even during active generation. |
-| **Fun Facts on Loading** | 50 rotating "Did you know?" facts keep you entertained while AI processes. |
-| **🎙️ AI Podcast** | NotebookLM-style two-host podcast with randomly paired male & female voices. Powered by Gemini TTS — volume control, WAV download for offline/WhatsApp sharing, completely free. |
-| **💬 Video Chat** | Ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history. |
-| **🖥️ Fullscreen-Aware** | Extension UI auto-hides in fullscreen mode for distraction-free viewing. |
-| **🌍 Multi-Language Onboarding** | Welcome page auto-detects browser language with manual selector. 11 languages: EN, TR, ES, FR, DE, JA, KO, ZH, PT, AR, HI. |
-| **SPA-Compatible** | Works seamlessly with YouTube's single-page navigation. |
-| **CI/CD Pipeline** | GitHub Actions: manifest validation, JS syntax checks, security audit, automated packaging. |
+<br />
 
 ---
 
-## Getting Started
+## Why people install it
 
-### 1. Install
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>⚡ Understand a video in 30 seconds</h3>
+      One prompt returns <b>Summary</b>, <b>Key Points</b>, and <b>Detailed Analysis</b> in a single round-trip — no waiting three times, no rate-limit loop.
+    </td>
+    <td width="33%" valign="top">
+      <h3>🎙️ Listen to it like a podcast</h3>
+      NotebookLM-style two-host <b>AI podcast</b> from the summary, randomized male/female Gemini TTS voices, volume control and <b>WAV download</b> for offline listening.
+    </td>
+    <td width="33%" valign="top">
+      <h3>💬 Ask it anything</h3>
+      Transcript-grounded <b>Chat</b> — follow-up questions answered only from what the video actually says, with full conversation history.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🌍 20+ output languages</h3>
+      EN, TR, ES, FR, DE, JA, KO, ZH, PT, AR, HI and more — summary language is independent of video language.
+    </td>
+    <td valign="top">
+      <h3>🔐 Private by design</h3>
+      No analytics SDKs, no ad trackers. BYOK keys stay on your device (obfuscated). Managed mode is a thin Supabase Edge layer you can audit.
+    </td>
+    <td valign="top">
+      <h3>🧩 Works the way you want</h3>
+      <b>Managed AI</b> (Google sign-in, free credits, optional Pro) <i>or</i> <b>BYOK</b> (Groq / Ollama Cloud / Gemini). Switch anytime.
+    </td>
+  </tr>
+</table>
+
+<br />
+
+<div align="center">
+  <img src="/Users/dr.sam/Desktop/Chrome-extention/docs/3.png" alt="What's New panel inside the extension" width="780" />
+  <br /><sub>The in-extension <i>What's New</i> panel — same design language as the summary panel, welcome flow, and popup.</sub>
+</div>
+
+---
+
+## How it works
+
+### Two paths, same panel
+
+```text
+┌──────────── Managed AI (default — no keys) ───────────────────────────────┐
+│                                                                           │
+│  YouTube ─▶ Transcript ─▶ service-worker ─▶ Supabase JWT                  │
+│                                              │                            │
+│                                              ├─▶ check-credits (Edge)     │
+│                                              └─▶ summarize   (Edge)       │
+│                                                     │                     │
+│                                                     ▼                     │
+│                                        DeepSeek + Gemini (server keys)    │
+│                                                     │                     │
+│                                                     ▼                     │
+│                                        Side panel in YouTube              │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌──────────── BYOK (your keys, direct) ─────────────────────────────────────┐
+│                                                                           │
+│  YouTube ─▶ Transcript ─▶ service-worker ─▶ Groq | Ollama | Gemini TTS    │
+│                                                     │                     │
+│                                                     ▼                     │
+│                                        Side panel + LRU cache (20 videos) │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Transcript extraction** — InnerTube / ANDROID client against YouTube's own caption endpoints. No third-party transcript scraper.
+2. **One round-trip** — a single prompt produces Summary + Key Points + Detailed Analysis. Podcast and Chat reuse the same transcript context.
+3. **4-layer parser** — delimiters → regex → headings → split. Resilient to models that drift from the requested format.
+4. **Instant tab switching** — in-memory + persistent LRU cache (max 20 videos). Summary / Key Points / Detailed render from cache while background work continues.
+5. **Credit-aware** — managed calls are gated by a server-side pre-flight estimator; no overdraft, no "3 credits showing but charged 7".
+
+---
+
+## Plans
+
+<table>
+  <tr>
+    <th align="left" width="33%">Free (managed)</th>
+    <th align="left" width="33%">Pro (managed)</th>
+    <th align="left" width="33%">BYOK</th>
+  </tr>
+  <tr>
+    <td valign="top">
+      Sign in with Google. Free credits refresh automatically. Summary, Key Points, Detailed, and Chat on managed servers.
+      <br /><br />
+      <b>Best for</b> casual viewers who don't want to manage API keys.
+    </td>
+    <td valign="top">
+      Monthly or yearly upgrade via Stripe. Higher monthly credit limit, priority on long videos, podcast generation included.
+      <br /><br />
+      <b>Best for</b> regular viewers and learners.
+    </td>
+    <td valign="top">
+      Bring your own Groq / Ollama Cloud key (summary + chat) and optional Gemini key (podcast TTS). Traffic goes browser → vendor — we never see it.
+      <br /><br />
+      <b>Best for</b> developers, privacy-first users, and anyone with existing vendor credits.
+    </td>
+  </tr>
+</table>
+
+> Pro billing is handled by Stripe. Cancel anytime from the **Manage Subscription** button in the popup.
+
+---
+
+## Getting started
+
+### Install
+
+**Recommended (1-click):**
+<a href="https://chromewebstore.google.com/detail/dkbgkfeobjailmeiaidmapifohkjpgji">Install from the Chrome Web Store</a>.
+
+**From source (developers):**
 
 ```bash
-# Clone the repo
 git clone https://github.com/CemRoot/yt-ai-summarizer.git
-
-# Or download the latest release ZIP
 ```
 
 Then in Chrome:
-1. Navigate to `chrome://extensions/`
-2. Enable **Developer mode** (toggle top-right)
-3. Click **Load unpacked** → select the extension folder
+1. Open `chrome://extensions/`
+2. Enable **Developer mode** (top-right)
+3. Click **Load unpacked** → select the repo folder
 
-### 2. Get a Free API Key
+### Choose a mode
 
-Choose your provider:
+<details>
+<summary><b>Option A — Managed AI (no API key)</b></summary>
 
-| Provider | Get Key | Free Tier |
-|----------|---------|-----------|
-| **Ollama Cloud** (recommended) | [ollama.com/settings/keys](https://ollama.com/settings/keys) | Gemini 3 Flash, 10+ models, free tier |
+1. Open the welcome page (opens automatically after install) → **Sign in with Google**.
+2. The extension talks to **Supabase** (Auth + Edge Functions) for credits and summarization.
+3. Optional **Pro** upgrade via Stripe when the free credits don't fit your usage.
+
+</details>
+
+<details>
+<summary><b>Option B — Bring your own key (BYOK)</b></summary>
+
+Pick a provider and paste the key into the popup:
+
+| Provider | Get a key | Free tier |
+|---|---|---|
+| **Ollama Cloud** _(recommended)_ | [ollama.com/settings/keys](https://ollama.com/settings/keys) | Gemini 3 Flash + 10 more models, free tier |
 | **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | 30 RPM, up to 500K tokens/day |
 
-### 3. Configure & Go
+For the **AI Podcast** (BYOK), also add a free **Gemini API key** ([aistudio.google.com/apikey](https://aistudio.google.com/apikey)) for TTS.
 
-1. Click the extension icon → paste your API key
-2. Pick your AI model and output language
-3. Open any YouTube video → click the floating brain icon
-4. Done. Summaries in seconds.
+</details>
 
----
+### Use it
 
-## How It Works
-
-```
-YouTube Video → Extract Transcript → Send to AI Provider → Parse 3 Sections → Display
-                                   ↳ Chat Mode → Transcript + Question + History → AI Answer
-```
-
-1. **Transcript Extraction** — Pulls caption data directly from YouTube using Android client context (no external APIs).
-2. **Combined AI Call** — A single prompt generates Summary + Key Points + Detailed Analysis simultaneously.
-3. **Robust Parsing** — 4-layer parser: exact delimiters → regex variants → heuristic headings → smart split.
-4. **Instant Display** — Results shown in a native-feeling side panel. Switch tabs instantly from cache.
-5. **Conversational Chat** — Chat tab sends questions alongside the transcript and conversation history for context-aware answers.
+1. Open any YouTube video.
+2. Click the floating brain icon on the right side of the player.
+3. Pick a tab — Summary, Key Points, Detailed, Podcast, or Chat.
+4. Summaries are cached for 20 videos; tab switches are instant.
 
 ---
 
-## AI Models
+## AI models
 
-### Groq
+<details>
+<summary><b>Groq (BYOK)</b> — ultra-fast LPU inference</summary>
 
-| Model | Speed | Quality | Best For |
-|-------|-------|---------|----------|
-| Llama 3.3 70B | ⚡⚡ | ★★★★★ | Highest quality summaries |
+| Model | Speed | Quality | Best for |
+|---|---|---|---|
+| Llama 3.3 70B | ⚡⚡ | ★★★★★ | Highest-quality summaries |
 | Llama 3.1 8B | ⚡⚡⚡ | ★★★ | Fast results, higher rate limit |
-| Llama 4 Scout 17B | ⚡⚡ | ★★★★ | New generation model |
+| Llama 4 Scout 17B | ⚡⚡ | ★★★★ | New-generation model |
 | Qwen3 32B | ⚡⚡ | ★★★★ | Strong reasoning |
 
-### Ollama Cloud
+</details>
 
-| Model | Size | Best For |
-|-------|------|----------|
-| **Gemini 3 Flash** ⭐ | — | **Recommended** — Fast & high quality |
+<details>
+<summary><b>Ollama Cloud (BYOK)</b> — flexible open models</summary>
+
+| Model | Size | Best for |
+|---|---|---|
+| **Gemini 3 Flash** ⭐ | — | **Default** — fast and high quality |
 | Qwen3-Next 80B | 80B | Reasoning & thinking |
 | DeepSeek V3.2 | 671B | Most powerful |
 | GPT-OSS 120B | 120B | General purpose |
 | Kimi K2.5 | — | Multimodal |
 | Devstral Small | 24B | Code-focused |
 
+</details>
+
+<details>
+<summary><b>Managed AI (server-side)</b> — DeepSeek + Gemini behind Supabase Edge</summary>
+
+Summary and Chat run on **DeepSeek** text models; Podcast TTS runs on **Gemini 2.5 Flash Preview TTS**. Costs are metered per token (real `usageMetadata`, not flat rates) and gated by a server-side pre-flight credit estimator so you can never be charged for a call you cannot afford.
+
+</details>
+
 ---
 
-## Project Structure
+## Privacy & security
 
-```
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>✅ No ads, no in-extension analytics</h3>
+      No Mixpanel, no Segment, no PostHog. The extension ships without telemetry SDKs.
+    </td>
+    <td width="50%" valign="top">
+      <h3>✅ BYOK keys stay on your device</h3>
+      API keys are XOR-obfuscated in <code>chrome.storage.local</code>. Transcripts and prompts go <b>directly</b> from your browser to the provider.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>✅ Managed AI is an auditable thin layer</h3>
+      Google sign-in via <b>Supabase Auth</b>. Managed calls go to <b>Supabase Edge Functions</b> which proxy to DeepSeek/Gemini. Stripe handles optional billing.
+    </td>
+    <td valign="top">
+      <h3>✅ Minimal permissions</h3>
+      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, plus explicit host access for YouTube, BYOK vendors, and our Supabase project. See <a href="manifest.json"><code>manifest.json</code></a>.
+    </td>
+  </tr>
+</table>
+
+Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the extension, dark-mode aware). Independent security review runs before every Chrome Web Store release — see the changelog for audit fixes.
+
+---
+
+## What's new
+
+### v2.0.1 — April 2026
+
+- **🛡️ Credit overdraft fix (managed AI)** — server-side pre-flight credit estimator inside `summarize`; UI "credits remaining" can never drift from the server balance again (migration `009`).
+- **📈 Truthful Gemini TTS cost** — per-token pricing from the official [Gemini pricing table](https://ai.google.dev/gemini-api/docs/pricing) instead of a flat rate; real `usageMetadata` logged to `usage_log`.
+- **🧩 `podcast-tts` logging restored** — migration `010` adds the `podcast-tts` enum so every TTS row is metered (fixes a silent COGS hole).
+- **🎨 Redesigned privacy page** — dark-mode support, "At a glance" trust-signal grid, BYOK vs Managed AI mode-comparison card. Legal wording unchanged.
+- **🔐 Security audit pass (pre-CWS)** — fixed avatar-URL `innerHTML` vector in popup + welcome, and stripped `access_token` / `refresh_token` from `chrome.storage.session` popup cache (audit-driven).
+- **🖼️ New icons** — refreshed 16 / 32 / 48 / 128 px PNGs; manifest now declares a `32` bucket so Chrome picks the exact menu size.
+- **🚀 Production managed AI** — live Google OAuth + live Stripe; `.env.example` is a live-ready template.
+- **🧹 Public-repo hygiene** — `.gitignore` hardened (`docs/**` private except the five GitHub Pages assets); internal E2E checklist moved to maintainers-only.
+
+### v2.0.0
+
+- **📋 Privacy & docs** — `privacy-policy.html` and README disclose managed AI (Supabase, Google OAuth, Stripe), BYOK vs server-side processing, fingerprint/abuse limits, and `identity` + Supabase host permissions.
+- **🚀 Freemium v2** — Managed AI (Supabase Edge + Google sign-in), Stripe Pro, device fingerprinting, hardened JWT verification. BYOK stays supported.
+- **📐 DRY billing constant** — `PRO_MONTHLY_AI_CREDIT_LIMIT` centralized in `backend/supabase/functions/_shared/billing-constants.ts`.
+- **💬 Chat quality** — stronger transcript-only system prompts on managed Edge and BYOK service worker.
+
+<details>
+<summary>Older versions (v1.x) — 20+ entries</summary>
+
+### v1.8.2
+- Update page polish, YouTube favicon, Open Settings via popup with in-page toast fallback, Previous Versions toggle CSS fix.
+
+### v1.8.1
+- Store resubmit bump; popup and What's New now read `chrome.runtime.getManifest().version`; distribution ZIP includes `update/`.
+
+### v1.8.0
+- **🎙️ Podcast TTS model fix** — migrated to `gemini-2.5-flash-preview-tts`; fixes "model not found".
+- **🔊 Podcast volume** + **📥 WAV download**.
+- **🔄 Non-blocking tab switching** — per-pipeline busy flags; tab switches stay instant during generation.
+
+### v1.7.x
+- v1.7.2 — Uninstall URL moved to portfolio domain.
+- v1.7.1 — Privacy policy redesign + Pages landing polish.
+- v1.7.0 — **Interactive Video Chat**, fullscreen auto-hide, chat context aligned at 80K chars.
+
+### v1.6.x
+- v1.6.4 — Gemini TTS model update, auto-merge pipeline, branch protection, CODEOWNERS.
+- v1.6.3 — InnerTube ANDROID client bump (v21.03.36, SDK 35), dynamic WEB client fallback, weekly Version Monitor, daily Transcript Health Check, Version Consistency CI, `uninstall_url`, troubleshooting guide.
+- v1.6.2 — Store CRX cache bust.
+- v1.6.1 — Searchable language menu, cache-control toggles, API key XOR+Base64 obfuscation, welcome-page i18n fix, CI security checks.
+- v1.6.0 — Random podcast voice pairs, 11-language welcome page (incl. RTL Arabic), inline Gemini key setup, full security audit.
+
+### v1.5.0
+- **🎙️ Gemini 2.5 Flash TTS** podcast — multi-speaker single-audio, full player, region restrictions localized.
+
+### v1.4.0
+- **🎙️ AI Podcast** v1 — NotebookLM-style two-host script + Web Speech API playback with live subtitles.
+
+### v1.3.0
+- Fun Facts during loading, Ollama + Gemini 3 Flash as default provider/model.
+
+### v1.2.x
+- v1.2.3 — ~3× faster for long videos (chunk 24K→80K, parallel batches of 3).
+- v1.2.2 — LRU cache index (max 20 videos, max ~800 KB).
+- v1.2.1 — SPA-nav fix, "Summarize this video?" start prompt, 8-language localization.
+- v1.2.0 — Dual provider, UI/UX redesign, 20+ languages, onboarding tooltip, 4-layer parser, GitHub Actions CI/CD.
+
+### v1.0.x
+- v1.0.2 — Credentials on all YouTube fetches.
+- v1.0.1 — Empty transcript bug fixed.
+- v1.0.0 — Initial release.
+
+</details>
+
+---
+
+## FAQ & troubleshooting
+
+<details>
+<summary><b>"This extension is not trusted by Enhanced Safe Browsing" — is it safe?</b></summary>
+
+Yes. That warning appears for **every new** Chrome extension. It is not a security signal — Google just hasn't yet built a long compliance history for the developer account. It disappears automatically after a few months of clean store presence. Click **Continue to install**.
+</details>
+
+<details>
+<summary><b><code>CRX_FILE_NOT_READABLE</code> when reinstalling</b></summary>
+
+Chrome's internal download cache holds a stale reference after uninstall + immediate reinstall.
+**Fix:** quit Chrome completely, reopen, then install again from the Web Store.
+</details>
+
+<details>
+<summary><b>Extension isn't showing on YouTube</b></summary>
+
+- Confirm you're on `youtube.com` (not an embedded player on another site).
+- Check `chrome://extensions/` → extension is enabled.
+- Refresh the YouTube tab (Cmd/Ctrl + R).
+- If you just installed, navigate to a new video.
+</details>
+
+<details>
+<summary><b>Caption / transcript unavailable</b></summary>
+
+Some videos have captions disabled or rely on ASR-only in unsupported languages. The extension tries multiple InnerTube client contexts and falls back to the WEB client before giving up. If you see "No captions available" on a video that clearly has captions, open an issue with the video ID — it's often a YouTube API change we can patch server-side.
+</details>
+
+---
+
+## For developers
+
+<details>
+<summary><b>Tech stack</b></summary>
+
+- **Client:** Manifest V3 Chrome extension — vanilla ES modules, ES6 classes with private fields (`#`), no build step, no TypeScript compile.
+- **Background:** `service-worker.js` owns AI routing, auth messages, transcript proxy, and pre-flight credit gating.
+- **Backend:** Supabase (Postgres + Edge Functions in TypeScript/Deno). Shared billing constants live in `backend/supabase/functions/_shared/`.
+- **AI providers:** DeepSeek (managed text), Gemini 2.5 Flash Preview TTS (managed + BYOK podcast), Groq and Ollama Cloud (BYOK text).
+- **Billing:** Stripe (monthly + yearly Pro). Webhook → Supabase triggers plan + credit cascades.
+- **OAuth:** Google via Supabase Auth (PKCE) + `chrome.identity.launchWebAuthFlow`.
+
+</details>
+
+<details>
+<summary><b>Repository layout</b></summary>
+
+```text
 yt-ai-summarizer/
-├── manifest.json              # Extension manifest (V3)
-├── service-worker.js          # Background: AI calls, routing, parsing
+├── manifest.json                   Manifest V3
+├── service-worker.js               Background: BYOK + managed AI routing, auth messages
+├── backend/supabase/               Edge Functions, SQL migrations, shared billing (private repo)
 ├── content/
-│   ├── content.js             # Main controller (cache, SPA nav, chat)
-│   ├── content.css            # Panel styles + dark/light theme + chat UI
-│   ├── transcript.js          # YouTube transcript extraction
-│   ├── ui.js                  # Panel UI, tabs, chat interface, onboarding tooltip
-│   ├── podcast.js             # Podcast audio player
-│   └── page-bridge.js         # MAIN world bridge for YT data
-├── popup/
-│   ├── popup.html             # Settings panel (dual provider)
-│   ├── popup.js               # Settings logic
-│   └── popup.css              # Modern card-based styles
-├── update/
-│   ├── update.html            # What's New page shown after extension updates
-│   ├── update.js              # Changelog rendering + i18n + actions
-│   └── update.css             # What's New page styles
-├── welcome/
-│   ├── welcome.html           # Step-by-step onboarding
-│   ├── welcome.js             # Provider selection & validation
-│   └── welcome.css            # Onboarding styles
+│   ├── content.js                  Main controller — cache, SPA nav, chat orchestration
+│   ├── content.css                 Panel + dark/light theme + chat UI
+│   ├── transcript.js               InnerTube transcript extractor
+│   ├── ui.js                       Panel UI, tabs, onboarding tooltip, credit badges
+│   ├── podcast.js                  Podcast audio player
+│   └── page-bridge.js              MAIN-world bridge for YT internal data
+├── popup/                          Settings popup (dual provider + managed account)
+├── welcome/                        Onboarding flow (Sign in with Google or BYOK)
+├── update/                         "What's New" page shown after updates
 ├── utils/
-│   ├── storage.js             # Provider-aware storage helpers
-│   └── gemini-pcm-wav.js      # Gemini TTS PCM→WAV export + download
-├── icons/                     # Extension icons (16, 48, 128px)
-├── _locales/
-│   ├── en/messages.json       # English strings
-│   └── tr/messages.json       # Turkish strings
-├── privacy-policy.html        # Privacy policy (bundled with extension)
-├── privacy-policy.js          # TOC highlight script for privacy page
-├── docs/                      # GitHub Pages (uninstall feedback, etc.)
-│   ├── index.html
-│   └── uninstall.html
-├── .github/workflows/
-│   ├── ci.yml                 # CI/CD pipeline
-│   └── github-pages.yml       # Deploy docs/ to GitHub Pages
-└── README.md
+│   ├── storage.js                  Settings + BYOK obfuscation + Supabase session + persistent device id
+│   ├── supabase-auth.js            Google OAuth (PKCE) via Supabase Auth REST
+│   ├── api-client.js               Edge Function client (auth-callback, check-credits, summarize)
+│   ├── fingerprint.js              Device fingerprint (managed sign-in / abuse limits)
+│   ├── auth-debug-log.js           Optional local auth diagnostics
+│   └── gemini-pcm-wav.js           Gemini TTS PCM → WAV export + download
+├── icons/                          16 / 32 / 48 / 128 px extension icons
+├── _locales/                       en + tr message catalogs
+├── privacy-policy.html             Bundled privacy policy (dark-mode aware)
+├── docs/                           GitHub Pages landing + uninstall template
+└── .github/workflows/              ci.yml, github-pages.yml
 ```
 
----
+</details>
 
-## CI/CD Pipeline
+<details>
+<summary><b>CI/CD</b></summary>
 
-Every push to `main` triggers 5 automated checks:
+Every push to `main` runs, in `.github/workflows/ci.yml`:
 
-| Job | What It Does |
-|-----|-------------|
-| **Manifest Check** | Validates JSON, required fields, manifest_version 3, referenced file existence |
-| **JS Lint** | Syntax checks on all `.js` files, JSON validation, HTML structure checks |
-| **Security Audit** | Scans for hardcoded API keys, `eval()`, `document.write()`, CSP validation, host permission audit |
-| **Version Consistency** | Ensures version numbers match across manifest.json, privacy-policy.html, and README.md |
-| **Build & Package** | Creates versioned `.zip` artifact for Chrome Web Store submission |
+| Job | What it does |
+|---|---|
+| **Manifest Check** | JSON validity, required fields, `manifest_version: 3`, referenced file existence |
+| **JS Lint** | `node --check` on every `.js` file, JSON validity, HTML structure |
+| **Security Audit** | Hardcoded-key grep, `eval` / `document.write` ban, CSP check, host permission audit, debug-ingest ban (`127.0.0.1:7243`) |
+| **Version Consistency** | `manifest.json` ↔ `privacy-policy.html` ↔ README top changelog entry must match |
+| **Build & Package** | Versioned `.zip` artifact for Chrome Web Store submission (excludes `*.test.js`, swap files, `.DS_Store`) |
 
-### Automated Maintenance
+**Scheduled:**
 
-| Workflow | Schedule | What It Does |
-|----------|----------|-------------|
-| **YouTube Version Monitor** | Mon & Thu 09:00 UTC | Compares ANDROID client version against NewPipeExtractor, auto-creates PR if outdated |
-| **Transcript Health Check** | Daily 06:00 UTC | Tests InnerTube caption extraction against a known video, opens GitHub Issue on failure |
+| Workflow | Cadence | What it does |
+|---|---|---|
+| **YouTube Version Monitor** | Mon & Thu 09:00 UTC | Compares the ANDROID client version against NewPipeExtractor; opens an auto-mergeable PR if it's behind. |
+| **Transcript Health Check** | Daily 06:00 UTC | Calls the InnerTube caption endpoint against a known video; opens an Issue on failure. |
 
----
+</details>
 
-## Privacy
+<details>
+<summary><b>Local tests</b></summary>
 
-- **Zero data collection** — no analytics, no tracking, no telemetry
-- **Local storage only** — API keys and settings stay in `chrome.storage.local` on your device
-- **Direct API calls** — transcripts and chat prompts go only to the AI hosts you enabled (Groq, Ollama Cloud, Gemini TTS)
-- **Permissions** — `storage`, `activeTab`, plus declared host access for YouTube and those providers (see `manifest.json`)
-- **Open source** — inspect every line of code
+```bash
+node --check service-worker.js
+node --test content/transcript.orchestration.test.js
+```
 
-See the full [Privacy Policy](privacy-policy.html).
+`*.test.js` files are present in the repo for local development but are **excluded from the Chrome Web Store ZIP** by the `ci.yml` packaging step.
 
-### Uninstall feedback URL (custom domain)
+</details>
 
-After uninstall, Chrome opens a page you host over **HTTPS** (required by `chrome.runtime.setUninstallURL`). This project uses your portfolio domain:
+<details>
+<summary><b>Maintainer pre-release checklist</b></summary>
 
-**https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html**
+- **Security.** CI runs secret-pattern grep, CSP check, manifest file-reference check, and debug-ingest ban. Keep `host_permissions` minimal.
+- **Debug noise.** No `console.log` / `console.warn` / `debugger` in shipping paths. `console.error` is reserved for real failures (missing deps, fatal extension state).
+- **Architecture.** Prefer ES6 classes and shared helpers (`StorageHelper`, controllers, UI modules). Do not duplicate secrets or API base URLs outside `utils/storage.js` + `service-worker.js`.
+- **Versions.** `manifest.json`, `privacy-policy.html`, and the top changelog entry must match — CI enforces this via the **Version Consistency** job.
+- **Uninstall page.** After editing `docs/uninstall.html`, copy it to the portfolio Vercel project at `public/yt-ai-summarizer/uninstall.html` and redeploy so the live URL matches `UNINSTALL_FEEDBACK_URL` in `service-worker.js`.
 
-The constant `UNINSTALL_FEEDBACK_URL` in `service-worker.js` must match that URL exactly (including `www` vs apex if you standardize on one).
+</details>
 
-**Deploy on Vercel (portfolio site):**
+<details>
+<summary><b>Uninstall feedback URL</b></summary>
 
-1. In this repo, the canonical HTML is [`docs/uninstall.html`](docs/uninstall.html).
-2. In your **portfolio** Vercel project, add the same file at **`public/yt-ai-summarizer/uninstall.html`** (Next.js, Vite, or any setup that serves `public/` at the site root).
-3. Deploy. Confirm the URL loads in an incognito window.
-4. Whenever you change `docs/uninstall.html` here, copy it to the portfolio repo again and redeploy — then ship a new extension version if the URL path ever changes.
+The post-uninstall page is served **only** from the portfolio deployment at **<https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html>**. `docs/uninstall.html` in this repo is the source-of-truth template; it does **not** change what users see until it is copied into the portfolio repo and redeployed (Vercel).
 
-**Why not `github.io`?** Users only see the domain above; `cemroot.github.io` is no longer used for uninstall.
+The constant `UNINSTALL_FEEDBACK_URL` in `service-worker.js` must match the live URL exactly, including `www` vs apex if you standardize on one.
 
-**Optional — GitHub Pages backup:** [`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml) can still publish `docs/` for your own testing or redirects; the extension does not point there unless you change `UNINSTALL_FEEDBACK_URL` back.
+[`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml) can still publish `docs/` for testing or redirects; the extension will not point there unless `UNINSTALL_FEEDBACK_URL` is changed.
+
+</details>
 
 ---
 
 ## Requirements
 
-- Chrome 111 or later
-- A free API key from [Groq](https://console.groq.com/keys) or [Ollama](https://ollama.com/settings/keys)
-
----
-
-## Pre-release checklist (maintainers)
-
-- **Security:** CI runs secret-pattern grep, CSP check, and manifest file references — keep `host_permissions` minimal.
-- **Debug noise:** No `console.log` / `console.warn` / `debugger` in shipping paths; `console.error` is only used for serious failures (e.g. missing content-script dependencies).
-- **Architecture:** Prefer ES classes and shared helpers (`StorageHelper`, controllers, UI modules) — avoid duplicating secrets or API base URLs outside `utils/storage.js` / `service-worker.js`.
-- **Versions:** `manifest.json`, `privacy-policy.html`, and the top README changelog entry must stay aligned (enforced by the **Version Consistency** CI job).
-- **Uninstall page:** After editing `docs/uninstall.html`, copy it to the portfolio Vercel project at `public/yt-ai-summarizer/uninstall.html` and redeploy so it matches `UNINSTALL_FEEDBACK_URL`.
-
----
-
-## E2E checklist (manual QA)
-
-### Kurulum / Ön Koşul
-
-- [ ] Extension temiz profilde yükleniyor (Developer mode / unpacked).
-- [ ] Ayarlar ekranında API key kaydetme ve yeniden açınca korunma doğrulanıyor.
-- [ ] YouTube’de floating buton ve panel sorunsuz açılıyor.
-
-### Ana Özet Akışı (`/watch`)
-
-- [ ] Video sayfasında `Summary`, `Key Points`, `Detailed` üretimi başarılı.
-- [ ] Üretim sırasında loading/progress metinleri doğru görünüyor.
-- [ ] Sonuç metni copy butonu ile panoya kopyalanıyor.
-- [ ] Refresh (regenerate) yeni istek tetikliyor ve sonuç güncelleniyor.
-
-### Transcript Dayanıklılık
-
-- [ ] Caption olan videoda transcript çekimi başarılı.
-- [ ] Caption olmayan videoda kullanıcıya doğru hata (transcript unavailable) gösteriliyor.
-- [ ] Sayfa yeni videoya geçince stale request sonucu eski videoya yazılmıyor.
-- [ ] Retry sonrası transcript geldiğinde akış toparlanıyor.
-
-### Chat Akışı
-
-- [ ] Chat sekmesi `/watch` üzerinde aktif ve mesaj gönderimi çalışıyor.
-- [ ] AI yanıtı transcript’e bağlı geliyor; sohbet geçmişi korunuyor.
-- [ ] API key yoksa doğru uyarı/hata mesajı gösteriliyor.
-- [ ] Geçersiz key / rate limit / provider down durumlarında doğru hata sınıfı gösteriliyor.
-
-### Route / Navigation (SPA)
-
-- [ ] YouTube SPA geçişlerinde (video→video) panel durumu bozulmuyor.
-- [ ] `/` (home), arama, abonelik gibi non-watch sayfalarda Chat disable oluyor.
-- [ ] Non-watch’ta helper text ve “video aç” yönlendirmesi doğru.
-- [ ] `/watch` geri dönüşte aynı video cache’den hızlı restore ediliyor.
-
-### Kısa Video ve Embed
-
-- [ ] `/shorts/...` ve `/embed/...` sayfalarında panel mount davranışı doğru.
-- [ ] Bu rotalarda desteklenmeyen chat durumları varsa kullanıcı mesajı net.
-
-### Cache Davranışı
-
-- [ ] Aynı videoda tab geçişleri anlık (in-memory cache) çalışıyor.
-- [ ] Persistent cache’den sonuç geri yükleme çalışıyor.
-- [ ] “Clear cache” sonrası eski içerik dönmüyor.
-- [ ] Farklı videolar arasında cache izolasyonu korunuyor.
-
-### Podcast Akışı (varsa kapsamda)
-
-- [ ] Podcast üretimi summary’den tetikleniyor.
-- [ ] Gemini key eksik/region block/rate limit hataları doğru gösteriliyor.
-- [ ] Podcast oynatıcı UI (play/pause/seek) stabil.
-
-### UI/UX ve Tema
-
-- [ ] Dark/Light tema YouTube temasına uyumlu.
-- [ ] Panel aç/kapat, tab switch, fullscreen auto-hide davranışları doğru.
-- [ ] Türkçe/İngilizce metinler ve i18n fallback’leri doğru.
-
-### Regresyon / CI Doğrulama
-
-- [ ] `node --check` tüm JS dosyalarında temiz.
-- [ ] `node --test content/transcript.orchestration.test.js` geçiyor.
-- [ ] JSON/HTML yapı kontrolleri temiz.
-- [ ] Paket zip içeriğinde `update/` dahil gerekli dosyalar mevcut.
-- [ ] GitHub Actions’ta özellikle **Transcript Health Check** ve CI run’ları yeşil.
-
----
-
-## Troubleshooting
-
-### "This extension is not trusted by Enhanced Safe Browsing"
-
-This warning appears for **all new extensions** on the Chrome Web Store. It is **not** a security issue — it simply means the developer account hasn't yet built a long enough compliance history with Google. The warning disappears automatically after a few months. You can safely click **"Continue to install"** to proceed.
-
-### CRX_FILE_NOT_READABLE on reinstall
-
-If you uninstall the extension and immediately try to reinstall from the Chrome Web Store, Chrome may show a `CRX_FILE_NOT_READABLE` error. This is caused by Chrome's internal download cache holding a stale reference.
-
-**Fix:** Close Chrome completely, reopen it, then install the extension again from the Web Store. This clears Chrome's session cache and allows a fresh download.
-
-### Extension not appearing on YouTube
-
-- Make sure you're on `youtube.com` (not an embedded player)
-- Check that the extension is enabled at `chrome://extensions/`
-- Try refreshing the YouTube page (Ctrl+R / Cmd+R)
-- If you just installed, wait a moment and navigate to a new video
-
----
-
-## Changelog
-
-### v1.8.2
-
-- **🎨 Update page polish**: Refined `update/update.css` for a more professional What's New layout and visual hierarchy. Fixed top accent line styling to match the welcome page.
-- **✨ Hero icon update**: Replaced the oversized red star SVG with the actual extension icon (`icon128.png`) in the update page's hero section.
-- **🔖 YouTube favicon**: Added a YouTube-style SVG favicon and wired it to update + popup pages.
-- **🧭 Open Settings behavior**: What's New now requests opening the extension action popup first, with an elegant in-page Settings Toast fallback if the popup API fails, instead of opening an ugly new tab.
-- **📜 Previous Versions toggle**: Fixed a CSS conflict (`display: flex` overriding `hidden`) making the previous versions list permanently visible instead of hidden by default.
-
-### v1.8.1
-
-- **📦 Store resubmit**: Bumped manifest version above 1.8.0 so Chrome Web Store accepts a new package (same codebase as 1.8.0 feature set).
-- **🏷️ Version label**: Popup and What’s New read `chrome.runtime.getManifest().version` — no hardcoded version string.
-- **📁 Package**: Distribution ZIP includes `update/` (What’s New page assets).
-
-### v1.8.0
-
-- **🎙️ Podcast TTS Model Fix**: Migrated from `gemini-2.5-flash-tts` (non-existent in v1beta) to `gemini-2.5-flash-preview-tts` — the correct model ID per Google's official speech generation docs. Fixes "model not found" error that broke all podcast generation.
-- **🔊 Podcast Volume Control**: New volume slider (0–100%) on the podcast player. Setting persists across videos via `chrome.storage.local`.
-- **📥 Podcast WAV Download**: "Download audio (WAV)" button exports the Gemini TTS audio as a proper WAV file. Users can save locally or share via WhatsApp as a document for offline listening.
-- **🔄 Non-Blocking Tab Switching**: Completely reworked tab switch architecture — each pipeline (summary, podcast, chat) now has its own busy flag. Switching tabs while AI is generating no longer freezes the UI or shows stale content from another tab. Cache-first display ensures instant tab switches.
-- **🧹 Clean Content Transitions**: `switchMode` now clears the content area synchronously before dispatching async handlers, eliminating brief flashes of wrong-tab content.
-
-### v1.7.2
-
-- **🔗 Uninstall URL**: Post-uninstall page now opens on **https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html** (portfolio / Vercel) instead of GitHub Pages — same markup as `docs/uninstall.html`; host that file under `public/yt-ai-summarizer/` on Vercel.
-
-### v1.7.1
-
-- **📄 Privacy policy**: Redesigned layout and copy (Chat, Gemini TTS, storage, permissions). Last updated date refreshed.
-- **🌐 GitHub Pages**: `docs/index.html` landing polish; uninstall page uses an inline SVG favicon (no missing `favicon.png` on Pages).
-- **📖 README**: Project structure, Pages/uninstall URL, optional custom-domain notes, maintainer pre-release checklist.
-- **🔧 Version sync**: Patch bump so store/build artifacts match the updated bundled `privacy-policy.html`.
-
-### v1.7.0
-
-- **💬 Interactive Video Chat**: New "Chat" tab lets you ask follow-up questions about the video. AI answers strictly from the transcript with full conversation history (last 10 messages). Works with all providers (Groq, Ollama, Gemini).
-- **🖥️ Fullscreen Auto-Hide**: Extension toggle button and panel automatically hide when YouTube enters fullscreen mode — no more UI clutter during cinema viewing.
-- **🧹 Pre-Release Cleanup**: Removed routine `console.log` / `console.warn` debugging from production paths; `console.error` remains only for serious failures (e.g. missing dependencies).
-- **🐛 Podcast Rate Bug Fix**: Fixed a race condition in `podcast.js` where changing playback speed caused a small seek jump. Position is now captured before the rate changes.
-- **📏 Chat Context Alignment**: Chat transcript context window set to 80K characters, matching the summary pipeline.
-
-### v1.6.4
-
-- **Gemini TTS Model Update**: Updated TTS model identifier.
-- **Auto-Merge Pipeline**: Version Monitor PRs now auto-merge via squash after all CI checks pass — zero manual intervention needed.
-- **Branch Protection**: All PRs require 5 CI checks before merging (Manifest, Lint, Security, Version Consistency, Build).
-- **CODEOWNERS**: Critical files auto-assign @CemRoot as reviewer on PRs.
-
-### v1.6.3
-
-- **Fix Empty Transcript**: Updated YouTube InnerTube ANDROID client from v19.29.37 to v21.03.36 (SDK 35, Android 15). YouTube was rejecting the outdated client version and returning empty captions.
-- **Dynamic Client Version**: Extension now auto-extracts YouTube's current WEB client version at runtime as a fallback when the ANDROID client fails. No more manual version updates for WEB client changes.
-- **YouTube Version Monitor**: New GitHub Actions workflow checks NewPipeExtractor twice a week and auto-creates PRs when the ANDROID client version is outdated.
-- **Transcript Health Check**: Daily automated probe tests InnerTube caption extraction and opens a GitHub Issue if transcript fetching is broken.
-- **Version Consistency CI**: New CI job ensures version numbers stay in sync across manifest.json, privacy-policy.html, and README.md.
-- **Uninstall URL**: Added `uninstall_url` to manifest for post-uninstall feedback and reinstall guidance.
-- **Troubleshooting Guide**: Added FAQ section to README covering Enhanced Safe Browsing warning, CRX_FILE_NOT_READABLE reinstall issue, and common setup questions.
-
-### v1.6.2
-
-- **Version Bump**: Force Chrome Web Store CRX regeneration to resolve CDN caching issues.
-
-### v1.6.1
-
-- **🎛️ New Language Selector**: Searchable, two-column language menu with flags and modern "pill" trigger on the welcome page.
-- **💾 Cache Controls**: Added "Cache summaries" and "Cache transcripts" toggles to settings; transcript caching disabled by default, reducing RAM/disk usage.
-- **🔐 API Key Obfuscation**: Keys stored with XOR + Base64 encoding in chrome.storage instead of plaintext.
-- **🔧 Aligned Defaults**: Provider and model defaults now match across all entry points — Ollama + Gemini 3 Flash.
-- **🗑️ Quick Cache Clear**: One-click trash icon in the panel header to clear cached data.
-- **🔒 CI Security Checks**: Obfuscation and sender.id validation checks added to the CI pipeline.
-- **🌍 Welcome Page i18n Fix**: Fixed a bug where instruction steps, Validate button, and footer stayed in English when switching languages.
-
-### v1.6.0
-
-- **🎭 Random Voice Pairs**: Podcast voices are no longer always male-male. 10 voice pair combinations with male-female, female-male, and female-female options randomly selected per video. Uses Gemini TTS voices: Charon, Kore, Puck, Aoede, Fenrir, Leda, Orus, Zephyr.
-- **🌍 Multi-Language Welcome Page**: Onboarding page now supports 11 languages (English, Türkçe, Español, Français, Deutsch, 日本語, 한국어, 中文, Português, العربية, हिन्दी). Auto-detects browser language with manual language selector. RTL support for Arabic.
-- **📋 Inline Gemini API Key**: Removed "Open Settings" redirect. Users can now enter their Gemini API key directly inside the podcast panel without leaving the page.
-- **🔒 Security Audit**: Comprehensive code review — no XSS vectors, API keys stored safely in chrome.storage.local, all user input sanitized with escapeHtml, CSP enforced, no eval/document.write usage.
-- **📄 Privacy Policy**: Updated to include Google Gemini TTS data flow and host permission documentation.
-- **Step 3 updated**: "How It Works" now mentions the Podcast mode alongside Summary, Key Points, and Detailed Analysis.
-
-### v1.5.0
-
-- **🎙️ Gemini TTS Podcast**: Replaced Web Speech API with Google Gemini 2.5 Flash TTS
-  - Near-human quality voices (Charon for Alex, Puck for Sam)
-  - Multi-speaker audio generated as a single audio file
-  - Real audio player: play/pause, seek bar, 10s skip, speed control (0.75x–1.5x)
-  - Audio duration displayed, progress bar click-to-seek
-- **Gemini API Key**: New settings field for free Gemini API key (no credit card needed)
-- **Guided setup**: Step-by-step instructions shown when Gemini key is missing
-- **Region restrictions**: Friendly "not available" messages for unsupported regions (China, Iran, Russia, North Korea) in their native languages
-- **Error handling**: Specific messages for GEMINI_REGION_BLOCKED, GEMINI_RATE_LIMITED, GEMINI_KEY_MISSING
-
-### v1.4.0
-
-- **🎙️ AI Podcast**: NotebookLM-style two-host podcast generated from video summaries
-  - AI writes a natural conversation script between two hosts (Alex & Sam)
-  - Web Speech API plays it with two distinct voices — completely free, no extra API needed
-  - Full podcast player: play/pause, skip forward/back, speed control (0.75x–1.5x)
-  - Live subtitles showing who's speaking and what they're saying
-  - Scrollable transcript with click-to-jump navigation
-  - Podcast tab added alongside Summary, Key Points, and Detailed Analysis
-- New `podcast.js` engine: voice selection, state management, sequential speech playback
-
-### v1.3.0
-
-- **Fun Facts**: 50 rotating "Did you know?" facts displayed during AI processing to keep users entertained
-- **Default provider changed**: Ollama Cloud is now the recommended provider (was Groq)
-- **Recommended model**: Gemini 3 Flash set as default for Ollama Cloud
-- Welcome page, popup, and storage defaults all updated to reflect Ollama Cloud + Gemini 3 Flash
-- Facts rotate every 5 seconds with smooth fade animation
-
-### v1.2.3
-
-- Performance: ~3x faster for long videos (chunk size 24K → 80K, parallel processing)
-- Most 1-hour videos now fit in a single chunk — no pre-summarization needed
-- Remaining chunks processed in parallel batches of 3 via `Promise.all()`
-
-### v1.2.2
-
-- LRU cache algorithm: max 20 videos cached, oldest auto-evicted when limit is reached
-- Each video stores up to 4 keys (3 summaries + 1 transcript), max ~800 KB total
-- Cache reads update `lastAccessed` timestamp — frequently watched videos stay cached longer
-- `clearCache()` now also wipes the LRU index
-
-### v1.2.1
-
-- Fixed: Toggle button not appearing on SPA navigation (broadened content script matching)
-- Added: "Summarize this video?" start prompt — no API call until user clicks Start (saves credits)
-- Localized start prompt in 8 languages (EN, TR, ES, FR, DE, JA, KO, ZH)
-- Fixed: CI false positive on placeholder API keys
-
-### v1.2.0
-
-- Dual AI provider support (Groq + Ollama Cloud)
-- Complete UI/UX redesign (Inter font, card-based settings, underline tabs)
-- 20+ language support with flag emojis in selector
-- First-visit onboarding tooltip ("Hey! I'm here")
-- Robust 4-layer response parser (fixes all-tabs-same-content bug)
-- GitHub Actions CI/CD pipeline
-- Updated privacy policy for both providers
-- Marketing-focused Chrome Web Store descriptions
-
-### v1.0.2
-
-- Fix: credentials added to all YouTube fetch calls
-
-### v1.0.1
-
-- Fix: empty transcript bug in transcript extraction
-
-### v1.0.0
-
-- Initial release
+- **Google Chrome ≥ 111** (or Chromium-based browser with MV3 support).
+- One of:
+  - A **Google account** (for free managed AI + optional Pro), or
+  - A **Groq** or **Ollama Cloud** API key (for BYOK). A free **Gemini API key** is additionally needed if you want the BYOK podcast.
 
 ---
 
 ## Contributing
 
 1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes
-4. Push and open a Pull Request
+2. Create a feature branch — `git checkout -b feature/your-idea`
+3. Commit your changes following the existing style (ES6 classes, no TypeScript build, shared helpers over copy-paste)
+4. Push and open a Pull Request — CI will run the full pipeline before review
+
+Issues and design discussions are welcome — especially if you're a YouTube viewer with a concrete use case we haven't covered.
 
 ---
 
 ## License
 
-MIT License — free to use, modify, and distribute.
+MIT — free to use, modify, and distribute.
 
 ---
 
-<p align="center">
-  Built for people who learn faster by reading.<br>
-  Built by people who got tired of 45-minute videos with 3 minutes of useful content.
-</p>
+<div align="center">
+  <sub>
+    Built for people who learn faster by reading.<br />
+    Built by people who got tired of 45-minute videos with 3 minutes of useful content.
+  </sub>
+  <br /><br />
+  <a href="https://chromewebstore.google.com/detail/dkbgkfeobjailmeiaidmapifohkjpgji">
+    <img alt="Install on Chrome Web Store" src="https://img.shields.io/badge/Install%20on%20Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" />
+  </a>
+</div>

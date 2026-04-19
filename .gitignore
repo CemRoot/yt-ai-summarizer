@@ -4,7 +4,35 @@
 *.pem
 node_modules/
 .env
+.env.*
+!.env.example
 
 # Local-only: Cursor rules (.mdc) and agent prompt — keep out of public GitHub
 .cursor/
 AGENTS.md
+
+# Backend infrastructure — Edge Functions, SQL schema, deploy scripts, secrets templates
+# Contains: rate limits, AI provider logic, abuse thresholds, cost calculations, DB schema
+backend/
+
+# Internal documentation — everything under docs/ stays private EXCEPT the GitHub Pages
+# public-facing assets (landing page + uninstall feedback).
+docs/**
+!docs/.nojekyll
+!docs/index.html
+!docs/uninstall.html
+!docs/favicon.png
+!docs/update-page-ui.png
+
+# Secrets / local config that must never be committed
+secrets/
+*.key
+*.p12
+*.mobileprovision
+credentials.json
+service-account*.json
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
