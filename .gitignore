@@ -23,6 +23,7 @@ docs/**
 !docs/uninstall.html
 !docs/favicon.png
 !docs/update-page-ui.png
+!docs/3.png
 
 # Secrets / local config that must never be committed
 secrets/

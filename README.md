@@ -74,7 +74,7 @@
 <br />
 
 <div align="center">
-  <img src="/Users/dr.sam/Desktop/Chrome-extention/docs/3.png" alt="What's New panel inside the extension" width="780" />
+  <img src="docs/3.png" alt="YouTube AI Summarizer — panel preview" width="780" />
   <br /><sub>The in-extension <i>What's New</i> panel — same design language as the summary panel, welcome flow, and popup.</sub>
 </div>
 
