@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "Nome da extensão — marca em inglês para consistência global"
+  },
+  "extDescription": {
+    "message": "Resumos, podcasts e chat com IA para qualquer vídeo do YouTube — 20+ idiomas, 5 créditos grátis, BYOK ou Pro por €4,99/mês.",
+    "description": "Descrição curta para Chrome Web Store (máx 132 caracteres)"
+  }
+}

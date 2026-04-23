@@ -448,7 +448,12 @@ class SummarizerController {
 
     const savedSettings = await storage.getSettings();
     const cc = savedSettings?.credits;
-    if (cc === undefined || cc === null || cc > 0 || cc === -1) return true;
+    // Positive balance or sentinel (-1 === "unknown, assume ok"): short-circuit so the
+    // common path stays zero-RTT. For undefined/null (fresh session) or 0 (exhausted)
+    // we fall through to a live checkCredits — managed-only users with just-consumed
+    // free credits should NOT be routed to the BYOK fallback path (which used to
+    // surface "Invalid API Key").
+    if (typeof cc === 'number' && (cc > 0 || cc === -1)) return true;
 
     const api = globalThis.ApiClient;
     if (!auth || !api || typeof api.checkCredits !== 'function') {
@@ -459,9 +464,11 @@ class SummarizerController {
 
     const live = await api.checkCredits().catch(() => null);
     if (!live || live.error) {
-      ui.showUpgradePrompt();
-      ui.updateCredits(0, 'free');
-      return false;
+      // Transient managed failure for a user who has no BYOK key. Let the service-worker
+      // path run — its `buildNoByokKeyError` now emits MANAGED_UNAVAILABLE (retryable UI)
+      // instead of the old misleading "Invalid API Key". Returning true here keeps the
+      // error messaging single-sourced in one place.
+      return true;
     }
 
     await this.#applyManagedCreditsSnapshot(live);
@@ -708,6 +715,13 @@ class SummarizerController {
       ui.showPodcastLoading('Generating podcast...');
       return;
     }
+
+    // Pre-flight credit gate — mirrors requestSummary (line 553) and sendChatMessage
+    // (line 836). Without this, a managed user with 0 credits would see a ~2-second
+    // "Writing podcast script..." spinner, then the edge 402 propagation, rather than
+    // the upgrade prompt immediately. BYOK users skip this check inside the helper.
+    if (!(await this.#ensureManagedCreditsNotExhausted())) return;
+
     this.#podcastBusy = true;
     ui.showPodcastLoading('Writing podcast script...');
 
@@ -971,6 +985,7 @@ class SummarizerController {
     if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
     if (code === 'GEMINI_KEY_INVALID') return 'GEMINI_MANAGED_TTS_KEY';
     if (code === 'RATE_LIMITED') return 'MANAGED_RATE_LIMIT';
+    if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
     if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
 
     if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
@@ -1095,6 +1110,11 @@ class SummarizerController {
         title: 'Invalid API Key',
         message: 'Your API key looks invalid. Please check your settings.',
         retryable: false
+      },
+      MANAGED_UNAVAILABLE: {
+        title: 'Managed AI Unavailable',
+        message: 'Cloud AI is temporarily unreachable (session or credits check failed). Please try again in a moment, or add your own API key in Settings.',
+        retryable: true
       },
       PROVIDER_RATE_LIMIT: {
         title: 'Rate Limited',

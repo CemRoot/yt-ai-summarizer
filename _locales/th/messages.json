@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "ชื่อส่วนขยาย — ใช้ชื่อแบรนด์ภาษาอังกฤษเพื่อความสอดคล้องระดับโลก"
+  },
+  "extDescription": {
+    "message": "สรุป, พ็อดแคสต์ และแชท AI สำหรับวิดีโอ YouTube ทุกคลิป — กว่า 20 ภาษา, 5 เครดิตฟรี, BYOK หรือ Pro เริ่ม €4.99/เดือน",
+    "description": "คำอธิบายสั้น ๆ สำหรับ Chrome Web Store (สูงสุด 132 อักขระ)"
+  }
+}

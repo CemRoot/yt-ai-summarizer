@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "拡張機能名 — グローバル統一のため英語ブランド名"
+  },
+  "extDescription": {
+    "message": "YouTube動画のAI要約・ポッドキャスト・チャット — 20以上の言語、無料5クレジット、BYOKまたはPro（€4.99/月〜）。",
+    "description": "Chrome Web Store用の短い説明（最大132文字）"
+  }
+}

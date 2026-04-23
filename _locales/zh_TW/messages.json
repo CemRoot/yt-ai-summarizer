@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "擴充功能名稱 — 使用英文品牌名以保持全球一致性"
+  },
+  "extDescription": {
+    "message": "任何 YouTube 影片的 AI 摘要、Podcast 與對話 — 支援 20+ 語言，5 次免費體驗，BYOK 或 Pro（€4.99/月起）。",
+    "description": "Chrome 線上應用程式商店的簡短說明（最多 132 個字元）"
+  }
+}

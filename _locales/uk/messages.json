@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "Назва розширення — англомовний бренд для глобальної узгодженості"
+  },
+  "extDescription": {
+    "message": "AI-конспекти, подкасти та чат для будь-якого відео YouTube — 20+ мов, 5 безкоштовних кредитів, BYOK або Pro від €4,99/міс.",
+    "description": "Короткий опис для Chrome Web Store (макс 132 символи)"
+  }
+}

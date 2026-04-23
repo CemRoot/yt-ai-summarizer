@@ -20,6 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.0.2',
+      date: '2026-04-23',
+      changes: [
+        { type: 'fixed',    text: 'c202_credits_message' },
+        { type: 'fixed',    text: 'c202_podcast_voices' },
+        { type: 'fixed',    text: 'c202_empty_response_credits' },
+        { type: 'improved', text: 'c202_podcast_speed' },
+        { type: 'improved', text: 'c202_summary_density' },
+      ]
+    },
+    {
       version: '2.0.1',
       date: '2026-04-17',
       changes: [
@@ -137,6 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c202_credits_message: 'When your free credits run out, you now see a clear "Credits exhausted" message with an upgrade button — no more misleading "Invalid API Key" error on managed AI',
+      c202_podcast_voices: 'Podcast audio always uses both voices (Alex + Sam). Script generation now forces alternating speakers via a JSON schema, so the "one voice reads everything" bug is gone',
+      c202_empty_response_credits: 'If the AI provider returns an empty reply (rare server issue), your credits are no longer deducted — the call is refunded and you can retry immediately',
+      c202_podcast_speed: 'Podcast generation ~17% faster end-to-end on real videos (script 10.8s → 5.2s, TTS 53.9s → 48.3s on our 18-min benchmark)',
+      c202_summary_density: 'Summaries on long videos are tighter and denser: per-section length targets in the prompt cut padding 22–35% while keeping every cited study, figure, and name',
+
       c201_credit_overdraft: 'Credit check before managed AI runs: long videos now warn you upfront if you need more credits, instead of starting and failing partway through',
       c201_tts_pricing: 'Podcast audio (Gemini TTS) billing now follows actual token usage from the provider, so your balance always matches real usage',
       c201_error_messages: 'Clearer managed-AI messages when something goes wrong — low credits, rate limits, and provider issues each explain what you can do next',
@@ -196,6 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c202_credits_message: 'Ücretsiz kredileriniz bittiğinde artık net bir "Kredi tükendi" mesajı ve yükseltme butonu görüyorsunuz — yönetilen AI\'da hatalı "Geçersiz API Anahtarı" uyarısı kaldırıldı',
+      c202_podcast_voices: 'Podcast her zaman iki sesle çalışıyor (Alex + Sam). Senaryo artık JSON şemasıyla dönüşümlü konuşmacı zorunlu kılınıyor; "tek ses her şeyi okuyor" hatası giderildi',
+      c202_empty_response_credits: 'AI sağlayıcı boş yanıt dönerse (nadir sunucu sorunu) krediniz artık düşmüyor — çağrı iade ediliyor ve hemen tekrar deneyebiliyorsunuz',
+      c202_podcast_speed: 'Podcast üretimi uçtan uca yaklaşık %17 daha hızlı (senaryo 10.8sn → 5.2sn, TTS 53.9sn → 48.3sn — 18 dk\'lık gerçek video testinde)',
+      c202_summary_density: 'Uzun videolarda özetler daha sıkı ve yoğun: prompt\'taki bölüm başı kelime hedefleri şişirmeyi %22–35 azaltıyor, atıflar/isimler/rakamlar korunuyor',
 
       c201_credit_overdraft: 'Yönetilen AI çalışmadan önce kredi kontrolü: uzun videolarda yetersiz krediniz varsa iş başlamadan uyarı alırsınız; yarıda kesilme olmaz',
       c201_tts_pricing: 'Podcast sesi (Gemini TTS) artık sağlayıcının gerçek token kullanımına göre hesaplanıyor; bakiyeniz kullanımla her zaman tutarlı',

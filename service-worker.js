@@ -746,8 +746,17 @@ async function getManagedMode() {
 }
 
 /**
- * When managed AI is off and the user has no BYOK key, pick NO_CREDITS / RATE_LIMITED / INVALID_API_KEY.
- * Mirrors summarize paths — chat previously skipped this and misreported exhausted credits as invalid key.
+ * Managed-only user (caller already asserted hasAnyByokApiKey()===false) landed in the
+ * BYOK fallback block because getManagedMode() returned managed:false. That can happen
+ * for four reasons — surface each with the right code, and NEVER default to
+ * INVALID_API_KEY (the user by definition has no key to be invalid — a fresh free user
+ * who just consumed their 5 credits would otherwise see "Invalid API Key", confusing
+ * them into reinstalling instead of upgrading).
+ *
+ * Priority order: RATE_LIMITED → NO_CREDITS → MANAGED_UNAVAILABLE (transient session /
+ * checkCredits failure: UI shows "try again in a moment" instead of a misleading key
+ * error).
+ *
  * @param {{ credits?: { rate_limited?: boolean, can_use?: boolean, credits?: number } }} mode
  */
 function buildNoByokKeyError(mode) {
@@ -756,12 +765,15 @@ function buildNoByokKeyError(mode) {
     e.code = 'RATE_LIMITED';
     return e;
   }
-  if (mode.credits && mode.credits.can_use === false && mode.credits.credits <= 0) {
+  if (mode.credits && mode.credits.can_use === false) {
     const e = new Error('Free credits exhausted.');
     e.code = 'NO_CREDITS';
     return e;
   }
-  return new Error('INVALID_API_KEY');
+  // mode.credits is null/undefined — session missing or checkCredits failed transiently.
+  const e = new Error('Managed AI is temporarily unavailable. Please try again in a moment.');
+  e.code = 'MANAGED_UNAVAILABLE';
+  return e;
 }
 
 /**
@@ -978,6 +990,37 @@ function pickVoicePair() {
   return VOICE_PAIRS[Math.floor(Math.random() * VOICE_PAIRS.length)];
 }
 
+/**
+ * Guarantees a dialogue array has both "Alex" and "Sam" speakers with alternation.
+ * Gemini multi-speaker TTS matches lines by exact speaker name — if the LLM emitted
+ * all lines as "Alex" (common Ollama Cloud failure mode), only voiceA would speak
+ * and users got a single-voice podcast. When the model got it right, this is a
+ * no-op; when it didn't, we reassign speakers in alternation so both voices are
+ * always used. Dialogue text is never altered.
+ * @param {Array<{speaker?: string, text?: string}>} dialogue
+ */
+function normalizePodcastDialogue(dialogue) {
+  if (!Array.isArray(dialogue) || dialogue.length < 2) return dialogue;
+  const clean = dialogue
+    .filter((l) => l && typeof l.text === 'string' && l.text.trim().length > 0)
+    .map((l) => ({
+      speaker: typeof l.speaker === 'string' ? l.speaker.trim() : '',
+      text: l.text.trim(),
+    }));
+  if (clean.length < 2) return dialogue;
+  const alexCount = clean.filter((l) => l.speaker === 'Alex').length;
+  const samCount = clean.filter((l) => l.speaker === 'Sam').length;
+  const needsRepair =
+    alexCount === 0 ||
+    samCount === 0 ||
+    Math.abs(alexCount - samCount) > Math.ceil(clean.length / 2);
+  if (!needsRepair) return clean;
+  console.warn(
+    `[YTAI] podcast repair: ${alexCount} Alex / ${samCount} Sam / ${clean.length} total — reassigning alternately`
+  );
+  return clean.map((l, i) => ({ speaker: i % 2 === 0 ? 'Alex' : 'Sam', text: l.text }));
+}
+
 function hostLabel(voice) {
   return voice.gender === 'F' ? 'she' : 'he';
 }
@@ -1116,18 +1159,26 @@ async function handleGeneratePodcast(data, tabId) {
 ${hostADesc}
 ${hostBDesc}
 
-RULES:
-- Write 12-20 dialogue turns total (6-10 per host).
-- Start with a warm intro: "Hey everyone, welcome back!" style.
+HARD REQUIREMENTS (violating any breaks the podcast):
+- Speakers MUST strictly alternate: Alex → Sam → Alex → Sam → ... starting with Alex.
+- BOTH speakers MUST appear. Never give a long monologue to one host.
+- Aim for roughly 50/50 speaker split (±1 turn).
+- Write 10-14 dialogue turns total (5-7 per host). Shorter is better — TTS is slow.
+- Each turn is ONE speaker only. Never combine two hosts in one JSON element.
+- The "speaker" field MUST be exactly "Alex" or "Sam" (case-sensitive).
+
+Style:
+- Start with a warm intro: "Hey everyone, welcome back!" style (Alex opens).
 - End with a brief wrap-up and sign-off.
 - Keep it conversational and fun — use "wow", "that's wild", "wait, really?" naturally.
 - Each line should be 1-3 sentences (speakable in 5-15 seconds).
 - DO NOT use any markdown formatting. Plain text only.
-- Host B should occasionally summarize what Host A said in simpler terms.
+- Sam should occasionally summarize what Alex said in simpler terms.
 ${languageInstruction}
 
 You MUST respond with ONLY a valid JSON array. No markdown, no code fences, no explanation.
-Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
+Format (note alternation):
+[{"speaker":"Alex","text":"Hey everyone, welcome back!"},{"speaker":"Sam","text":"So what are we diving into today?"},{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."}]`;
 
   const result = await callAI(provider, apiKey, model, [
     { role: 'system', content: podcastPrompt },
@@ -1149,6 +1200,12 @@ Format: [{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."},...]`;
   if (!Array.isArray(dialogue) || dialogue.length < 4) {
     throw new Error('Failed to generate podcast script. Please try again.');
   }
+
+  // Repair: if BYOK LLM collapsed to one speaker, force alternating Alex/Sam so
+  // multi-speaker TTS actually uses both voices. Mirrors the edge-side
+  // `repairPodcastDialogue` guard; TTS only respects speakers named exactly
+  // "Alex" and "Sam" per the speakerVoiceConfigs below.
+  dialogue = normalizePodcastDialogue(dialogue);
 
   // Step 2: Convert script to audio via Gemini TTS
   sendProgress('Generating audio with Gemini TTS...', 0.5);

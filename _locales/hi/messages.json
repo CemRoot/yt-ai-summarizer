@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "एक्सटेंशन नाम — वैश्विक एकरूपता के लिए अंग्रेज़ी ब्रांड"
+  },
+  "extDescription": {
+    "message": "किसी भी YouTube वीडियो के लिए AI सारांश, पॉडकास्ट व चैट — 20+ भाषाएँ, 5 फ्री क्रेडिट, BYOK या €4.99/माह से Pro।",
+    "description": "Chrome Web Store के लिए संक्षिप्त विवरण (अधिकतम 132 वर्ण)"
+  }
+}

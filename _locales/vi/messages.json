@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "YouTube AI Summarizer",
+    "description": "Tên tiện ích — thương hiệu tiếng Anh để nhất quán toàn cầu"
+  },
+  "extDescription": {
+    "message": "Tóm tắt, podcast & trò chuyện AI cho mọi video YouTube — 20+ ngôn ngữ, 5 credit miễn phí, BYOK hoặc Pro từ €4,99/tháng.",
+    "description": "Mô tả ngắn cho Chrome Web Store (tối đa 132 ký tự)"
+  }
+}
