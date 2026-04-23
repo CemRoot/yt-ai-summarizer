@@ -1,7 +1,7 @@
 {
   "extName": {
     "message": "YouTube AI Summarizer",
-    "description": "Extension name shown in Chrome Web Store and browser"
+    "description": "Extension name shown in Chrome Web Store and browser (English default)"
   },
   "extDescription": {
     "message": "AI summaries, podcasts & chat for any YouTube video — 20+ languages, 5 free credits, BYOK or Pro from €4.99/mo.",

@@ -267,6 +267,10 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.0.3 — April 2026
+
+- **🌐 Localized Chrome Web Store titles (21 locales)** — each `_locales/<lang>/messages.json` now sets `extName` in that language (e.g. Spanish: *Resúmenes con IA de YouTube*, Turkish: *YouTube Yapay Zeka Özetleyici*), so the **package title** in the store matches how people search in their own language. English default remains *YouTube AI Summarizer*; all names stay within Chrome’s length guidance and use “YouTube” in descriptive form.
+
 ### v2.0.2 — April 2026
 
 - **🧾 Correct "credits exhausted" message for managed users** — when you run out of free credits (or our managed AI is temporarily unavailable), you now see a clear "Credits exhausted" / "Managed AI unavailable" card with an upgrade CTA, instead of the misleading "Invalid API Key" error that would appear on v2.0.1.

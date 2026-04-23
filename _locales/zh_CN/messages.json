@@ -1,7 +1,7 @@
 {
   "extName": {
-    "message": "YouTube AI Summarizer",
-    "description": "扩展名称 — 使用英文品牌名以保持全球一致性"
+    "message": "YouTube视频AI摘要",
+    "description": "Chrome 网上应用店和浏览器中的名称"
   },
   "extDescription": {
     "message": "任何 YouTube 视频的 AI 摘要、播客与对话 — 支持 20+ 语言，5 次免费体验，BYOK 或 Pro（€4.99/月起）。",

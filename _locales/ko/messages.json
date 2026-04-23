@@ -1,7 +1,7 @@
 {
   "extName": {
-    "message": "YouTube AI Summarizer",
-    "description": "확장 프로그램 이름 — 글로벌 일관성을 위한 영문 브랜드명"
+    "message": "YouTube AI 요약",
+    "description": "Chrome 웹 스토어와 브라우저에 표시되는 이름"
   },
   "extDescription": {
     "message": "모든 YouTube 영상의 AI 요약·팟캐스트·채팅 — 20개 이상 언어, 무료 5크레딧, BYOK 또는 월 €4.99부터 Pro.",

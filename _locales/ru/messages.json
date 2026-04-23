@@ -1,7 +1,7 @@
 {
   "extName": {
-    "message": "YouTube AI Summarizer",
-    "description": "Название расширения — англоязычный бренд для глобальной согласованности"
+    "message": "YouTube: ИИ-резюме",
+    "description": "Название в Chrome Web Store и браузере"
   },
   "extDescription": {
     "message": "AI-саммари, подкасты и чат для любого видео YouTube — 20+ языков, 5 бесплатных кредитов, BYOK или Pro от €4.99/мес.",

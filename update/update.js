@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.0.3',
+      date: '2026-04-23',
+      changes: [
+        { type: 'improved', text: 'c203_localized_store_titles' },
+      ]
+    },
+    {
       version: '2.0.2',
       date: '2026-04-23',
       changes: [
@@ -148,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c203_localized_store_titles: 'Chrome Web Store listing title is now localized per language (21 locales) — e.g. Spanish shows "Resúmenes con IA de YouTube" so searchers in that language see a native product name; English stays "YouTube AI Summarizer"',
       c202_credits_message: 'When your free credits run out, you now see a clear "Credits exhausted" message with an upgrade button — no more misleading "Invalid API Key" error on managed AI',
       c202_podcast_voices: 'Podcast audio always uses both voices (Alex + Sam). Script generation now forces alternating speakers via a JSON schema, so the "one voice reads everything" bug is gone',
       c202_empty_response_credits: 'If the AI provider returns an empty reply (rare server issue), your credits are no longer deducted — the call is refunded and you can retry immediately',
@@ -214,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
 
+      c203_localized_store_titles: 'Chrome Web Mağazası\'ndaki uzantı başlığı artık 21 dilde yerelleştirildi — örn. İspanyolca\'da "Resúmenes con IA de YouTube" görünür; İngilizce varsayılan "YouTube AI Summarizer" olarak kalır',
       c202_credits_message: 'Ücretsiz kredileriniz bittiğinde artık net bir "Kredi tükendi" mesajı ve yükseltme butonu görüyorsunuz — yönetilen AI\'da hatalı "Geçersiz API Anahtarı" uyarısı kaldırıldı',
       c202_podcast_voices: 'Podcast her zaman iki sesle çalışıyor (Alex + Sam). Senaryo artık JSON şemasıyla dönüşümlü konuşmacı zorunlu kılınıyor; "tek ses her şeyi okuyor" hatası giderildi',
       c202_empty_response_credits: 'AI sağlayıcı boş yanıt dönerse (nadir sunucu sorunu) krediniz artık düşmüyor — çağrı iade ediliyor ve hemen tekrar deneyebiliyorsunuz',
