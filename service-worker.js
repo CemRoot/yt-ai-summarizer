@@ -1472,11 +1472,16 @@ ${content}
 
   if (mode.managed) {
     try {
+      // Use the deployed `chat` action (single short answer + credit deduction).
+      // The backend has no `article-*` action, so anything else falls back to the
+      // YouTube 3-section summary format. Chat returns one bounded answer.
       const edgeResult = await ApiClient.getInstance().summarize({
         videoId: `article:${Date.now()}`,
         transcript: content,
-        action: 'article-summary',
-        language: language || 'auto',
+        action: 'chat',
+        language: langName,
+        chatMessage: `Summarize this article in ${langName}. Maximum 2-3 short sentences (50-60 words). Plain text only — no headers, no bullet points, no "summary" label. Just the key facts.`,
+        chatHistory: [],
       });
       return {
         content: edgeResult.result || edgeResult.content || '',
@@ -1498,7 +1503,7 @@ ${content}
   const { provider, apiKey, model } = await getProviderConfig();
   if (!apiKey) throw new Error('NO_API_KEY');
 
-  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };
 }
 
@@ -1560,13 +1565,19 @@ ${content}
 
   if (mode.managed) {
     try {
-      const chatHistory = (history || []).slice(-10);
+      const chatHistory = (history || []).slice(-10).map(m => ({
+        role: m.role === 'ai' ? 'assistant' : m.role,
+        content: m.content || m.text || ''
+      }));
+      // Keep answers short: instruct brevity in the chat message itself since the
+      // deployed chat prompt is YouTube-oriented.
+      const briefQuestion = `${question}\n\n(Answer in ${langName}, 1-3 short sentences only, based only on the article above.)`;
       const edgeResult = await ApiClient.getInstance().summarize({
         videoId: `article:${Date.now()}`,
         transcript: content,
-        action: 'article-chat',
-        language: language || 'auto',
-        chatMessage: question,
+        action: 'chat',
+        language: langName,
+        chatMessage: briefQuestion,
         chatHistory,
       });
       return {
@@ -1574,6 +1585,7 @@ ${content}
         model: edgeResult.provider || 'managed',
         provider: 'managed',
         credits_remaining: edgeResult.credits_remaining,
+        credits_used: edgeResult.credits_used,
       };
     } catch (err) {
       if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS') {
@@ -1588,7 +1600,7 @@ ${content}
   const { provider, apiKey, model } = await getProviderConfig();
   if (!apiKey) throw new Error('NO_API_KEY');
 
-  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };
 }
 

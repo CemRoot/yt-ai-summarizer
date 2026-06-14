@@ -102,6 +102,25 @@
   letter-spacing: -0.3px;
 }
 
+.gleano-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gleano-credit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+
 .gleano-close-btn {
   background: rgba(255, 255, 255, 0.15);
   border: none;
@@ -214,6 +233,65 @@
   color: #f9fafb;
 }
 
+/* Summary Ready State */
+.gleano-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.gleano-ready-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.gleano-panel.dark .gleano-ready-title {
+  color: #f9fafb;
+}
+
+.gleano-ready-excerpt {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.gleano-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.gleano-generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.gleano-generate-btn:active {
+  transform: translateY(0);
+}
+
+.gleano-ready-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
 /* Loading State */
 .gleano-loading {
   display: flex;
@@ -263,13 +341,38 @@
 /* Chat Messages */
 .gleano-chat-empty {
   text-align: center;
-  padding: 60px 20px;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gleano-chat-empty-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%);
+  color: #10b981;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.gleano-chat-empty-icon svg {
+  width: 26px;
+  height: 26px;
 }
 
 .gleano-chat-empty p {
-  color: #6b7280;
+  color: #374151;
   font-size: 15px;
+  font-weight: 500;
   margin-bottom: 8px;
+}
+
+.gleano-panel.dark .gleano-chat-empty p {
+  color: #e5e7eb;
 }
 
 .gleano-hint {

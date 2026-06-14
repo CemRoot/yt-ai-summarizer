@@ -17,7 +17,7 @@ class ArticleUI {
 
   #panelRoot = null;
   #isOpen = false;
-  #currentMode = 'summary';
+  #currentMode = 'chat';
   #isDarkMode = false;
   #chatMessages = [];
   #eventHandlers = {};
@@ -99,26 +99,29 @@ class ArticleUI {
           <div class="gleano-header-logo">${ArticleUI.#ICONS.sparkle}</div>
           <span class="gleano-header-title">Gleano</span>
         </div>
-        <button class="gleano-close-btn" title="Close">${ArticleUI.#ICONS.close}</button>
+        <div class="gleano-header-right">
+          <span class="gleano-credit-badge" id="gleanoCreditBadge" title="Remaining credits" style="display: none;"></span>
+          <button class="gleano-close-btn" title="Close">${ArticleUI.#ICONS.close}</button>
+        </div>
       </div>
       
       <nav class="gleano-tabs">
-        <button class="gleano-tab active" data-mode="summary">Summary</button>
-        <button class="gleano-tab" data-mode="chat">Chat</button>
+        <button class="gleano-tab active" data-mode="chat">Chat</button>
+        <button class="gleano-tab" data-mode="summary">Summary</button>
       </nav>
       
       <div class="gleano-content">
         <div class="gleano-result" id="gleanoResult"></div>
       </div>
       
-      <div class="gleano-chat-input" id="gleanoChatInput" style="display: none;">
+      <div class="gleano-chat-input" id="gleanoChatInput">
         <input type="text" placeholder="Ask about this article..." id="gleanoChatText" />
         <button class="gleano-send-btn" id="gleanoChatSend">${ArticleUI.#ICONS.send}</button>
       </div>
       
       <div class="gleano-footer">
         <button class="gleano-action-btn" id="gleanoCopy" title="Copy">${ArticleUI.#ICONS.copy}</button>
-        <button class="gleano-action-btn" id="gleanoRefresh" title="Regenerate">${ArticleUI.#ICONS.refresh}</button>
+        <button class="gleano-action-btn" id="gleanoRefresh" title="Regenerate" style="display: none;">${ArticleUI.#ICONS.refresh}</button>
       </div>
     `;
     
@@ -164,6 +167,11 @@ class ArticleUI {
     const chatInput = document.getElementById('gleanoChatInput');
     if (chatInput) {
       chatInput.style.display = mode === 'chat' ? 'flex' : 'none';
+    }
+
+    const refreshBtn = document.getElementById('gleanoRefresh');
+    if (refreshBtn) {
+      refreshBtn.style.display = mode === 'summary' ? 'flex' : 'none';
     }
 
     this.#emitEvent('modeChange', { mode });
@@ -225,6 +233,40 @@ class ArticleUI {
     return this.#currentMode;
   }
 
+  updateCredits(credits) {
+    const badge = document.getElementById('gleanoCreditBadge');
+    if (!badge) return;
+    if (typeof credits === 'number' && credits >= 0) {
+      badge.textContent = `${credits} ⚡`;
+      badge.style.display = 'inline-flex';
+    }
+  }
+
+  /**
+   * Shows the summary "ready" state with a Generate button.
+   * Does NOT trigger AI — user must click to spend credits.
+   */
+  showSummaryPrompt(meta = {}) {
+    const result = document.getElementById('gleanoResult');
+    if (!result) return;
+    const title = meta.title ? this.#escape(meta.title) : '';
+    const excerpt = meta.excerpt ? this.#escape(meta.excerpt) : '';
+    result.innerHTML = `
+      <div class="gleano-ready">
+        ${title ? `<div class="gleano-ready-title">${title}</div>` : ''}
+        ${excerpt ? `<p class="gleano-ready-excerpt">${excerpt}</p>` : ''}
+        <button class="gleano-generate-btn" id="gleanoGenerateBtn">
+          ${ArticleUI.#ICONS.sparkle}
+          <span>Generate Summary</span>
+        </button>
+        <p class="gleano-ready-hint">Uses 1 credit. Or just ask a question in the Chat tab.</p>
+      </div>
+    `;
+    document.getElementById('gleanoGenerateBtn')?.addEventListener('click', () => {
+      this.#emitEvent('generateSummary');
+    });
+  }
+
   showLoading(message = 'Analyzing article...') {
     const result = document.getElementById('gleanoResult');
     if (result) {
@@ -267,8 +309,9 @@ class ArticleUI {
     if (messages.length === 0) {
       result.innerHTML = `
         <div class="gleano-chat-empty">
-          <p>Ask any question about this article.</p>
-          <p class="gleano-hint">The AI will answer based only on the article content.</p>
+          <div class="gleano-chat-empty-icon">${ArticleUI.#ICONS.sparkle}</div>
+          <p>Ask anything about this article</p>
+          <p class="gleano-hint">Answers are based only on the article content. Switch to the Summary tab for a quick recap.</p>
         </div>
       `;
       return;
@@ -305,6 +348,14 @@ class ArticleUI {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 300);
     }, duration);
+  }
+
+  #escape(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   #formatMarkdown(text) {

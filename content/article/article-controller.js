@@ -56,36 +56,72 @@ class ArticleController {
     this.#ui.on('panelOpen', () => this.#onPanelOpen());
     this.#ui.on('modeChange', (data) => this.#onModeChange(data.mode));
     this.#ui.on('chatMessage', (data) => this.#onChatMessage(data.message));
+    this.#ui.on('generateSummary', () => this.#showSummary(true));
     this.#ui.on('refresh', () => this.#onRefresh());
   }
 
-  async #onPanelOpen() {
-    if (!this.#articleContent) {
-      this.#ui.showLoading('Extracting article content...');
-      
-      const result = this.#extractor.extract();
-      
-      if (result.error) {
-        this.#ui.showError(this.#getErrorMessage(result.error, result.message));
-        return;
-      }
-      
-      this.#articleContent = result;
-    }
+  #ensureArticleContent() {
+    if (this.#articleContent) return true;
 
+    const result = this.#extractor.extract();
+    if (result.error) {
+      this.#ui.showError(this.#getErrorMessage(result.error, result.message));
+      return false;
+    }
+    this.#articleContent = result;
+    return true;
+  }
+
+  async #onPanelOpen() {
+    if (!this.#ensureArticleContent()) return;
+
+    // Show current credit balance if available (managed users).
+    this.#loadInitialCredits();
+
+    // Default to Chat tab — do NOT auto-generate the summary (saves credits).
     const mode = this.#ui.getCurrentMode();
     if (mode === 'summary') {
-      await this.#showSummary();
+      this.#showSummaryState();
+    } else {
+      this.#showChatHistory();
+    }
+  }
+
+  #loadInitialCredits() {
+    try {
+      chrome.storage.local.get(['settings'], (result) => {
+        const s = result?.settings || {};
+        const plan = String(s.userPlan || '').toLowerCase();
+        // Only show credits for managed (signed-in) users, not BYOK.
+        if (plan && plan !== 'anonymous' && typeof s.credits === 'number') {
+          this.#ui.updateCredits(s.credits);
+        }
+      });
+    } catch { /* ignore */ }
+  }
+
+  #onModeChange(mode) {
+    if (!this.#ensureArticleContent()) return;
+
+    if (mode === 'summary') {
+      this.#showSummaryState();
     } else if (mode === 'chat') {
       this.#showChatHistory();
     }
   }
 
-  async #onModeChange(mode) {
-    if (mode === 'summary') {
-      await this.#showSummary();
-    } else if (mode === 'chat') {
-      this.#showChatHistory();
+  /**
+   * Shows either the cached summary or the "Generate Summary" prompt.
+   * Never triggers an AI call automatically.
+   */
+  #showSummaryState() {
+    if (this.#summaryCache) {
+      this.#ui.showResult(this.#summaryCache);
+    } else {
+      this.#ui.showSummaryPrompt({
+        title: this.#articleContent?.title,
+        excerpt: this.#articleContent?.excerpt
+      });
     }
   }
 
@@ -113,20 +149,38 @@ class ArticleController {
     this.#ui.showChat(typingHistory);
 
     try {
-      const response = await this.#sendToAI('chat', message);
+      const { content, credits } = await this.#sendToAI('chat', message);
       
       // Add AI response to history
-      this.#chatHistory.push({ role: 'assistant', content: response });
+      this.#chatHistory.push({ role: 'assistant', content });
       this.#ui.showChat(this.#chatHistory);
+      this.#updateCredits(credits);
     } catch (err) {
       console.error('[ArticleController] Chat error:', err);
       // Remove the user message on error
       this.#chatHistory.pop();
       this.#ui.showChat(this.#chatHistory);
-      this.#ui.showToast('Failed to get response. Please try again.');
+      this.#ui.showToast(this.#friendlyError(err));
     } finally {
       this.#isProcessing = false;
     }
+  }
+
+  #updateCredits(credits) {
+    if (typeof credits === 'number') {
+      this.#ui.updateCredits(credits);
+    }
+  }
+
+  #friendlyError(err) {
+    const msg = String(err?.message || '');
+    if (/NO_CREDITS|INSUFFICIENT_CREDITS/i.test(msg)) {
+      return 'Krediniz tükendi. Pro\'ya yükseltin veya kendi API anahtarınızı kullanın.';
+    }
+    if (/NO_API_KEY/i.test(msg)) {
+      return 'Lütfen ayarlardan giriş yapın veya bir API anahtarı ekleyin.';
+    }
+    return 'Bir hata oluştu. Lütfen tekrar deneyin.';
   }
 
   async #onRefresh() {
@@ -145,10 +199,9 @@ class ArticleController {
       return;
     }
 
-    if (!this.#articleContent) {
-      this.#ui.showError('Article content not available.');
-      return;
-    }
+    if (!this.#ensureArticleContent()) return;
+
+    if (this.#isProcessing) return;
 
     if (!this.#checkRateLimit()) {
       this.#ui.showToast('Too many requests. Please wait a moment.');
@@ -159,12 +212,13 @@ class ArticleController {
     this.#ui.showLoading('Generating summary...');
 
     try {
-      const summary = await this.#sendToAI('summary');
-      this.#summaryCache = summary;
-      this.#ui.showResult(summary);
+      const { content, credits } = await this.#sendToAI('summary');
+      this.#summaryCache = content;
+      this.#ui.showResult(content);
+      this.#updateCredits(credits);
     } catch (err) {
       console.error('[ArticleController] Summary error:', err);
-      this.#ui.showError('Failed to generate summary. Please try again.');
+      this.#ui.showError(this.#friendlyError(err));
     } finally {
       this.#isProcessing = false;
     }
@@ -208,7 +262,10 @@ class ArticleController {
           return;
         }
         
-        resolve(response?.content || response?.result || 'No response received.');
+        resolve({
+          content: response?.content || response?.result || 'No response received.',
+          credits: typeof response?.credits_remaining === 'number' ? response.credits_remaining : null
+        });
       });
     });
   }
