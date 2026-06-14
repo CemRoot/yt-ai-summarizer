@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Set up Gleano — AI summaries for YouTube &amp; articles and add your API key.">
-  <meta name="theme-color" content="#ececee">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="icon" type="image/png" href="../icons/icon32.png?v=2.1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -63,12 +64,18 @@
     <!-- Hero -->
     <header class="hero">
       <div class="hero-card">
-        <div class="hero-badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="34" height="34"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        <span class="hero-version" id="heroVersion" title="Extension version">v2.1.0</span>
+        <div class="hero-brand-row">
+          <img class="hero-logo-mark" src="../icons/icon48.png?v=2.1.0" width="48" height="48" alt="" aria-hidden="true">
         </div>
-        <p class="hero-kicker" id="heroKicker">Chrome extension</p>
+        <p class="hero-kicker" id="heroKicker">AI Content Reader</p>
         <h1 id="heroTitle">Gleano</h1>
-        <p class="hero-sub" id="heroSub">Get instant AI-powered summaries, key points, and detailed analysis for any YouTube video.</p>
+        <p class="hero-sub" id="heroSub">Summarize YouTube videos and web articles with AI — key points, detailed analysis, chat, and podcast.</p>
+        <ul class="hero-features" aria-label="Features">
+          <li id="heroF1">YouTube summaries</li>
+          <li id="heroF2">Article Reader</li>
+          <li id="heroF3">Chat &amp; podcast</li>
+        </ul>
       </div>
     </header>
 
@@ -88,7 +95,7 @@
           <h3 id="googleCardTitle">Sign in with Google</h3>
           <p id="googleCardDesc">Get 5 free AI-powered summaries — no API key needed.</p>
           <ul class="onboard-features">
-            <li id="googleF1">5 free video summaries</li>
+            <li id="googleF1">5 free AI summaries</li>
             <li id="googleF2">No API key required</li>
             <li id="googleF3">Upgrade anytime for unlimited</li>
           </ul>
@@ -186,27 +193,27 @@
         <span class="step-chip" id="step3Chip">Step 3 of 3</span>
       </div>
       <h2 id="step3Title">How It Works</h2>
-      <p class="step-desc" id="step3Desc">Three simple steps on any YouTube video page.</p>
+      <p class="step-desc" id="step3Desc">Three simple steps on YouTube or any supported article page.</p>
 
       <div class="how-cards">
         <div class="how-card">
           <div class="how-num">1</div>
-          <div class="how-icon red">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+          <div class="how-icon brand">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
           </div>
           <div>
-            <h3 id="how1Title">Open a Video</h3>
-            <p id="how1Desc">Go to any YouTube video that has captions or subtitles available.</p>
+            <h3 id="how1Title">Open Content</h3>
+            <p id="how1Desc">Play a YouTube video with captions, or open a news article or blog in Chrome.</p>
           </div>
         </div>
         <div class="how-card">
           <div class="how-num">2</div>
           <div class="how-icon blue">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <img src="../icons/icon32.png?v=2.1.0" width="24" height="24" alt="" aria-hidden="true">
           </div>
           <div>
-            <h3 id="how2Title">Click the AI Button</h3>
-            <p id="how2Desc">A floating button appears on the bottom-right of the page. Click it to open the panel.</p>
+            <h3 id="how2Title">Launch Gleano</h3>
+            <p id="how2Desc">On YouTube, click the floating button. On articles, open Gleano from the toolbar and tap Article Reader.</p>
           </div>
         </div>
         <div class="how-card">
@@ -224,9 +231,9 @@
       <div class="final-cta">
         <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-          <span id="goYoutubeText">Go to YouTube &amp; Try It</span>
+          <span id="goYoutubeText">Try on YouTube</span>
         </a>
-        <p class="tip-box" id="tipBox">You can change your provider, model, and language anytime from the extension settings (click the puzzle icon in Chrome toolbar).</p>
+        <p class="tip-box" id="tipBox">On articles, pin Gleano and use Article Reader from the popup. Change provider, model, and language anytime in extension settings.</p>
       </div>
     </section>
 

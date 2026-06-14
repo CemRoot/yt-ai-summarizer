@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/svg+xml" href="../icons/youtube-favicon.svg">
+  <link rel="icon" type="image/png" href="../icons/icon32.png?v=2.1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,9 +15,7 @@
     <!-- Header -->
     <header class="popup-header">
       <div class="popup-brand">
-        <div class="popup-logo-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" focusable="false"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#10b981"/></svg>
-        </div>
+        <img class="popup-logo-mark" src="../icons/icon32.png?v=2.1.0" width="32" height="32" alt="" aria-hidden="true">
         <div class="popup-brand-text">
           <span class="popup-title">Gleano</span>
           <span class="popup-subtitle">AI Content Reader</span>
@@ -25,6 +23,15 @@
       </div>
       <span class="popup-version" id="popupVersion" title="Extension version">v…</span>
     </header>
+
+    <div class="popup-whats-new hidden" id="whatsNewBanner" role="status">
+      <div class="popup-whats-new-text">
+        <strong id="whatsNewTitle">Gleano v2.1.0</strong>
+        <span>Article Reader, rebrand &amp; performance fixes</span>
+      </div>
+      <button type="button" class="popup-whats-new-link" id="whatsNewLink">What's new</button>
+      <button type="button" class="popup-whats-new-dismiss" id="whatsNewDismiss" aria-label="Dismiss update notice">&times;</button>
+    </div>
 
     <nav class="popup-tabs" role="tablist" aria-label="Settings sections">
       <button type="button" class="popup-tab active" role="tab" aria-selected="true" aria-controls="panel-setup" id="tab-btn-setup" data-tab="setup">Setup</button>
@@ -43,7 +50,7 @@
       </div>
       <p class="card-hint" id="articleReaderHint">Summarize and chat about this article using AI.</p>
       <button type="button" class="btn btn-primary" id="openArticleReaderBtn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2L9.19 8.63 2 10l5.46 4.73L5.82 22 12 18.27 18.18 22l-1.64-7.27L22 10l-7.19-1.37z"/></svg>
+        <img src="../icons/icon32.png?v=2.1.0" width="16" height="16" alt="" aria-hidden="true">
         Open Article Reader
       </button>
       <p class="card-error hidden" id="articleReaderError"></p>
@@ -71,6 +78,7 @@
           </div>
         </div>
         <div class="account-credits" id="accountCredits"></div>
+        <div class="account-rate-warning hidden" id="accountRateWarning" role="alert"></div>
         <div class="popup-pro-group account-pro-upgrade hidden" id="popupUpgradeProGroup" role="group" aria-label="Upgrade billing">
           <button type="button" class="popup-pro-plan" data-plan="monthly" title="Pro — billed monthly">Monthly</button>
           <button type="button" class="popup-pro-plan popup-pro-plan-recommended" data-plan="yearly" title="Pro — billed yearly (usually best value)">Yearly</button>

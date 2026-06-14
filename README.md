@@ -113,6 +113,7 @@
 3. **4-layer parser** — delimiters → regex → headings → split. Resilient to models that drift from the requested format.
 4. **Instant tab switching** — in-memory + persistent LRU cache (max 20 videos). Summary / Key Points / Detailed render from cache while background work continues.
 5. **Credit-aware** — managed calls are gated by a server-side pre-flight estimator; no overdraft, no "3 credits showing but charged 7".
+6. **Article Reader** — on any news/blog page, open the popup → **Open Article Reader**. Scripts inject via `activeTab` + `scripting` (no `<all_urls>`). The extractor reads main article text locally; summary/chat goes through the same BYOK or managed AI paths as YouTube.
 
 ---
 
@@ -269,15 +270,15 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ### v2.1.0 — June 2026 (Gleano)
 
-- **🎉 Rebranded to Gleano** — the extension is now called "Gleano" across all locales, reflecting its expanded scope beyond YouTube. The brand name is consistent in all 21 languages.
-- **📰 Article Reader (coming soon)** — infrastructure for reading and chatting about web articles. Uses `chrome.scripting` API with `activeTab` permission for on-demand content injection.
+- **🎉 Rebranded to Gleano** — the extension is now called "Gleano" across all 21 locales, reflecting its expanded scope beyond YouTube.
+- **📰 Article Reader** — summarize and chat about news articles and blog posts on any site. Opens from the popup via `chrome.scripting` + `activeTab` (on-demand injection; no broad `<all_urls>` host permission).
 - **🐛 Tab switching race condition fixed** — guard clauses prevent stale UI updates when rapidly switching between Summary/Key Points/Detailed/Chat/Podcast tabs during async operations.
 - **🧠 Memory optimization** — LRU eviction for in-memory caches (max 20 videos), proper cleanup of MutationObservers and event listeners on UI teardown.
-- **🔐 Scripting permission added** — enables dynamic content script injection for the upcoming article reader feature. No new host permissions required — uses existing `activeTab`.
+- **🔐 Scripting permission added** — enables dynamic Article Reader injection on the tab you activate. YouTube host permissions unchanged.
 
 ### v2.0.3 — April 2026
 
-- **🌐 Localized Chrome Web Store titles (21 locales)** — each `_locales/<lang>/messages.json` now sets `extName` in that language (e.g. Spanish: *Resúmenes con IA de YouTube*, Turkish: *YouTube Yapay Zeka Özetleyici*), so the **package title** in the store matches how people search in their own language. English default remains *YouTube AI Summarizer*; all names stay within Chrome’s length guidance and use “YouTube” in descriptive form.
+- **🌐 Localized Chrome Web Store titles (21 locales)** — each `_locales/<lang>/messages.json` sets `extName` to **Gleano** with a localized `extDescription` that mentions YouTube videos and articles where relevant.
 
 ### v2.0.2 — April 2026
 
@@ -415,8 +416,9 @@ yt-ai-summarizer/
 │   ├── transcript.js               InnerTube transcript extractor
 │   ├── ui.js                       Panel UI, tabs, onboarding tooltip, credit badges
 │   ├── podcast.js                  Podcast audio player
-│   └── page-bridge.js              MAIN-world bridge for YT internal data
-├── popup/                          Settings popup (dual provider + managed account)
+│   ├── page-bridge.js              MAIN-world bridge for YT internal data
+│   └── article/                    Article Reader (extractor, UI, controller, CSS)
+├── popup/                          Settings popup (dual provider + managed account + Article Reader)
 ├── welcome/                        Onboarding flow (Sign in with Google or BYOK)
 ├── update/                         "What's New" page shown after updates
 ├── utils/

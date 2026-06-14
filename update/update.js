@@ -20,6 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.1.0',
+      date: '2026-06-14',
+      changes: [
+        { type: 'new',      text: 'c210_rebrand_gleano' },
+        { type: 'new',      text: 'c210_article_reader' },
+        { type: 'improved', text: 'c210_memory' },
+        { type: 'fixed',    text: 'c210_tab_race' },
+        { type: 'changed',  text: 'c210_scripting' },
+      ]
+    },
+    {
       version: '2.0.3',
       date: '2026-04-23',
       changes: [
@@ -155,7 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
-      c203_localized_store_titles: 'Chrome Web Store listing title is now localized per language (21 locales) — e.g. Spanish shows "Resúmenes con IA de YouTube" so searchers in that language see a native product name; English stays "Gleano"',
+      c210_rebrand_gleano: 'Rebranded to Gleano — the extension name is now "Gleano" in all 21 locales, reflecting video + article reading beyond YouTube',
+      c210_article_reader: 'Article Reader — summarize and chat about any news article or blog post. Open from the popup on supported pages; uses on-demand injection via activeTab (no broad host permissions)',
+      c210_memory: 'Memory optimization — LRU eviction for in-memory caches (max 20 videos), proper cleanup of MutationObservers and event listeners on panel teardown',
+      c210_tab_race: 'Tab switching race condition fixed — guard clauses prevent stale UI updates when rapidly switching Summary / Key Points / Detailed / Chat / Podcast during async work',
+      c210_scripting: 'Scripting permission added — enables dynamic Article Reader injection on the tab you activate. YouTube host permissions unchanged',
+
+      c203_localized_store_titles: 'Chrome Web Store listing title is now localized per language (21 locales) — product name is "Gleano" in every locale; descriptions mention YouTube videos and articles where relevant',
       c202_credits_message: 'When your free credits run out, you now see a clear "Credits exhausted" message with an upgrade button — no more misleading "Invalid API Key" error on managed AI',
       c202_podcast_voices: 'Podcast audio always uses both voices (Alex + Sam). Script generation now forces alternating speakers via a JSON schema, so the "one voice reads everything" bug is gone',
       c202_empty_response_credits: 'If the AI provider returns an empty reply (rare server issue), your credits are no longer deducted — the call is refunded and you can retry immediately',
@@ -222,7 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
 
-      c203_localized_store_titles: 'Chrome Web Mağazası\'ndaki uzantı başlığı artık 21 dilde yerelleştirildi — örn. İspanyolca\'da "Resúmenes con IA de YouTube" görünür; İngilizce varsayılan "Gleano" olarak kalır',
+      c210_rebrand_gleano: 'Gleano markası — uzantı adı artık 21 dilde "Gleano"; YouTube\'un ötesinde video + makale okuma kapsamını yansıtıyor',
+      c210_article_reader: 'Makale Okuyucu — haber ve blog yazılarını özetleyin ve sohbet edin. Desteklenen sayfalarda popup\'tan açın; activeTab ile isteğe bağlı enjeksiyon (geniş host izni yok)',
+      c210_memory: 'Bellek optimizasyonu — bellek içi önbellek için LRU (en fazla 20 video), panel kapanırken MutationObserver ve dinleyici temizliği',
+      c210_tab_race: 'Sekme geçişi yarış durumu düzeltildi — Özet / Anahtar Noktalar / Detaylı / Sohbet / Podcast arasında hızlı geçişte eski UI güncellemeleri engellendi',
+      c210_scripting: 'Scripting izni eklendi — etkinleştirdiğiniz sekmede Makale Okuyucu dinamik enjeksiyonu. YouTube host izinleri değişmedi',
+
+      c203_localized_store_titles: 'Chrome Web Mağazası başlığı 21 dilde yerelleştirildi — ürün adı her dilde "Gleano"; açıklamalar gerektiğinde YouTube videoları ve makaleleri belirtir',
       c202_credits_message: 'Ücretsiz kredileriniz bittiğinde artık net bir "Kredi tükendi" mesajı ve yükseltme butonu görüyorsunuz — yönetilen AI\'da hatalı "Geçersiz API Anahtarı" uyarısı kaldırıldı',
       c202_podcast_voices: 'Podcast her zaman iki sesle çalışıyor (Alex + Sam). Senaryo artık JSON şemasıyla dönüşümlü konuşmacı zorunlu kılınıyor; "tek ses her şeyi okuyor" hatası giderildi',
       c202_empty_response_credits: 'AI sağlayıcı boş yanıt dönerse (nadir sunucu sorunu) krediniz artık düşmüyor — çağrı iade ediliyor ve hemen tekrar deneyebiliyorsunuz',

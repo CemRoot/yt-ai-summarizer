@@ -1104,8 +1104,8 @@ class SummarizerController {
         retryable: false
       },
       MANAGED_RATE_LIMIT: {
-        title: 'Rate Limited',
-        message: 'Too many requests on managed AI. Wait a moment or use your own API key.',
+        title: 'Slow down a little',
+        message: "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.",
         retryable: true
       },
       SESSION_EXPIRED: {
@@ -1165,9 +1165,9 @@ class SummarizerController {
         retryable: true
       },
       AI_QUOTA_EXCEEDED: {
-        title: 'AI quota limit',
+        title: 'System Error',
         message:
-          'Managed fallback (Google Gemini) hit quota or billing limits. Open Google AI Studio → billing / API key, or set platform primary to a working model. Podcast TTS also uses Gemini.',
+          'Something went wrong on our side (the AI service is temporarily unavailable). Please try again later. If it keeps happening, please open a support ticket.',
         retryable: true
       },
       GEMINI_MANAGED_TTS_KEY: {

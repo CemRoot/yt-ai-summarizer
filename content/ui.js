@@ -29,6 +29,12 @@ class SummarizerUI {
   #themeChangeHandler = null;
   #fullscreenHandler = null;
 
+  static #LOGO_URL = chrome.runtime.getURL('icons/icon32.png');
+
+  static #logoImg(size = 24) {
+    return `<img src="${SummarizerUI.#LOGO_URL}" width="${size}" height="${size}" alt="" class="ytai-logo-img" aria-hidden="true">`;
+  }
+
   static #ICONS = {
     brain:    `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
     play:     `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
@@ -38,7 +44,6 @@ class SummarizerUI {
     settings: `<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`,
     key:      `<svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>`,
     error:    `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`,
-    sparkle:  `<svg viewBox="0 0 24 24"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>`,
     send:     `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`,
     ai:       `<svg viewBox="0 0 24 24"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/></svg>`
   };
@@ -187,7 +192,7 @@ class SummarizerUI {
     const panelTitle = 'Gleano'; // Brand name - same in all languages
     header.innerHTML = `
       <div class="ytai-header-left">
-        <div class="ytai-header-logo">${SummarizerUI.#ICONS.sparkle}</div>
+        <div class="ytai-header-logo">${SummarizerUI.#logoImg(24)}</div>
         <span class="ytai-header-title">${panelTitle}</span>
         <span class="ytai-auth-badge" id="ytaiAuthBadge"></span>
       </div>
@@ -457,7 +462,7 @@ class SummarizerUI {
 
     content.innerHTML = `
       <div class="ytai-ready-prompt">
-        <div class="ytai-ready-icon">${SummarizerUI.#ICONS.sparkle}</div>
+        <div class="ytai-ready-icon">${SummarizerUI.#logoImg(32)}</div>
         <div class="ytai-ready-title">${this.#escapeHtml(t.title)}</div>
         <div class="ytai-ready-desc">${this.#escapeHtml(t.desc)}</div>
         <button class="ytai-btn ytai-btn-primary ytai-start-btn">

@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Gleano — Chrome extension that turns any YouTube video into a summary, chat, or AI podcast. BYOK or managed AI.">
+  <meta name="description" content="Gleano — Chrome extension for AI summaries and chat on YouTube videos and web articles. BYOK or managed AI.">
   <meta name="theme-color" content="#0b0c0e">
   <title>Gleano</title>
-  <link rel="icon" href="favicon.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon.png?v=2.1.0" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -22,8 +22,8 @@
       --text-secondary: #c8ccd2;
       --muted: #9aa0a6;
       --dim: #6b7280;
-      --brand: #ff0033;
-      --brand-soft: rgba(255, 0, 51, 0.14);
+      --brand: #6366f1;
+      --brand-soft: rgba(99, 102, 241, 0.14);
       --link: #8ab4f8;
       --link-hover: #a9c5fb;
       --green: #34d399;
@@ -36,7 +36,7 @@
     body {
       font-family: var(--font);
       background:
-        radial-gradient(1200px 600px at 15% -10%, rgba(255, 0, 51, 0.12), transparent 60%),
+        radial-gradient(1200px 600px at 15% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
         radial-gradient(900px 500px at 110% 0%, rgba(138, 180, 248, 0.1), transparent 55%),
         var(--bg);
       color: var(--text);
@@ -88,7 +88,7 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--brand) 0%, #ff6c6c 50%, var(--brand) 100%);
+      background: linear-gradient(90deg, var(--brand) 0%, #8b5cf6 50%, var(--brand) 100%);
     }
     .logo {
       width: 56px;
@@ -100,9 +100,9 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(255, 0, 51, 0.15);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
     }
-    .logo svg { width: 32px; height: 32px; }
+    .logo img { width: 32px; height: 32px; border-radius: 8px; display: block; }
     h1 {
       font-size: clamp(1.45rem, 4vw, 1.75rem);
       font-weight: 800;
@@ -214,14 +214,15 @@
     <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Chrome Extension</span>
     <article class="card">
       <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.58 7.19a2.51 2.51 0 0 0-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 0 0 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#ff0033"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        <img src="favicon.png?v=2.1.0" width="32" height="32" alt="">
       </div>
       <h1>Gleano</h1>
-      <p class="lead">Turn any YouTube video into a concise summary, ask follow-up questions, or generate a NotebookLM-style podcast. Sign in with Google for managed credits, or bring your own API key.</p>
+      <p class="lead">Turn YouTube videos and web articles into concise summaries, ask follow-up questions, or generate a NotebookLM-style podcast. Sign in with Google for managed credits, or bring your own API key.</p>
 
       <div class="pills" aria-label="Guarantees">
         <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No ads · no telemetry</span>
         <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>BYOK or managed</span>
+        <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Article Reader</span>
         <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Open source</span>
       </div>
 

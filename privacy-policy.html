@@ -6,7 +6,7 @@
   <meta name="description" content="Privacy Policy for Gleano v2.1.0 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
   <meta name="theme-color" content="#eceef2">
   <title>Privacy Policy — Gleano</title>
-  <link rel="icon" href="icons/icon16.png" sizes="16x16" type="image/png">
+  <link rel="icon" href="icons/icon32.png?v=2.1.0" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,11 +23,11 @@
       --dim: #80868b;
       --border: #dadce0;
       --border-subtle: rgba(0, 0, 0, 0.06);
-      /* YouTube-aligned brand */
-      --brand: #ff0000;
-      --brand-dark: #cc0000;
-      --brand-soft: rgba(255, 0, 0, 0.09);
-      --brand-softer: rgba(255, 0, 0, 0.05);
+      /* Gleano brand */
+      --brand: #6366f1;
+      --brand-dark: #4f46e5;
+      --brand-soft: rgba(99, 102, 241, 0.09);
+      --brand-softer: rgba(99, 102, 241, 0.05);
       /* Links: familiar "YouTube blue" */
       --link: #065fd4;
       --link-hover: #044aa3;
@@ -195,18 +195,12 @@
       margin-bottom: 20px;
     }
     .doc-logo {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      background: linear-gradient(145deg, #fff 0%, #f5f5f5 100%);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       flex-shrink: 0;
     }
-    .doc-logo svg { display: block; width: 28px; height: 28px; }
     .doc-title-block { flex: 1; min-width: 0; }
     .doc-header h1 {
       font-size: clamp(1.5rem, 4vw, 1.85rem);
@@ -596,16 +590,14 @@
         <div class="doc-header-inner">
           <p class="doc-eyebrow">Privacy &amp; legal</p>
           <div class="doc-brand">
-            <div class="doc-logo" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
-            </div>
+            <img class="doc-logo" src="icons/icon48.png?v=2.1.0" width="48" height="48" alt="" aria-hidden="true">
             <div class="doc-title-block">
               <h1>Privacy Policy</h1>
               <p class="doc-lead">Gleano — how we handle data. v2 offers <strong>optional managed AI</strong> (Google sign-in + our Supabase backend) alongside <strong>bring-your-own-key (BYOK)</strong>. We do not run ads or analytics telemetry in the extension.</p>
             </div>
           </div>
           <div class="doc-meta">
-            <span class="meta-pill">Last updated · April 17, 2026</span>
+            <span class="meta-pill">Last updated · June 14, 2026</span>
             <span class="meta-pill meta-pill--version">Extension v2.1.0</span>
           </div>
         </div>
@@ -631,7 +623,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M12 19v2"/><path d="m5 5 1.4 1.4"/><path d="m17.6 17.6 1.4 1.4"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="m5 19 1.4-1.4"/><path d="m17.6 6.4 1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
           </span>
           <div class="glance-title">Transparent by design</div>
-          <div class="glance-sub">Network calls only fire when you click a feature — Summary, Chat, or Podcast.</div>
+          <div class="glance-sub">Network calls only fire when you click a feature — Summary, Chat, Podcast, or Article Reader.</div>
         </div>
         <div class="glance-card">
           <span class="glance-icon" aria-hidden="true">
@@ -678,6 +670,7 @@
           <h2><span class="num">1</span> Data we access</h2>
           <ul>
             <li><strong>YouTube transcripts</strong> — Captions for the video on the tab you are viewing are read only when you start a summary, chat, or podcast flow. We do not scrape unrelated pages.</li>
+            <li><strong>Web article text (Article Reader)</strong> — When you open Article Reader on a page, the extension extracts the main article body from the DOM of the <strong>active tab you chose</strong> (title, author, and readable text). Extraction runs locally in your browser. Article text is sent to your AI provider (BYOK) or our managed Edge Functions only when you request a summary or send a chat message — not automatically on page load.</li>
             <li><strong>BYOK: your API keys</strong> (Groq, Ollama Cloud, Google Gemini for TTS) — Stored <strong>locally</strong> in the extension (obfuscated). Used only to authenticate to those providers when you use BYOK.</li>
             <li><strong>Managed AI: Google account</strong> — If you sign in, Supabase receives standard OAuth tokens from Google. We use Google’s identifiers to create your app account. We do not receive your Google password.</li>
             <li><strong>Device identifier for abuse prevention</strong> — For managed sign-in, the extension derives a <strong>browser/device fingerprint</strong> (FingerprintJS-based) and a <strong>persistent local ID</strong> (<span class="inline-code">chrome.storage.local</span>). A fingerprint value is sent to our backend during auth registration so we can limit free-tier abuse (e.g. many accounts on one device). This is not used for advertising.</li>
@@ -693,6 +686,7 @@
           <ul>
             <li><strong>Summaries</strong> — Transcript text is sent to <strong>your</strong> chosen AI provider (Groq or Ollama Cloud) to generate summary, key points, and detailed analysis. Responses return to your browser.</li>
             <li><strong>Chat</strong> — Your messages, transcript context, and recent conversation history go to that same provider. The extension publisher does not proxy those requests.</li>
+            <li><strong>Article Reader</strong> — Extracted article text and your questions go to your configured provider when you click Generate Summary or send a chat message.</li>
             <li><strong>Podcast</strong> — A generated script may be sent to <strong>Google Gemini TTS</strong> (using your key when in BYOK mode) to produce audio, played in the browser and optionally cached locally.</li>
             <li><strong>API keys</strong> — Used only to authenticate to the vendors you configured. They are not sent to the extension author.</li>
           </ul>
@@ -700,6 +694,7 @@
           <ul>
             <li><strong>Auth &amp; credits</strong> — Your session JWT and fingerprint are sent to Supabase Edge Functions (e.g. <span class="inline-code">auth-callback</span>, <span class="inline-code">check-credits</span>) to create/update your account, enforce free-tier and Pro limits, and return checkout links when applicable.</li>
             <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>DeepSeek</strong> and <strong>Google Gemini</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Results return to your browser.</li>
+            <li><strong>Article Reader (managed)</strong> — Article text and chat prompts follow the same managed path through <span class="inline-code">summarize</span> when you explicitly request a summary or send a chat message. Credits are consumed per request.</li>
             <li><strong>Billing</strong> — If you subscribe, <strong>Stripe</strong> processes payment; we store subscription status in our database as needed to unlock Pro features. Opening checkout uses Stripe-hosted pages (and may set Stripe cookies under their domain).</li>
           </ul>
           <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your full browsing history. For managed users, account email and usage metadata may exist on Supabase as described above; IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
@@ -758,8 +753,9 @@
           <p><strong>Chrome extension permissions</strong></p>
           <div class="chips">
             <span class="chip"><code>storage</code> — settings, session, keys, caches locally</span>
-            <span class="chip"><code>activeTab</code> — access the current tab when you use the extension</span>
+            <span class="chip"><code>activeTab</code> — access the current tab when you use the extension (YouTube panel or Article Reader)</span>
             <span class="chip"><code>identity</code> — Google OAuth redirect for Supabase sign-in (managed AI)</span>
+            <span class="chip"><code>scripting</code> — inject Article Reader scripts into the active tab only when you open it from the popup</span>
           </div>
           <p class="spaced-top"><strong>Host access</strong> (declared in the manifest)</p>
           <div class="chips">

@@ -6,13 +6,26 @@
 class ArticleUI {
   static #instance = null;
 
+  static #msg(key, fallback = '') {
+    try {
+      return chrome.i18n?.getMessage(key) || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  static #LOGO_URL = chrome.runtime.getURL('icons/icon32.png');
+
+  static #logoImg(size = 20) {
+    return `<img src="${ArticleUI.#LOGO_URL}" width="${size}" height="${size}" alt="" class="gleano-logo-img" aria-hidden="true">`;
+  }
+
   static #ICONS = {
-    sparkle: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2L9.19 8.63 2 10l5.46 4.73L5.82 22 12 18.27 18.18 22l-1.64-7.27L22 10l-7.19-1.37z"/></svg>',
     close: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
     send: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
     copy: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
     refresh: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
-    article: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>'
+    article: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>'
   };
 
   #panelRoot = null;
@@ -21,6 +34,8 @@ class ArticleUI {
   #isDarkMode = false;
   #chatMessages = [];
   #eventHandlers = {};
+  #themeMediaQuery = null;
+  #themeChangeHandler = null;
 
   constructor() {
     if (ArticleUI.#instance) {
@@ -46,6 +61,11 @@ class ArticleUI {
   }
 
   destroy() {
+    if (this.#themeMediaQuery && this.#themeChangeHandler) {
+      this.#themeMediaQuery.removeEventListener('change', this.#themeChangeHandler);
+    }
+    this.#themeMediaQuery = null;
+    this.#themeChangeHandler = null;
     if (this.#panelRoot) {
       this.#panelRoot.remove();
       this.#panelRoot = null;
@@ -58,24 +78,31 @@ class ArticleUI {
   }
 
   #detectTheme() {
-    const darkMeta = document.querySelector('meta[name="color-scheme"]');
-    if (darkMeta?.content?.includes('dark')) {
-      this.#isDarkMode = true;
-      return;
-    }
-    
-    const bgColor = window.getComputedStyle(document.body).backgroundColor;
-    if (bgColor) {
-      const rgb = bgColor.match(/\d+/g);
-      if (rgb && rgb.length >= 3) {
-        const luminance = (parseInt(rgb[0]) * 0.299 + parseInt(rgb[1]) * 0.587 + parseInt(rgb[2]) * 0.114) / 255;
-        this.#isDarkMode = luminance < 0.5;
-      }
-    }
-    
-    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-      this.#isDarkMode = true;
-    }
+    // Follow the OS/system theme, NOT the website's theme. Day = light, night = dark.
+    this.#themeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)') || null;
+    this.#isDarkMode = !!this.#themeMediaQuery?.matches;
+
+    // Update live when the system theme changes.
+    this.#themeChangeHandler = (e) => {
+      this.#isDarkMode = e.matches;
+      this.#applyTheme();
+    };
+    this.#themeMediaQuery?.addEventListener('change', this.#themeChangeHandler);
+  }
+
+  #applyTheme() {
+    this.#panelRoot?.classList.toggle('dark', this.#isDarkMode);
+    const btn = document.getElementById('gleano-article-toggle');
+    btn?.classList.toggle('dark', this.#isDarkMode);
+  }
+
+  #scrollToBottom() {
+    // The scroll container is .gleano-content (overflow-y: auto), NOT #gleanoResult.
+    const content = this.#panelRoot?.querySelector('.gleano-content');
+    if (!content) return;
+    requestAnimationFrame(() => {
+      content.scrollTop = content.scrollHeight;
+    });
   }
 
   #createToggleButton() {
@@ -83,7 +110,7 @@ class ArticleUI {
     btn.id = 'gleano-article-toggle';
     btn.className = 'gleano-toggle-btn' + (this.#isDarkMode ? ' dark' : '');
     btn.innerHTML = ArticleUI.#ICONS.article;
-    btn.title = 'Gleano - Read & Chat';
+    btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano - Read & Chat');
     btn.addEventListener('click', () => this.toggle());
     document.body.appendChild(btn);
   }
@@ -96,7 +123,7 @@ class ArticleUI {
     panel.innerHTML = `
       <div class="gleano-header">
         <div class="gleano-header-left">
-          <div class="gleano-header-logo">${ArticleUI.#ICONS.sparkle}</div>
+          <div class="gleano-header-logo">${ArticleUI.#logoImg(22)}</div>
           <span class="gleano-header-title">Gleano</span>
         </div>
         <div class="gleano-header-right">
@@ -106,8 +133,8 @@ class ArticleUI {
       </div>
       
       <nav class="gleano-tabs">
-        <button class="gleano-tab active" data-mode="chat">Chat</button>
-        <button class="gleano-tab" data-mode="summary">Summary</button>
+        <button class="gleano-tab active" data-mode="chat">${ArticleUI.#msg('articleChatTab', 'Chat')}</button>
+        <button class="gleano-tab" data-mode="summary">${ArticleUI.#msg('articleSummaryTab', 'Summary')}</button>
       </nav>
       
       <div class="gleano-content">
@@ -115,7 +142,7 @@ class ArticleUI {
       </div>
       
       <div class="gleano-chat-input" id="gleanoChatInput">
-        <input type="text" placeholder="Ask about this article..." id="gleanoChatText" />
+        <input type="text" placeholder="${ArticleUI.#msg('articleChatPlaceholder', 'Ask about this article...')}" id="gleanoChatText" />
         <button class="gleano-send-btn" id="gleanoChatSend">${ArticleUI.#ICONS.send}</button>
       </div>
       
@@ -190,7 +217,7 @@ class ArticleUI {
     const result = document.getElementById('gleanoResult');
     if (result?.textContent) {
       navigator.clipboard.writeText(result.textContent).then(() => {
-        this.showToast('Copied to clipboard!');
+        this.showToast(ArticleUI.#msg('copied', 'Copied to clipboard!'));
       });
     }
   }
@@ -256,7 +283,7 @@ class ArticleUI {
         ${title ? `<div class="gleano-ready-title">${title}</div>` : ''}
         ${excerpt ? `<p class="gleano-ready-excerpt">${excerpt}</p>` : ''}
         <button class="gleano-generate-btn" id="gleanoGenerateBtn">
-          ${ArticleUI.#ICONS.sparkle}
+          ${ArticleUI.#logoImg(16)}
           <span>Generate Summary</span>
         </button>
         <p class="gleano-ready-hint">Uses 1 credit. Or just ask a question in the Chat tab.</p>
@@ -267,7 +294,7 @@ class ArticleUI {
     });
   }
 
-  showLoading(message = 'Analyzing article...') {
+  showLoading(message = ArticleUI.#msg('articleLoading', 'Analyzing article...')) {
     const result = document.getElementById('gleanoResult');
     if (result) {
       result.innerHTML = `
@@ -309,7 +336,7 @@ class ArticleUI {
     if (messages.length === 0) {
       result.innerHTML = `
         <div class="gleano-chat-empty">
-          <div class="gleano-chat-empty-icon">${ArticleUI.#ICONS.sparkle}</div>
+          <div class="gleano-chat-empty-icon">${ArticleUI.#logoImg(32)}</div>
           <p>Ask anything about this article</p>
           <p class="gleano-hint">Answers are based only on the article content. Switch to the Summary tab for a quick recap.</p>
         </div>
@@ -329,7 +356,7 @@ class ArticleUI {
       `;
     }).join('');
 
-    result.scrollTop = result.scrollHeight;
+    this.#scrollToBottom();
   }
 
   appendChatMessage(role, content) {

@@ -11,7 +11,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const v = chrome.runtime?.getManifest?.()?.version;
     const verEl = $('#popupVersion');
     if (verEl && v) verEl.textContent = `v${v}`;
+    await _maybeShowWhatsNew(v);
   } catch { /* ignore */ }
+
+  async function _maybeShowWhatsNew(version) {
+    if (!version) return;
+    const banner = $('#whatsNewBanner');
+    const titleEl = $('#whatsNewTitle');
+    if (!banner) return;
+
+    const storage = await chrome.storage.local.get(['lastUpdateVersion', 'whatsNewDismissedVersion']);
+    if (storage.whatsNewDismissedVersion === version) return;
+    if (storage.lastUpdateVersion !== version) return;
+
+    if (titleEl) titleEl.textContent = `Gleano v${version}`;
+    banner.classList.remove('hidden');
+
+    $('#whatsNewLink')?.addEventListener('click', () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('update/update.html') });
+    });
+    $('#whatsNewDismiss')?.addEventListener('click', () => {
+      chrome.storage.local.set({ whatsNewDismissedVersion: version });
+      banner.classList.add('hidden');
+    });
+  }
 
   const popupUpgradeProGroup = $('#popupUpgradeProGroup');
   if (popupUpgradeProGroup) {
@@ -155,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       openArticleReaderBtn.disabled = false;
       openArticleReaderBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2L9.19 8.63 2 10l5.46 4.73L5.82 22 12 18.27 18.18 22l-1.64-7.27L22 10l-7.19-1.37z"/></svg>
+        <img src="${chrome.runtime.getURL('icons/icon32.png')}" width="16" height="16" alt="" aria-hidden="true">
         Open Article Reader
       `;
       if (articleReaderError) {
@@ -177,6 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const accountEmail     = $('#accountEmail');
   const accountPlan      = $('#accountPlan');
   const accountCredits   = $('#accountCredits');
+  const accountRateWarning = $('#accountRateWarning');
 
   function setProviderVisibility(managed) {
     isGoogleUser = managed;
@@ -266,6 +290,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       accountAvatar.textContent = (name || 'U')[0].toUpperCase();
     }
 
+    // Surface OUR per-account rate cap (check-credits `rate_limited`). This is the
+    // app's own burst guard — distinct from a provider/system error. Pro users who
+    // somehow hit it just get the "slow down" line (no upgrade CTA to give).
+    const _updateRateWarning = (c) => {
+      if (!accountRateWarning) return;
+      const limited = !!(c && c.rate_limited === true);
+      accountRateWarning.classList.toggle('hidden', !limited);
+      if (!limited) return;
+      const isProPlan = String(c?.plan || '').toLowerCase() === 'pro';
+      accountRateWarning.textContent = isProPlan
+        ? "You've made a lot of requests in a short time. Please take a short break and try again soon."
+        : "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.";
+    };
+
     const _updateCreditsUI = (plan, creditsCount, monthlyUsage, monthlyLimit) => {
       const planNorm = String(plan || '').toLowerCase();
       const isPro = planNorm === 'pro';
@@ -302,12 +340,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (credits && credits.plan) {
       _updateCreditsUI(credits.plan, credits.credits, credits.monthly_usage, credits.monthly_limit);
+      _updateRateWarning(credits);
       finishSignedInLayout();
     } else {
       accountPlan.innerHTML = '<span class="badge-free">Free</span>';
       accountCredits.textContent = 'Checking credits…';
       _lastPlanNorm = 'free';
       _lastCreditsCount = 0;
+      if (accountRateWarning) accountRateWarning.classList.add('hidden');
       if (popupUpgradeProGroup) popupUpgradeProGroup.classList.add('hidden');
       const credEpoch = accountRenderEpoch;
       chrome.runtime.sendMessage({ action: 'checkCredits' }).then((c) => {
@@ -315,6 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (accountSignedIn.classList.contains('hidden')) return;
         if (c && c.plan) _updateCreditsUI(c.plan, c.credits, c.monthly_usage, c.monthly_limit);
         else accountCredits.textContent = '';
+        _updateRateWarning(c);
         finishSignedInLayout();
       }).catch(() => {
         accountCredits.textContent = '';

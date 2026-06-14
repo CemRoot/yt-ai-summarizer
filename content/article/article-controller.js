@@ -173,14 +173,30 @@ class ArticleController {
   }
 
   #friendlyError(err) {
+    // Prefer the structured error code; fall back to matching the message text.
+    const code = String(err?.code || '').toUpperCase();
     const msg = String(err?.message || '');
-    if (/NO_CREDITS|INSUFFICIENT_CREDITS/i.test(msg)) {
-      return 'Krediniz tükendi. Pro\'ya yükseltin veya kendi API anahtarınızı kullanın.';
+    const has = (re) => re.test(code) || re.test(msg);
+
+    if (has(/NO_CREDITS|INSUFFICIENT_CREDITS/)) {
+      return 'You are out of credits. Upgrade to Pro or add your own API key in settings.';
     }
-    if (/NO_API_KEY/i.test(msg)) {
-      return 'Lütfen ayarlardan giriş yapın veya bir API anahtarı ekleyin.';
+    // Provider-side exhaustion/failure (Gemini/Ollama) — this is a system issue,
+    // NOT the user's own rate cap. Tell them it's on us and to open a ticket.
+    if (has(/AI_QUOTA_EXCEEDED|GEMINI_QUOTA|PROVIDER_UNAVAILABLE|SERVER_ERROR|PROVIDER_EMPTY_RESPONSE/)) {
+      return 'System error: the AI service is temporarily unavailable. Please try again later, and if it persists, open a support ticket.';
     }
-    return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+    // Our own per-account burst cap.
+    if (has(/RATE_LIMITED|TOO MANY REQUESTS/)) {
+      return "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.";
+    }
+    if (has(/NO_API_KEY/)) {
+      return 'Please sign in or add an API key in settings.';
+    }
+    if (has(/SESSION_EXPIRED|NOT_AUTHENTICATED/)) {
+      return 'Your session expired. Please sign in again.';
+    }
+    return 'Something went wrong. Please try again.';
   }
 
   async #onRefresh() {
@@ -258,7 +274,9 @@ class ArticleController {
         }
         
         if (response?.error) {
-          reject(new Error(response.error));
+          const e = new Error(response.error);
+          if (response.errorCode) e.code = response.errorCode;
+          reject(e);
           return;
         }
         
@@ -320,12 +338,12 @@ class ArticleController {
 
   #getErrorMessage(errorCode, defaultMessage) {
     const messages = {
-      'blocked': 'This page type is not supported for security reasons (e.g., banking, email, login pages).',
-      'not_readable': 'No readable article content found on this page. Try a news article or blog post.',
-      'too_short': 'The article is too short to summarize. It needs at least 500 characters.',
-      'parse_failed': 'Could not extract the article content. The page structure may not be supported.'
+      'blocked': chrome.i18n?.getMessage('articleBlocked') || 'This page type is not supported for security reasons (e.g., banking, email, login pages).',
+      'not_readable': chrome.i18n?.getMessage('articleNotFound') || 'No readable article content found on this page. Try a news article or blog post.',
+      'too_short': chrome.i18n?.getMessage('articleTooShort') || 'The article is too short to summarize. It needs at least 500 characters.',
+      'parse_failed': chrome.i18n?.getMessage('articleError') || 'Could not extract the article content. The page structure may not be supported.'
     };
-    return messages[errorCode] || defaultMessage || 'An unexpected error occurred.';
+    return messages[errorCode] || defaultMessage || chrome.i18n?.getMessage('articleError') || 'An unexpected error occurred.';
   }
 
   getArticleMetadata() {

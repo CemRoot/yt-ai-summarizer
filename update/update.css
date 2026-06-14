@@ -67,21 +67,10 @@ body {
 
 .popup-logo-mark {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #fff 0%, #f8f8fa 100%);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.popup-logo-mark svg {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
 }
 
 .version-pill {

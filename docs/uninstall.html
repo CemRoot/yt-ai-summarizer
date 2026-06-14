@@ -10,8 +10,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Uninstalled — Gleano</title>
-  <!-- Inline SVG favicon: works on GitHub Pages without a separate file (avoids 404 / wrong asset). -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FF0000' d='M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z'/%3E%3Cpath fill='%23fff' d='M10 15.5l5.5-3.5L10 8.5v7z'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="icon" href="favicon.png?v=2.1.0" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -106,7 +105,7 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .brand-icon svg { width: 18px; height: 18px; }
+    .brand-icon img { width: 24px; height: 24px; border-radius: 6px; display: block; }
     .brand-name {
       font-size: 0.95rem;
       font-weight: 600;
@@ -402,7 +401,7 @@
     <!-- Brand -->
     <div class="brand">
       <div class="brand-icon">
-        <svg viewBox="0 0 24 24"><path d="M21.58 7.19a2.51 2.51 0 00-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 001.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81z" fill="#FF0000"/><path d="M10 15.5l5.5-3.5L10 8.5v7z" fill="#fff"/></svg>
+        <img src="favicon.png?v=2.1.0" width="24" height="24" alt="" aria-hidden="true">
       </div>
       <span class="brand-name">Gleano</span>
     </div>
@@ -421,7 +420,7 @@
     <div class="reinstall-card">
       <div class="reinstall-info">
         <h3>Changed your mind?</h3>
-        <p>Get back instant AI summaries, key points, and podcast mode for any YouTube video.</p>
+        <p>Get back instant AI summaries, key points, podcast mode for YouTube videos, and Article Reader for news and blogs.</p>
         <div class="reinstall-stats">
           <div class="stat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg>

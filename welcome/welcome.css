@@ -9,11 +9,11 @@
   --text-mut:     #8e8e93;
   --border:       #e4e4e7;
   --border-strong:#d4d4d8;
-  --accent:       #065fd4;
-  --accent-hover: #0550b3;
-  --accent-soft:  rgba(6, 95, 212, 0.1);
-  --accent-faint: rgba(6, 95, 212, 0.06);
-  --yt-red:       #ff0000;
+  --accent:       #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-soft:  rgba(99, 102, 241, 0.12);
+  --accent-faint: rgba(99, 102, 241, 0.06);
+  --brand-2:      #8b5cf6;
   --green:        #0d7a5c;
   --green-soft:   rgba(13, 122, 92, 0.1);
   --radius:       14px;
@@ -34,7 +34,7 @@
 .welcome-accent {
   height: 3px;
   width: 100%;
-  background: linear-gradient(90deg, var(--yt-red) 0%, #c00 50%, var(--yt-red) 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--brand-2) 50%, var(--accent) 100%);
   flex-shrink: 0;
 }
 
@@ -174,7 +174,7 @@ body {
 .progress-fill {
   height: 100%;
   width: 33.33%;
-  background: linear-gradient(90deg, var(--accent) 0%, #3b82f6 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--brand-2) 100%);
   border-radius: 4px;
   transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -278,6 +278,7 @@ body {
 }
 
 .hero-card {
+  position: relative;
   text-align: center;
   padding: 32px 24px 28px;
   background: var(--surface);
@@ -291,8 +292,45 @@ body {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.hero-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.hero-logo-mark {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.how-icon img { display: block; border-radius: 6px; }
+
+.hero-version {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-mut);
-  margin-bottom: 12px;
+  background: var(--surface-2);
+  padding: 5px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  z-index: 1;
+}
+
+[dir="rtl"] .hero-version {
+  right: auto;
+  left: 14px;
 }
 
 .hero-badge {
@@ -324,7 +362,27 @@ body {
   color: var(--text-sec);
   line-height: 1.55;
   max-width: 36rem;
-  margin: 0 auto;
+  margin: 0 auto 16px;
+}
+
+.hero-features {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.hero-features li {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  background: var(--accent-faint);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  padding: 5px 12px;
+  border-radius: 999px;
 }
 
 /* ═══ Steps ═══ */
@@ -397,7 +455,7 @@ body {
   background: var(--accent-faint);
   padding: 5px 12px;
   border-radius: 100px;
-  border: 1px solid rgba(6, 95, 212, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 .step h2 {
@@ -506,7 +564,7 @@ body {
   background: var(--accent-faint);
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(6, 95, 212, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
 /* ═══ Instruction Card ═══ */
@@ -614,7 +672,7 @@ body {
 
 .validation-status.success { background: #e8f5f0; color: var(--green); border: 1px solid #b8e0cc; }
 .validation-status.error   { background: #fdecef; color: #c00; border: 1px solid #f5c6c6; }
-.validation-status.loading { background: var(--accent-faint); color: var(--accent); border: 1px solid rgba(6, 95, 212, 0.2); }
+.validation-status.loading { background: var(--accent-faint); color: var(--accent); border: 1px solid rgba(99, 102, 241, 0.2); }
 .validation-status.hidden  { display: none; }
 
 /* ═══ How Cards ═══ */
@@ -668,8 +726,8 @@ body {
   flex-shrink: 0;
 }
 
-.how-icon.red   { background: rgba(255, 0, 0, 0.08);   color: var(--yt-red); }
-.how-icon.blue  { background: var(--accent-faint);     color: var(--accent); }
+.how-icon.brand { background: var(--accent-faint); color: var(--accent); }
+.how-icon.blue  { background: rgba(139, 92, 246, 0.1); color: var(--brand-2); }
 .how-icon.green { background: var(--green-soft);       color: var(--green); }
 
 .how-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em; }
@@ -709,7 +767,7 @@ body {
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(6, 95, 212, 0.35);
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.35);
 }
 
 .btn-primary:hover { background: var(--accent-hover); }
@@ -768,13 +826,13 @@ body {
 
 .onboard-card:hover {
   border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(6, 95, 212, 0.1);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
   transform: translateY(-2px);
 }
 
 .onboard-primary {
   border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(6, 95, 212, 0.04) 0%, var(--surface) 100%);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.05) 0%, var(--surface) 100%);
 }
 
 .onboard-secondary {
@@ -962,7 +1020,9 @@ body {
 
 @media (max-width: 600px) {
   .welcome-container { padding: 0 14px 48px; }
-  .hero-card { padding: 24px 18px; }
+  .hero-card { padding: 28px 16px 24px; }
+  .hero-version { top: 10px; right: 10px; font-size: 10px; padding: 4px 8px; }
+  [dir="rtl"] .hero-version { right: auto; left: 10px; }
   .provider-cards { grid-template-columns: 1fr; }
   .onboard-paths { grid-template-columns: 1fr; }
   .welcome-provider-toggle { grid-template-columns: 1fr; }
