@@ -438,6 +438,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ─── Article Reader actions ──────────────────────────────────────
+
+  if (message.action === 'articleSummary') {
+    handleArticleSummary(message)
+      .then(sendResponse)
+      .catch((err) => sendResponse(serializeError(err)));
+    return true;
+  }
+
+  if (message.action === 'articleChat') {
+    handleArticleChat(message)
+      .then(sendResponse)
+      .catch((err) => sendResponse(serializeError(err)));
+    return true;
+  }
+
+  if (message.action === 'injectArticleReader') {
+    injectArticleReader(message.tabId)
+      .then(sendResponse)
+      .catch((err) => sendResponse({ error: err?.message || 'Injection failed' }));
+    return true;
+  }
+
+  if (message.action === 'checkArticlePage') {
+    checkArticlePage(message.tabId)
+      .then(sendResponse)
+      .catch((err) => sendResponse({ error: err?.message || 'Check failed' }));
+    return true;
+  }
+
   return false;
 });
 
@@ -1355,6 +1385,250 @@ ${contextTranscript}
 
   const result = await callAI(provider, apiKey, model, messages, 0, 2048);
   return { answer: result.content, model: result.model, provider };
+}
+
+// ─── Article Reader Handlers ─────────────────────────────────────────────────
+
+const ARTICLE_SYSTEM_PROMPTS = {
+  summary: `You are an expert article analyst. Given a web article, provide a clear and concise summary in 3-5 paragraphs.
+
+RULES:
+- Capture the main thesis, key arguments, and conclusions.
+- Include specific evidence: names, dates, statistics, and references mentioned.
+- Use markdown formatting with bold for key terms.
+- Be precise — do not generalize or add information not in the article.`,
+
+  chat: `You are an article-grounded assistant. You ONLY answer based on the article content provided below.
+
+RULES:
+- Answer ONLY from the article. If something is not mentioned, say "The article does not mention this."
+- Never make up information or draw from external knowledge.
+- Use markdown where appropriate (bold, lists).
+- Keep responses focused and relevant to the question.`
+};
+
+/**
+ * Handle article summary request
+ */
+async function handleArticleSummary(data) {
+  const { articleContent, articleTitle, articleUrl, language } = data;
+
+  if (!articleContent || articleContent.trim().length < 100) {
+    throw new Error('INSUFFICIENT_CONTENT');
+  }
+
+  const languageInstruction = language && language !== 'en' && language !== 'auto'
+    ? `\n\nIMPORTANT: Respond in ${language}. All content must be in that language.`
+    : '';
+
+  const maxChars = 80000;
+  let content = articleContent;
+  if (content.length > maxChars) {
+    content = content.substring(0, maxChars) + '\n... [Content truncated]';
+  }
+
+  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.summary}${languageInstruction}
+
+--- ARTICLE ---
+Title: ${articleTitle || 'Unknown'}
+URL: ${articleUrl || 'Unknown'}
+
+${content}
+---------------`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: 'Please provide a comprehensive summary of this article.' }
+  ];
+
+  const mode = await getManagedMode();
+
+  if (mode.managed) {
+    try {
+      const edgeResult = await ApiClient.getInstance().summarize({
+        videoId: `article:${Date.now()}`,
+        transcript: content,
+        action: 'article-summary',
+        language: language || 'auto',
+      });
+      return {
+        content: edgeResult.result || edgeResult.content || '',
+        model: edgeResult.provider || 'managed',
+        provider: 'managed',
+        credits_remaining: edgeResult.credits_remaining,
+        credits_used: edgeResult.credits_used,
+      };
+    } catch (err) {
+      if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS') {
+        const { apiKey } = await getProviderConfig();
+        if (!apiKey) throw err;
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  const { provider, apiKey, model } = await getProviderConfig();
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  return { content: result.content, model: result.model, provider };
+}
+
+/**
+ * Handle article chat request
+ */
+async function handleArticleChat(data) {
+  const { articleContent, articleTitle, articleUrl, question, history, language } = data;
+
+  if (!articleContent || articleContent.trim().length < 100) {
+    throw new Error('INSUFFICIENT_CONTENT');
+  }
+
+  if (!question || question.trim().length === 0) {
+    throw new Error('EMPTY_QUESTION');
+  }
+
+  const languageInstruction = language && language !== 'en' && language !== 'auto'
+    ? `\n\nIMPORTANT: Respond in ${language}. All content must be in that language.`
+    : '';
+
+  const maxChars = 80000;
+  let content = articleContent;
+  if (content.length > maxChars) {
+    content = content.substring(0, maxChars) + '\n... [Content truncated]';
+  }
+
+  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.chat}${languageInstruction}
+
+--- ARTICLE ---
+Title: ${articleTitle || 'Unknown'}
+URL: ${articleUrl || 'Unknown'}
+
+${content}
+---------------`;
+
+  const messages = [{ role: 'system', content: systemPrompt }];
+
+  if (history && history.length > 0) {
+    const recentHistory = history.slice(-10);
+    for (const msg of recentHistory) {
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        messages.push({ role: msg.role, content: msg.content });
+      }
+    }
+  }
+
+  messages.push({ role: 'user', content: question });
+
+  const mode = await getManagedMode();
+
+  if (mode.managed) {
+    try {
+      const chatHistory = (history || []).slice(-10);
+      const edgeResult = await ApiClient.getInstance().summarize({
+        videoId: `article:${Date.now()}`,
+        transcript: content,
+        action: 'article-chat',
+        language: language || 'auto',
+        chatMessage: question,
+        chatHistory,
+      });
+      return {
+        content: edgeResult.result || '',
+        model: edgeResult.provider || 'managed',
+        provider: 'managed',
+        credits_remaining: edgeResult.credits_remaining,
+      };
+    } catch (err) {
+      if (err?.code === 'NO_CREDITS' || err?.code === 'INSUFFICIENT_CREDITS') {
+        const { apiKey } = await getProviderConfig();
+        if (!apiKey) throw err;
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  const { provider, apiKey, model } = await getProviderConfig();
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  return { content: result.content, model: result.model, provider };
+}
+
+/**
+ * Inject article reader content scripts into a tab
+ */
+async function injectArticleReader(tabId) {
+  if (!tabId) {
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    tabId = activeTab?.id;
+  }
+
+  if (!tabId) throw new Error('NO_ACTIVE_TAB');
+
+  const tab = await chrome.tabs.get(tabId);
+  if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+    throw new Error('UNSUPPORTED_PAGE');
+  }
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['utils/readability.js']
+  });
+
+  await chrome.scripting.insertCSS({
+    target: { tabId },
+    files: ['content/article/article.css']
+  });
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: [
+      'content/article/article-extractor.js',
+      'content/article/article-ui.js',
+      'content/article/article-controller.js'
+    ]
+  });
+
+  return { ok: true, tabId };
+}
+
+/**
+ * Check if current tab is suitable for article reading
+ */
+async function checkArticlePage(tabId) {
+  if (!tabId) {
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    tabId = activeTab?.id;
+  }
+
+  if (!tabId) return { isArticle: false, reason: 'NO_TAB' };
+
+  const tab = await chrome.tabs.get(tabId);
+  const url = tab.url || '';
+
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
+    return { isArticle: false, reason: 'BROWSER_PAGE' };
+  }
+
+  if (/youtube\.com|youtu\.be/i.test(url)) {
+    return { isArticle: false, reason: 'YOUTUBE', isYouTube: true };
+  }
+
+  const blockedPatterns = [
+    /banking|bank\./i,
+    /mail\.(google|yahoo|outlook)/i,
+    /login|signin|auth|oauth/i,
+    /checkout|payment|cart/i
+  ];
+
+  if (blockedPatterns.some(p => p.test(url))) {
+    return { isArticle: false, reason: 'BLOCKED_PAGE' };
+  }
+
+  return { isArticle: true, url, title: tab.title };
 }
 
 /**

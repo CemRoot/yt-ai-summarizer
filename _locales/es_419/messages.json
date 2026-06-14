@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "Resúmenes, podcasts y chat con IA para cualquier videos de YouTube y artículos — 20+ idiomas, 5 créditos gratis, BYOK o Pro desde €4,99/mes.",
     "description": "Descripción breve para Chrome Web Store (máx 132 caracteres)"
+  },
+  "articleReaderTitle": {
+    "message": "Lector de Artículos",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Resumen",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Chat",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Pregunta sobre este artículo...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "No se encontró artículo legible",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Artículo demasiado corto",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "Este tipo de página no es compatible",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Analizando artículo...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Error al procesar el artículo",
+    "description": "Article reader UI text"
   }
 }

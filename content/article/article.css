@@ -1,0 +1,437 @@
+/**
+ * Gleano - Article Reader Styles
+ * Consistent with YouTube panel design
+ */
+
+/* Toggle Button */
+.gleano-toggle-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gleano-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+.gleano-toggle-btn.dark {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Panel */
+.gleano-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gleano-panel.open {
+  right: 0;
+}
+
+.gleano-panel.dark {
+  background: #1f2937;
+  border-left-color: #374151;
+  color: #f3f4f6;
+}
+
+/* Header */
+.gleano-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.gleano-panel.dark .gleano-header {
+  border-bottom-color: #374151;
+}
+
+.gleano-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gleano-header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gleano-header-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gleano-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.gleano-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tabs */
+.gleano-tabs {
+  display: flex;
+  padding: 8px 12px;
+  gap: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.gleano-panel.dark .gleano-tabs {
+  border-bottom-color: #374151;
+}
+
+.gleano-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gleano-tab:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.gleano-tab.active {
+  background: #10b981;
+  color: white;
+}
+
+.gleano-panel.dark .gleano-tab {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.gleano-panel.dark .gleano-tab:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.gleano-panel.dark .gleano-tab.active {
+  background: #10b981;
+  color: white;
+}
+
+/* Content Area */
+.gleano-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.gleano-result {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.gleano-panel.dark .gleano-result {
+  color: #e5e7eb;
+}
+
+.gleano-result h2, .gleano-result h3, .gleano-result h4 {
+  margin: 16px 0 8px 0;
+  color: #111827;
+}
+
+.gleano-panel.dark .gleano-result h2,
+.gleano-panel.dark .gleano-result h3,
+.gleano-panel.dark .gleano-result h4 {
+  color: #f9fafb;
+}
+
+.gleano-result p {
+  margin: 0 0 12px 0;
+}
+
+.gleano-result ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.gleano-result li {
+  margin: 4px 0;
+}
+
+.gleano-result code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+.gleano-panel.dark .gleano-result code {
+  background: #374151;
+}
+
+.gleano-result strong {
+  color: #111827;
+}
+
+.gleano-panel.dark .gleano-result strong {
+  color: #f9fafb;
+}
+
+/* Loading State */
+.gleano-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.gleano-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: gleano-spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes gleano-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.gleano-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  color: #991b1b;
+}
+
+.gleano-panel.dark .gleano-error {
+  background: #451a1a;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+/* Chat */
+.gleano-chat-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.gleano-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.gleano-chat-msg {
+  margin-bottom: 12px;
+}
+
+.gleano-chat-msg.user {
+  text-align: right;
+}
+
+.gleano-chat-bubble {
+  display: inline-block;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.gleano-chat-msg.user .gleano-chat-bubble {
+  background: #10b981;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.gleano-chat-msg.assistant .gleano-chat-bubble {
+  background: #f3f4f6;
+  color: #374151;
+  border-bottom-left-radius: 4px;
+}
+
+.gleano-panel.dark .gleano-chat-msg.assistant .gleano-chat-bubble {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+/* Chat Input */
+.gleano-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.gleano-panel.dark .gleano-chat-input {
+  border-top-color: #374151;
+  background: #111827;
+}
+
+.gleano-chat-input input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #374151;
+}
+
+.gleano-panel.dark .gleano-chat-input input {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+.gleano-chat-input input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.gleano-send-btn {
+  padding: 10px 14px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.gleano-send-btn:hover {
+  background: #059669;
+}
+
+/* Footer Actions */
+.gleano-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.gleano-panel.dark .gleano-footer {
+  border-top-color: #374151;
+}
+
+.gleano-action-btn {
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.gleano-action-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.gleano-panel.dark .gleano-action-btn {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.gleano-panel.dark .gleano-action-btn:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+/* Toast */
+.gleano-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1f2937;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.gleano-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .gleano-panel {
+    width: 100%;
+    right: -100%;
+  }
+  
+  .gleano-toggle-btn {
+    bottom: 80px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+}

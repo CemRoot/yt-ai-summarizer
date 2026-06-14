@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "任何 YouTube 影片的 AI 摘要、Podcast 與對話 — 支援 20+ 語言，5 次免費體驗，BYOK 或 Pro（€4.99/月起）。",
     "description": "Chrome 線上應用程式商店的簡短說明（最多 132 個字元）"
+  },
+  "articleReaderTitle": {
+    "message": "文章閱讀器",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "摘要",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "聊天",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "詢問有關這篇文章的問題...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "未找到可讀文章",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "文章太短",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "不支援此頁面類型",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "正在分析文章...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "處理失敗",
+    "description": "Article reader UI text"
   }
 }

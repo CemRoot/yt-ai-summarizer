@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "KI-Zusammenfassungen, Podcasts & Chat für jedes YouTube-Videos und Artikel — 20+ Sprachen, 5 Gratis-Credits, BYOK oder Pro ab 4,99 €/Monat.",
     "description": "Kurzbeschreibung für den Chrome Web Store (max 132 Zeichen)"
+  },
+  "articleReaderTitle": {
+    "message": "Artikelleser",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Zusammenfassung",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Chat",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Frage zu diesem Artikel stellen...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "Kein lesbarer Artikel gefunden",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Artikel zu kurz",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "Dieser Seitentyp wird nicht unterstützt",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Artikel wird analysiert...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Verarbeitung fehlgeschlagen",
+    "description": "Article reader UI text"
   }
 }

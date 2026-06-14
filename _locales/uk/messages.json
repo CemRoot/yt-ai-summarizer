@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "AI-конспекти, подкасти та чат для будь-якого відео YouTube — 20+ мов, 5 безкоштовних кредитів, BYOK або Pro від €4,99/міс.",
     "description": "Короткий опис для Chrome Web Store (макс 132 символи)"
+  },
+  "articleReaderTitle": {
+    "message": "Article Reader",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Summary",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Chat",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Ask about this article...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "No readable article found on this page",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Article is too short (min 500 chars)",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "This page type is not supported",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Analyzing article...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Failed to process article",
+    "description": "Article reader UI text"
   }
 }

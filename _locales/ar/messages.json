@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "ملخصات وبودكاست ودردشة بالذكاء الاصطناعي لأي فيديو يوتيوب — أكثر من 20 لغة، 5 أرصدة مجانية، BYOK أو Pro ابتداءً من €4.99/شهر.",
     "description": "وصف قصير لمتجر Chrome Web Store (حد أقصى 132 حرفًا)"
+  },
+  "articleReaderTitle": {
+    "message": "قارئ المقالات",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "ملخص",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "محادثة",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "اسأل عن هذا المقال...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "لم يتم العثور على مقال قابل للقراءة",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "المقال قصير جداً",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "هذا النوع من الصفحات غير مدعوم",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "جاري تحليل المقال...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "فشل في المعالجة",
+    "description": "Article reader UI text"
   }
 }

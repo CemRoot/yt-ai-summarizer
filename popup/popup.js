@@ -111,6 +111,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch { /* ignore */ }
 
+  // ─── Article Reader Detection ────────────────────────────────────
+  const articleReaderCard = $('#articleReaderCard');
+  const articleReaderHint = $('#articleReaderHint');
+  const articleReaderError = $('#articleReaderError');
+  const openArticleReaderBtn = $('#openArticleReaderBtn');
+
+  async function checkAndShowArticleReader() {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'checkArticlePage' });
+      
+      if (response?.isYouTube) {
+        articleReaderCard?.classList.add('hidden');
+        return;
+      }
+      
+      if (response?.isArticle) {
+        articleReaderCard?.classList.remove('hidden');
+        if (articleReaderHint) {
+          articleReaderHint.textContent = `Summarize and chat about "${response.title?.substring(0, 40) || 'this article'}..."`;
+        }
+      } else {
+        articleReaderCard?.classList.add('hidden');
+      }
+    } catch (err) {
+      articleReaderCard?.classList.add('hidden');
+    }
+  }
+
+  openArticleReaderBtn?.addEventListener('click', async () => {
+    openArticleReaderBtn.disabled = true;
+    openArticleReaderBtn.textContent = 'Opening...';
+    articleReaderError?.classList.add('hidden');
+    
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'injectArticleReader' });
+      
+      if (response?.error) {
+        throw new Error(response.error);
+      }
+      
+      window.close();
+    } catch (err) {
+      openArticleReaderBtn.disabled = false;
+      openArticleReaderBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2L9.19 8.63 2 10l5.46 4.73L5.82 22 12 18.27 18.18 22l-1.64-7.27L22 10l-7.19-1.37z"/></svg>
+        Open Article Reader
+      `;
+      if (articleReaderError) {
+        articleReaderError.textContent = err.message || 'Failed to open article reader';
+        articleReaderError.classList.remove('hidden');
+      }
+    }
+  });
+
+  checkAndShowArticleReader();
+
   // ─── Account UI ──────────────────────────────────────────────────
   const accountSignedOut = $('#accountSignedOut');
   const accountSignedIn  = $('#accountSignedIn');

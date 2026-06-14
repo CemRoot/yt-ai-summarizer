@@ -82,5 +82,41 @@
   "copied": {
     "message": "Panoya kopyalandı!",
     "description": "Metin kopyalandığında geri bildirim"
+  },
+  "articleReaderTitle": {
+    "message": "Makale Okuyucu",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Özet",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Sohbet",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Bu makale hakkında bir soru sorun...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "Bu sayfada okunabilir makale bulunamadı",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Makale çok kısa (min 500 karakter)",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "Bu sayfa türü desteklenmiyor",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Makale analiz ediliyor...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Makale işlenemedi",
+    "description": "Article reader UI text"
   }
 }

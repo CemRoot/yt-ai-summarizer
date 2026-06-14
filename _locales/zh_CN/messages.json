@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "任何 YouTube 视频的 AI 摘要、播客与对话 — 支持 20+ 语言，5 次免费体验，BYOK 或 Pro（€4.99/月起）。",
     "description": "Chrome 网上应用店的简短说明（最多 132 个字符）"
+  },
+  "articleReaderTitle": {
+    "message": "文章阅读器",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "摘要",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "聊天",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "询问有关这篇文章的问题...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "未找到可读文章",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "文章太短",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "不支持此页面类型",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "正在分析文章...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "处理失败",
+    "description": "Article reader UI text"
   }
 }

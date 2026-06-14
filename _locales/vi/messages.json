@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "Tóm tắt, podcast & trò chuyện AI cho mọi video YouTube e articoli — 20+ ngôn ngữ, 5 credit miễn phí, BYOK hoặc Pro từ €4,99/tháng.",
     "description": "Mô tả ngắn cho Chrome Web Store (tối đa 132 ký tự)"
+  },
+  "articleReaderTitle": {
+    "message": "Article Reader",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Summary",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Chat",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Ask about this article...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "No readable article found on this page",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Article is too short (min 500 chars)",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "This page type is not supported",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Analyzing article...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Failed to process article",
+    "description": "Article reader UI text"
   }
 }

@@ -35,6 +35,20 @@
     <main class="popup-body">
     <div class="popup-tab-panel active" id="panel-setup" role="tabpanel" aria-labelledby="tab-btn-setup" data-tab-panel="setup">
 
+    <!-- Article Reader (shown on non-YouTube pages) -->
+    <div class="popup-card article-reader-card hidden" id="articleReaderCard">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        Article Reader
+      </div>
+      <p class="card-hint" id="articleReaderHint">Summarize and chat about this article using AI.</p>
+      <button type="button" class="btn btn-primary" id="openArticleReaderBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2L9.19 8.63 2 10l5.46 4.73L5.82 22 12 18.27 18.18 22l-1.64-7.27L22 10l-7.19-1.37z"/></svg>
+        Open Article Reader
+      </button>
+      <p class="card-error hidden" id="articleReaderError"></p>
+    </div>
+
     <!-- Account (Supabase Auth) -->
     <div class="popup-card account-card" id="accountCard">
       <div id="accountSignedOut" class="hidden">

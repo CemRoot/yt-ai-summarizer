@@ -832,6 +832,34 @@ select:focus {
 }
 
 /* ── Account card ── */
+/* Article Reader Card */
+.article-reader-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.04) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.article-reader-card .card-title {
+  color: #059669;
+}
+
+.article-reader-card .btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+}
+
+.article-reader-card .btn-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.article-reader-card .card-error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: var(--radius-xs);
+  color: #dc2626;
+  font-size: 12px;
+}
+
 .account-card { position: relative; }
 
 .btn-google {

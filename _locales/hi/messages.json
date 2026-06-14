@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "किसी भी YouTube वीडियो के लिए AI सारांश, पॉडकास्ट व चैट — 20+ भाषाएँ, 5 फ्री क्रेडिट, BYOK या €4.99/माह से Pro।",
     "description": "Chrome Web Store के लिए संक्षिप्त विवरण (अधिकतम 132 वर्ण)"
+  },
+  "articleReaderTitle": {
+    "message": "लेख पाठक",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "सारांश",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "चैट",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "इस लेख के बारे में पूछें...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "कोई पठनीय लेख नहीं मिला",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "लेख बहुत छोटा है",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "इस पृष्ठ प्रकार का समर्थन नहीं है",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "लेख का विश्लेषण...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "प्रसंस्करण विफल",
+    "description": "Article reader UI text"
   }
 }

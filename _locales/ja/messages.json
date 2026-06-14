@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "YouTube動画と記事のAI要約・ポッドキャスト・チャット — 20以上の言語、無料5クレジット、BYOKまたはPro（€4.99/月〜）。",
     "description": "Chrome Web Store用の短い説明（最大132文字）"
+  },
+  "articleReaderTitle": {
+    "message": "記事リーダー",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "要約",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "チャット",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "この記事について質問...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "読める記事が見つかりません",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "記事が短すぎます",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "このページタイプはサポートされていません",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "記事を分析中...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "処理に失敗しました",
+    "description": "Article reader UI text"
   }
 }

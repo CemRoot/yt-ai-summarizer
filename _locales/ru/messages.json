@@ -6,5 +6,41 @@
   "extDescription": {
     "message": "AI-саммари, подкасты и чат для любого видео YouTube — 20+ языков, бесплатные кредиты, BYOK или Pro от €4.99/мес.",
     "description": "Короткое описание для Chrome Web Store (макс 132 символа)"
+  },
+  "articleReaderTitle": {
+    "message": "Читалка статей",
+    "description": "Article reader UI text"
+  },
+  "articleSummaryTab": {
+    "message": "Сводка",
+    "description": "Article reader UI text"
+  },
+  "articleChatTab": {
+    "message": "Чат",
+    "description": "Article reader UI text"
+  },
+  "articleChatPlaceholder": {
+    "message": "Задайте вопрос о статье...",
+    "description": "Article reader UI text"
+  },
+  "articleNotFound": {
+    "message": "Статья не найдена",
+    "description": "Article reader UI text"
+  },
+  "articleTooShort": {
+    "message": "Статья слишком короткая",
+    "description": "Article reader UI text"
+  },
+  "articleBlocked": {
+    "message": "Этот тип страницы не поддерживается",
+    "description": "Article reader UI text"
+  },
+  "articleLoading": {
+    "message": "Анализ статьи...",
+    "description": "Article reader UI text"
+  },
+  "articleError": {
+    "message": "Ошибка обработки",
+    "description": "Article reader UI text"
   }
 }
