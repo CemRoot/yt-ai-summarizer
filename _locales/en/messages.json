@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "YouTube AI Summarizer",
-    "description": "Extension name shown in Chrome Web Store and browser (English default)"
+    "message": "Gleano",
+    "description": "Extension name shown in Chrome Web Store and browser"
   },
   "extDescription": {
-    "message": "AI summaries, podcasts & chat for any YouTube video — 20+ languages, 5 free credits, BYOK or Pro from €4.99/mo.",
+    "message": "AI summaries, podcasts & chat for YouTube videos and articles — 20+ languages, free credits, BYOK or Pro.",
     "description": "Extension description for Chrome Web Store listing (max 132 chars)"
   },
   "apiKeyRequired": {

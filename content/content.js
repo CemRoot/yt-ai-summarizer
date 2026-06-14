@@ -91,6 +91,9 @@ class SummarizerController {
 
   static #instance = null;
 
+  /** Max videos to keep in memory (matches StorageHelper LRU limit) */
+  static #MAX_MEMORY_CACHE = 20;
+
   #currentVideoId = null;
   #combinedCache = null;  // { videoId, summary, keypoints, detailed }
   #podcastCache = null;   // { videoId, dialogue, audioBase64 }
@@ -263,11 +266,20 @@ class SummarizerController {
     return { ok: true, videoId };
   }
 
+  /** Enforce LRU limit on a Map by removing oldest entries (FIFO order in ES6 Maps) */
+  #enforceCacheLimit(map) {
+    while (map.size > SummarizerController.#MAX_MEMORY_CACHE) {
+      const oldestKey = map.keys().next().value;
+      map.delete(oldestKey);
+    }
+  }
+
   #ensureChatCache(videoId) {
     let cache = this.#chatCacheByVideo.get(videoId);
     if (!cache) {
       cache = { videoId, messages: [] };
       this.#chatCacheByVideo.set(videoId, cache);
+      this.#enforceCacheLimit(this.#chatCacheByVideo);
     }
     this.#chatCache = cache;
     return cache;
@@ -387,15 +399,21 @@ class SummarizerController {
     const settings = await storage.getSettings();
     if (settings.autoRun && canUseAI) {
       ui.autoOpen();
-      const cached = await storage.getCachedSummary(videoId, settings.defaultMode || 'summary');
-      if (cached?.content) {
-        const existing = this.#summaryCacheByVideo.get(videoId) || { videoId };
-        existing[settings.defaultMode || 'summary'] = cached.content;
-        this.#summaryCacheByVideo.set(videoId, existing);
-        this.#combinedCache = existing;
-        ui.showResult(cached.content);
-      } else {
-        ui.showReadyPrompt();
+      const defaultMode = settings.defaultMode || 'summary';
+      const cached = await storage.getCachedSummary(videoId, defaultMode);
+      // Guard: user may have switched tabs during async cache read
+      const currentMode = ui.getCurrentMode();
+      if (this.#isTextResultMode(currentMode)) {
+        if (cached?.content) {
+          const existing = this.#summaryCacheByVideo.get(videoId) || { videoId };
+          existing[defaultMode] = cached.content;
+          this.#summaryCacheByVideo.set(videoId, existing);
+          this.#enforceCacheLimit(this.#summaryCacheByVideo);
+          this.#combinedCache = existing;
+          ui.showResult(cached.content);
+        } else {
+          ui.showReadyPrompt();
+        }
       }
     }
 
@@ -546,10 +564,13 @@ class SummarizerController {
     // 3) Persistent cache
     if (!forceRefresh) {
       const cached = await storage.getCachedSummary(videoId, mode);
+      // Guard: mode may have changed during async storage read
+      if (ui.getCurrentMode() !== mode) return;
       if (cached?.content) {
         const existing = this.#summaryCacheByVideo.get(videoId) || { videoId };
         existing[mode] = cached.content;
         this.#summaryCacheByVideo.set(videoId, existing);
+        this.#enforceCacheLimit(this.#summaryCacheByVideo);
         this.#combinedCache = existing;
         ui.showResult(cached.content);
         return;
@@ -596,6 +617,7 @@ class SummarizerController {
         detailed: response.detailed
       };
       this.#summaryCacheByVideo.set(videoId, this.#combinedCache);
+      this.#enforceCacheLimit(this.#summaryCacheByVideo);
 
       if (response.provider) ui.updateProviderLabel(response.provider);
 
@@ -939,14 +961,25 @@ class SummarizerController {
 
     const mode = ui.getCurrentMode();
 
+    // Only handle text-result modes here; chat/podcast have their own handlers
+    if (!this.#isTextResultMode(mode)) return;
+
     if (this.#combinedCache?.videoId === videoId && this.#combinedCache[mode]) {
       ui.showResult(this.#combinedCache[mode]);
       return;
     }
 
     hasAccess().then(async (canUseAI) => {
+      // Guard: mode may have changed during async hasAccess() check
+      if (ui.getCurrentMode() !== mode) return;
+
       if (!canUseAI) { ui.showApiKeyPrompt(); return; }
+
       const cached = await storage.getCachedSummary(videoId, mode);
+
+      // Guard: mode may have changed during async storage read
+      if (ui.getCurrentMode() !== mode) return;
+
       if (cached?.content) {
         ui.showResult(cached.content);
       } else {

@@ -23,6 +23,11 @@ class SummarizerUI {
   #isDarkTheme = false;
   #factInterval = null;
   #creditDeltaTimer = null;
+  // Cleanup references for memory management
+  #themeObserver = null;
+  #themeMediaQuery = null;
+  #themeChangeHandler = null;
+  #fullscreenHandler = null;
 
   static #ICONS = {
     brain:    `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
@@ -149,7 +154,7 @@ class SummarizerUI {
   #createToggleButton() {
     const btn = document.createElement('button');
     btn.className = 'ytai-toggle-btn';
-    btn.title = 'YouTube AI Summarizer';
+    btn.title = 'Gleano';
     btn.innerHTML = SummarizerUI.#ICONS.brain;
     btn.addEventListener('click', () => this.togglePanel());
     return btn;
@@ -179,8 +184,7 @@ class SummarizerUI {
     // Header
     const header = document.createElement('div');
     header.className = 'ytai-header';
-    const panelTitles = { tr: 'AI Özetleyici', es: 'Resumen IA', fr: 'Résumeur IA', de: 'KI-Zusammenfassung', ja: 'AI要約', ko: 'AI 요약', zh: 'AI摘要' };
-    const panelTitle = panelTitles[this.#uiLang()] || 'AI Summarizer';
+    const panelTitle = 'Gleano'; // Brand name - same in all languages
     header.innerHTML = `
       <div class="ytai-header-left">
         <div class="ytai-header-logo">${SummarizerUI.#ICONS.sparkle}</div>
@@ -300,23 +304,26 @@ class SummarizerUI {
     this.#panelRoot.appendChild(panel);
     this.#showOnboardingTooltip(toggleBtn);
 
-    // Theme observer
-    const applyTheme = () => {
+    // Theme observer (store reference for cleanup)
+    this.#themeChangeHandler = () => {
       const wasDark = this.#isDarkTheme;
       this.#detectTheme();
       if (wasDark !== this.#isDarkTheme) {
-        this.#panelRoot.classList.toggle('ytai-dark', this.#isDarkTheme);
+        this.#panelRoot?.classList.toggle('ytai-dark', this.#isDarkTheme);
       }
     };
-    new MutationObserver(applyTheme).observe(document.documentElement, {
+    this.#themeObserver = new MutationObserver(this.#themeChangeHandler);
+    this.#themeObserver.observe(document.documentElement, {
       attributes: true, attributeFilter: ['dark', 'style']
     });
-    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    this.#themeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
+    this.#themeMediaQuery?.addEventListener('change', this.#themeChangeHandler);
 
-    // Fullscreen detection
-    document.addEventListener('fullscreenchange', () => {
+    // Fullscreen detection (store reference for cleanup)
+    this.#fullscreenHandler = () => {
       this.#panelRoot?.classList.toggle('ytai-is-fullscreen', !!document.fullscreenElement);
-    });
+    };
+    document.addEventListener('fullscreenchange', this.#fullscreenHandler);
   }
 
   // ─── Panel toggle ─────────────────────────────────────────────────
@@ -1267,6 +1274,31 @@ class SummarizerUI {
   getCurrentMode() { return this.#currentMode; }
 
   destroy() {
+    // Stop intervals/timers
+    this.#stopFactRotation();
+    if (this.#creditDeltaTimer) {
+      clearTimeout(this.#creditDeltaTimer);
+      this.#creditDeltaTimer = null;
+    }
+
+    // Disconnect observers
+    if (this.#themeObserver) {
+      this.#themeObserver.disconnect();
+      this.#themeObserver = null;
+    }
+
+    // Remove event listeners
+    if (this.#themeMediaQuery && this.#themeChangeHandler) {
+      this.#themeMediaQuery.removeEventListener('change', this.#themeChangeHandler);
+    }
+    if (this.#fullscreenHandler) {
+      document.removeEventListener('fullscreenchange', this.#fullscreenHandler);
+    }
+    this.#themeChangeHandler = null;
+    this.#fullscreenHandler = null;
+    this.#themeMediaQuery = null;
+
+    // Remove DOM
     this.#panelRoot?.remove();
     this.#panelRoot = null;
     this.#isOpen = false;

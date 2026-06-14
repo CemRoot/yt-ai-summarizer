@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="icons/icon128.png" alt="YouTube AI Summarizer" width="96" height="96" />
+<img src="icons/icon128.png" alt="Gleano" width="96" height="96" />
 
-# YouTube AI Summarizer
+# Gleano
 
 ### Stop watching. Start reading.
 
-**Turn any YouTube video into a 30-second read — summary, key points, detailed analysis, a two-host AI podcast, and a transcript-grounded chat. Free managed credits with Google sign-in, or bring your own API keys. No ads. No trackers. No 45-minute videos with 3 minutes of useful content.**
+**Turn any YouTube video or web article into a 30-second read — summary, key points, detailed analysis, AI podcast, and content-grounded chat. Free managed credits with Google sign-in, or bring your own API keys. No ads. No trackers.**
 
 <br />
 
@@ -74,7 +74,7 @@
 <br />
 
 <div align="center">
-  <img src="docs/3.png" alt="YouTube AI Summarizer — panel preview" width="780" />
+  <img src="docs/3.png" alt="Gleano — panel preview" width="780" />
   <br /><sub>The in-extension <i>What's New</i> panel — same design language as the summary panel, welcome flow, and popup.</sub>
 </div>
 
@@ -256,7 +256,7 @@ Summary and Chat run on **DeepSeek** text models; Podcast TTS runs on **Gemini 2
     </td>
     <td valign="top">
       <h3>✅ Minimal permissions</h3>
-      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, plus explicit host access for YouTube, BYOK vendors, and our Supabase project. See <a href="manifest.json"><code>manifest.json</code></a>.
+      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, <code>scripting</code>, plus explicit host access for YouTube, BYOK vendors, and our Supabase project. See <a href="manifest.json"><code>manifest.json</code></a>.
     </td>
   </tr>
 </table>
@@ -266,6 +266,14 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 ---
 
 ## What's new
+
+### v2.1.0 — June 2026 (Gleano)
+
+- **🎉 Rebranded to Gleano** — the extension is now called "Gleano" across all locales, reflecting its expanded scope beyond YouTube. The brand name is consistent in all 21 languages.
+- **📰 Article Reader (coming soon)** — infrastructure for reading and chatting about web articles. Uses `chrome.scripting` API with `activeTab` permission for on-demand content injection.
+- **🐛 Tab switching race condition fixed** — guard clauses prevent stale UI updates when rapidly switching between Summary/Key Points/Detailed/Chat/Podcast tabs during async operations.
+- **🧠 Memory optimization** — LRU eviction for in-memory caches (max 20 videos), proper cleanup of MutationObservers and event listeners on UI teardown.
+- **🔐 Scripting permission added** — enables dynamic content script injection for the upcoming article reader feature. No new host permissions required — uses existing `activeTab`.
 
 ### v2.0.3 — April 2026
 
@@ -419,7 +427,7 @@ yt-ai-summarizer/
 │   ├── auth-debug-log.js           Optional local auth diagnostics
 │   └── gemini-pcm-wav.js           Gemini TTS PCM → WAV export + download
 ├── icons/                          16 / 32 / 48 / 128 px extension icons
-├── _locales/                       en + tr message catalogs
+├── _locales/                       21 language message catalogs
 ├── privacy-policy.html             Bundled privacy policy (dark-mode aware)
 ├── docs/                           GitHub Pages landing + uninstall template
 └── .github/workflows/              ci.yml, github-pages.yml

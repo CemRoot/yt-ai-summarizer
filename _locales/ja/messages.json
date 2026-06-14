@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "YouTubeのAI要約",
+    "message": "Gleano",
     "description": "Chrome ウェブストアとブラウザに表示される製品名"
   },
   "extDescription": {
-    "message": "YouTube動画のAI要約・ポッドキャスト・チャット — 20以上の言語、無料5クレジット、BYOKまたはPro（€4.99/月〜）。",
+    "message": "YouTube動画と記事のAI要約・ポッドキャスト・チャット — 20以上の言語、無料5クレジット、BYOKまたはPro（€4.99/月〜）。",
     "description": "Chrome Web Store用の短い説明（最大132文字）"
   }
 }

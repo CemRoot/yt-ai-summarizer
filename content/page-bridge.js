@@ -1,5 +1,5 @@
 /**
- * YouTube AI Summarizer - Page Bridge (MAIN World)
+ * Gleano - Page Bridge (MAIN World)
  * Runs in the page's main JavaScript context to access YouTube's internal APIs.
  * Communicates with the content script (isolated world) via DOM events.
  */

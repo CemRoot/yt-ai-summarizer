@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "YouTube Yapay Zeka Özetleyici",
+    "message": "Gleano",
     "description": "Uzantı adı — Chrome Web Mağazası ve tarayıcı"
   },
   "extDescription": {
-    "message": "Her YouTube videosu için AI özet, podcast ve sohbet — 20+ dil, 5 ücretsiz kredi, BYOK veya aylık €4,99 Pro.",
+    "message": "YouTube videoları ve makaleler için AI özet, podcast ve sohbet — 20+ dil, ücretsiz kredi, BYOK veya Pro.",
     "description": "Chrome Web Store listeleme açıklaması (max 132 karakter)"
   },
   "apiKeyRequired": {

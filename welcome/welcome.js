@@ -1,5 +1,5 @@
 /**
- * YouTube AI Summarizer — Welcome / Onboarding Controller (v2.0)
+ * Gleano — Welcome / Onboarding Controller (v2.0)
  * Multi-language support + dual-provider + Gemini TTS podcast.
  */
 
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── i18n strings ──
   const I18N = {
     en: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'Get instant AI-powered summaries, key points, and detailed analysis for any YouTube video.',
       step1chip: 'Step 1 of 3',
       step1title: 'Get Started',
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rail3: 'Başla',
     },
     es: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'Obtén resúmenes instantáneos con IA, puntos clave y análisis detallados de cualquier video de YouTube.',
       step1chip: 'Paso 1 de 3', step1title: 'Comenzar', step1desc: 'Inicia sesión para resúmenes gratuitos o usa tu propia clave API.',
       googleCardTitle: 'Iniciar sesión con Google', googleCardDesc: 'Obtén 5 resúmenes gratuitos — sin clave API.',
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: 'Desarrollado por', privacyPolicy: 'Política de Privacidad', langLabel: 'Idioma',
     },
     fr: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'Obtenez des résumés instantanés par IA, des points clés et des analyses détaillées pour toute vidéo YouTube.',
       step1chip: 'Étape 1 sur 3', step1title: 'Commencer', step1desc: 'Connectez-vous pour des résumés gratuits ou utilisez votre propre clé API.',
       googleCardTitle: 'Se connecter avec Google', googleCardDesc: 'Obtenez 5 résumés gratuits — aucune clé API requise.',
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: 'Propulsé par', privacyPolicy: 'Politique de Confidentialité', langLabel: 'Langue',
     },
     de: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'Erhalten Sie sofortige KI-gestützte Zusammenfassungen, Kernpunkte und detaillierte Analysen für jedes YouTube-Video.',
       step1chip: 'Schritt 1 von 3', step1title: 'Loslegen', step1desc: 'Melden Sie sich an für kostenlose KI-Zusammenfassungen oder verwenden Sie Ihren eigenen API-Schlüssel.',
       googleCardTitle: 'Mit Google anmelden', googleCardDesc: 'Erhalten Sie 5 kostenlose Zusammenfassungen — kein API-Schlüssel nötig.',
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: 'Unterstützt von', privacyPolicy: 'Datenschutzrichtlinie', langLabel: 'Sprache',
     },
     ja: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'YouTubeの動画をAIで即座に要約。キーポイントと詳細分析も。',
       step1chip: 'ステップ 1/3', step1title: '始めましょう', step1desc: '無料AIサマリーにサインインするか、自分のAPIキーを使用します。',
       googleCardTitle: 'Googleでサインイン', googleCardDesc: '5つの無料AIサマリー — APIキー不要。',
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: '提供元', privacyPolicy: 'プライバシーポリシー', langLabel: '言語',
     },
     ko: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'YouTube 동영상의 AI 요약, 핵심 포인트, 상세 분석을 즉시 받아보세요.',
       step1chip: '1단계 / 3', step1title: '시작하기', step1desc: '무료 AI 요약을 위해 로그인하거나 자신의 API 키를 사용하세요.',
       googleCardTitle: 'Google로 로그인', googleCardDesc: '5개의 무료 AI 요약 — API 키 필요 없음.',
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: '제공', privacyPolicy: '개인정보 보호정책', langLabel: '언어',
     },
     zh: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: '为任何YouTube视频获取即时AI摘要、关键要点和详细分析。',
       step1chip: '第1步 / 共3步', step1title: '开始使用', step1desc: '登录以获取免费AI摘要或使用您自己的API密钥。',
       googleCardTitle: '使用Google登录', googleCardDesc: '获取5个免费AI摘要 — 无需API密钥。',
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: '技术支持', privacyPolicy: '隐私政策', langLabel: '语言',
     },
     pt: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'Obtenha resumos instantâneos com IA, pontos-chave e análises detalhadas de qualquer vídeo do YouTube.',
       step1chip: 'Passo 1 de 3', step1title: 'Começar', step1desc: 'Faça login para resumos gratuitos ou use sua própria chave API.',
       googleCardTitle: 'Entrar com Google', googleCardDesc: 'Obtenha 5 resumos gratuitos — sem chave API.',
@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: 'Desenvolvido por', privacyPolicy: 'Política de Privacidade', langLabel: 'Idioma',
     },
     ar: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'احصل على ملخصات فورية بالذكاء الاصطناعي والنقاط الرئيسية والتحليل المفصل لأي فيديو يوتيوب.',
       step1chip: 'الخطوة 1 من 3', step1title: 'ابدأ الآن', step1desc: 'سجل دخولك للحصول على ملخصات مجانية أو استخدم مفتاح API الخاص بك.',
       googleCardTitle: 'تسجيل الدخول بـ Google', googleCardDesc: 'احصل على 5 ملخصات مجانية — بدون مفتاح API.',
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
       footerPowered: 'مدعوم من', privacyPolicy: 'سياسة الخصوصية', langLabel: 'اللغة',
     },
     hi: {
-      title: 'YouTube AI Summarizer',
+      title: 'Gleano',
       subtitle: 'किसी भी YouTube वीडियो का तुरंत AI सारांश, मुख्य बिंदु और विस्तृत विश्लेषण प्राप्त करें।',
       step1chip: 'चरण 1 / 3', step1title: 'शुरू करें', step1desc: 'मुफ़्त AI सारांश के लिए साइन इन करें या अपनी API कुंजी का उपयोग करें।',
       googleCardTitle: 'Google से साइन इन', googleCardDesc: '5 मुफ़्त AI सारांश प्राप्त करें — API कुंजी की आवश्यकता नहीं।',

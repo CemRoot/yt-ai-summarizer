@@ -1,5 +1,5 @@
 /**
- * YouTube AI Summarizer — What's New / Update Page Controller
+ * Gleano — What's New / Update Page Controller
  *
  * ═══════════════════════════════════════════════════════════════
  *  HOW TO ADD A NEW VERSION:
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const I18N = {
     en: {
       heroTitle: "What's New",
-      heroSub: 'YouTube AI Summarizer has been updated with new features and improvements.',
+      heroSub: 'Gleano has been updated with new features and improvements.',
       latest: 'Latest',
       previousVersions: 'Previous Versions',
       continueYoutube: 'Continue to YouTube',
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
-      c203_localized_store_titles: 'Chrome Web Store listing title is now localized per language (21 locales) — e.g. Spanish shows "Resúmenes con IA de YouTube" so searchers in that language see a native product name; English stays "YouTube AI Summarizer"',
+      c203_localized_store_titles: 'Chrome Web Store listing title is now localized per language (21 locales) — e.g. Spanish shows "Resúmenes con IA de YouTube" so searchers in that language see a native product name; English stays "Gleano"',
       c202_credits_message: 'When your free credits run out, you now see a clear "Credits exhausted" message with an upgrade button — no more misleading "Invalid API Key" error on managed AI',
       c202_podcast_voices: 'Podcast audio always uses both voices (Alex + Sam). Script generation now forces alternating speakers via a JSON schema, so the "one voice reads everything" bug is gone',
       c202_empty_response_credits: 'If the AI provider returns an empty reply (rare server issue), your credits are no longer deducted — the call is refunded and you can retry immediately',
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     tr: {
       heroTitle: 'Neler Yeni',
-      heroSub: 'YouTube AI Özetleyici yeni özellikler ve iyileştirmelerle güncellendi.',
+      heroSub: 'Gleano yeni özellikler ve iyileştirmelerle güncellendi.',
       latest: 'Güncel',
       previousVersions: 'Önceki Sürümler',
       continueYoutube: "YouTube'a Devam Et",
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
 
-      c203_localized_store_titles: 'Chrome Web Mağazası\'ndaki uzantı başlığı artık 21 dilde yerelleştirildi — örn. İspanyolca\'da "Resúmenes con IA de YouTube" görünür; İngilizce varsayılan "YouTube AI Summarizer" olarak kalır',
+      c203_localized_store_titles: 'Chrome Web Mağazası\'ndaki uzantı başlığı artık 21 dilde yerelleştirildi — örn. İspanyolca\'da "Resúmenes con IA de YouTube" görünür; İngilizce varsayılan "Gleano" olarak kalır',
       c202_credits_message: 'Ücretsiz kredileriniz bittiğinde artık net bir "Kredi tükendi" mesajı ve yükseltme butonu görüyorsunuz — yönetilen AI\'da hatalı "Geçersiz API Anahtarı" uyarısı kaldırıldı',
       c202_podcast_voices: 'Podcast her zaman iki sesle çalışıyor (Alex + Sam). Senaryo artık JSON şemasıyla dönüşümlü konuşmacı zorunlu kılınıyor; "tek ses her şeyi okuyor" hatası giderildi',
       c202_empty_response_credits: 'AI sağlayıcı boş yanıt dönerse (nadir sunucu sorunu) krediniz artık düşmüyor — çağrı iade ediliyor ve hemen tekrar deneyebiliyorsunuz',
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     es: {
       heroTitle: 'Novedades',
-      heroSub: 'YouTube AI Summarizer se ha actualizado con nuevas funciones y mejoras.',
+      heroSub: 'Gleano se ha actualizado con nuevas funciones y mejoras.',
       latest: 'Última',
       previousVersions: 'Versiones Anteriores',
       continueYoutube: 'Continuar a YouTube',
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     fr: {
       heroTitle: 'Nouveautés',
-      heroSub: 'YouTube AI Summarizer a été mis à jour avec de nouvelles fonctionnalités.',
+      heroSub: 'Gleano a été mis à jour avec de nouvelles fonctionnalités.',
       latest: 'Dernière',
       previousVersions: 'Versions Précédentes',
       continueYoutube: 'Continuer vers YouTube',
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       heroTitle: 'Was ist neu',
-      heroSub: 'YouTube AI Summarizer wurde mit neuen Funktionen aktualisiert.',
+      heroSub: 'Gleano wurde mit neuen Funktionen aktualisiert.',
       latest: 'Aktuell',
       previousVersions: 'Frühere Versionen',
       continueYoutube: 'Weiter zu YouTube',
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     ja: {
       heroTitle: '新機能',
-      heroSub: 'YouTube AI Summarizerが新機能と改善で更新されました。',
+      heroSub: 'Gleanoが新機能と改善で更新されました。',
       latest: '最新',
       previousVersions: '以前のバージョン',
       continueYoutube: 'YouTubeへ',
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     ko: {
       heroTitle: '새로운 기능',
-      heroSub: 'YouTube AI Summarizer가 새로운 기능과 개선사항으로 업데이트되었습니다.',
+      heroSub: 'Gleano가 새로운 기능과 개선사항으로 업데이트되었습니다.',
       latest: '최신',
       previousVersions: '이전 버전',
       continueYoutube: 'YouTube로 이동',
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     zh: {
       heroTitle: '新功能',
-      heroSub: 'YouTube AI Summarizer 已更新，带来新功能和改进。',
+      heroSub: 'Gleano 已更新，带来新功能和改进。',
       latest: '最新',
       previousVersions: '历史版本',
       continueYoutube: '前往YouTube',
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     pt: {
       heroTitle: 'Novidades',
-      heroSub: 'YouTube AI Summarizer foi atualizado com novos recursos e melhorias.',
+      heroSub: 'Gleano foi atualizado com novos recursos e melhorias.',
       latest: 'Última',
       previousVersions: 'Versões Anteriores',
       continueYoutube: 'Continuar para o YouTube',
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     ar: {
       heroTitle: 'ما الجديد',
-      heroSub: 'تم تحديث YouTube AI Summarizer بميزات وتحسينات جديدة.',
+      heroSub: 'تم تحديث Gleano بميزات وتحسينات جديدة.',
       latest: 'الأحدث',
       previousVersions: 'الإصدارات السابقة',
       continueYoutube: 'المتابعة إلى YouTube',
@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     hi: {
       heroTitle: 'नया क्या है',
-      heroSub: 'YouTube AI Summarizer नई सुविधाओं और सुधारों के साथ अपडेट हुआ।',
+      heroSub: 'Gleano नई सुविधाओं और सुधारों के साथ अपडेट हुआ।',
       latest: 'नवीनतम',
       previousVersions: 'पिछले संस्करण',
       continueYoutube: 'YouTube पर जारी रखें',

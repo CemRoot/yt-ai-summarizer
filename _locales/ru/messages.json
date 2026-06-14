@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "YouTube: ИИ-резюме",
+    "message": "Gleano",
     "description": "Название в Chrome Web Store и браузере"
   },
   "extDescription": {
-    "message": "AI-саммари, подкасты и чат для любого видео YouTube — 20+ языков, 5 бесплатных кредитов, BYOK или Pro от €4.99/мес.",
+    "message": "AI-саммари, подкасты и чат для любого видео YouTube — 20+ языков, бесплатные кредиты, BYOK или Pro от €4.99/мес.",
     "description": "Короткое описание для Chrome Web Store (макс 132 символа)"
   }
 }

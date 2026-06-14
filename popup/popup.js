@@ -1,5 +1,5 @@
 /**
- * YouTube AI Summarizer — Settings Controller (v1.1)
+ * Gleano — Settings Controller (v1.1)
  * Supports Groq + Ollama Cloud dual-provider system
  */
 

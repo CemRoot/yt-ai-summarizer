@@ -1,5 +1,5 @@
 /**
- * YouTube AI Summarizer - Service Worker (Background Script)
+ * Gleano - Service Worker (Background Script)
  * Handles Groq API calls, onboarding, and cross-component messaging
  */
 
