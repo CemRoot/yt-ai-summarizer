@@ -1,52 +1,58 @@
 /**
  * Gleano - Article Reader Styles
- * Consistent with YouTube panel design
+ * Modern, clean design
  */
 
 /* Toggle Button */
 .gleano-toggle-btn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   border: none;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35), 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 2147483646;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gleano-toggle-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.45), 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.gleano-toggle-btn.dark {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+.gleano-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.gleano-toggle-btn svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* Panel */
 .gleano-panel {
   position: fixed;
   top: 0;
-  right: -400px;
-  width: 380px;
+  right: -420px;
+  width: 400px;
   height: 100vh;
-  background: #ffffff;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  background: #fafafa;
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.12);
   z-index: 2147483647;
   display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .gleano-panel.open {
@@ -54,9 +60,8 @@
 }
 
 .gleano-panel.dark {
-  background: #1f2937;
-  border-left-color: #374151;
-  color: #f3f4f6;
+  background: #111827;
+  border-left-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Header */
@@ -64,73 +69,84 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  padding: 16px 20px;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
-}
-
-.gleano-panel.dark .gleano-header {
-  border-bottom-color: #374151;
+  flex-shrink: 0;
 }
 
 .gleano-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .gleano-header-logo {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.gleano-header-logo svg {
+  width: 18px;
+  height: 18px;
 }
 
 .gleano-header-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.3px;
 }
 
 .gleano-close-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
-  border-radius: 6px;
-  padding: 6px;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .gleano-close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }
 
 /* Tabs */
 .gleano-tabs {
   display: flex;
-  padding: 8px 12px;
+  padding: 12px 16px;
   gap: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .gleano-panel.dark .gleano-tabs {
-  border-bottom-color: #374151;
+  background: #1f2937;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
 .gleano-tab {
   flex: 1;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #f3f4f6;
   color: #6b7280;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gleano-tab:hover {
@@ -139,8 +155,9 @@
 }
 
 .gleano-tab.active {
-  background: #10b981;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .gleano-panel.dark .gleano-tab {
@@ -154,7 +171,7 @@
 }
 
 .gleano-panel.dark .gleano-tab.active {
-  background: #10b981;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
 }
 
@@ -162,57 +179,35 @@
 .gleano-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
+  background: white;
+}
+
+.gleano-panel.dark .gleano-content {
+  background: #1f2937;
 }
 
 .gleano-result {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.7;
-  color: #374151;
+  color: #1f2937;
 }
 
 .gleano-panel.dark .gleano-result {
   color: #e5e7eb;
 }
 
-.gleano-result h2, .gleano-result h3, .gleano-result h4 {
-  margin: 16px 0 8px 0;
-  color: #111827;
-}
-
-.gleano-panel.dark .gleano-result h2,
-.gleano-panel.dark .gleano-result h3,
-.gleano-panel.dark .gleano-result h4 {
-  color: #f9fafb;
-}
-
 .gleano-result p {
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
 }
 
-.gleano-result ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.gleano-result li {
-  margin: 4px 0;
-}
-
-.gleano-result code {
-  background: #f3f4f6;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: 'SF Mono', Monaco, Consolas, monospace;
-  font-size: 13px;
-}
-
-.gleano-panel.dark .gleano-result code {
-  background: #374151;
+.gleano-result p:last-child {
+  margin-bottom: 0;
 }
 
 .gleano-result strong {
   color: #111827;
+  font-weight: 600;
 }
 
 .gleano-panel.dark .gleano-result strong {
@@ -225,19 +220,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 60px 20px;
   text-align: center;
-  color: #6b7280;
 }
 
 .gleano-spinner {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: 3px solid #e5e7eb;
   border-top-color: #10b981;
   border-radius: 50%;
   animation: gleano-spin 0.8s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.gleano-loading p {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 @keyframes gleano-spin {
@@ -246,59 +246,71 @@
 
 /* Error State */
 .gleano-error {
-  background: #fef2f2;
+  background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
   border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   color: #991b1b;
+  text-align: center;
 }
 
 .gleano-panel.dark .gleano-error {
-  background: #451a1a;
+  background: linear-gradient(145deg, #451a1a 0%, #7f1d1d 100%);
   border-color: #7f1d1d;
   color: #fca5a5;
 }
 
-/* Chat */
+/* Chat Messages */
 .gleano-chat-empty {
   text-align: center;
-  padding: 40px 20px;
+  padding: 60px 20px;
+}
+
+.gleano-chat-empty p {
   color: #6b7280;
+  font-size: 15px;
+  margin-bottom: 8px;
 }
 
 .gleano-hint {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 8px;
+  font-size: 13px !important;
+  color: #9ca3af !important;
 }
 
 .gleano-chat-msg {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
 }
 
 .gleano-chat-msg.user {
-  text-align: right;
+  justify-content: flex-end;
+}
+
+.gleano-chat-msg.assistant {
+  justify-content: flex-start;
 }
 
 .gleano-chat-bubble {
-  display: inline-block;
   max-width: 85%;
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 14px 18px;
+  border-radius: 20px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  word-wrap: break-word;
 }
 
 .gleano-chat-msg.user .gleano-chat-bubble {
-  background: #10b981;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
 }
 
 .gleano-chat-msg.assistant .gleano-chat-bubble {
   background: #f3f4f6;
-  color: #374151;
-  border-bottom-left-radius: 4px;
+  color: #1f2937;
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .gleano-panel.dark .gleano-chat-msg.assistant .gleano-chat-bubble {
@@ -306,28 +318,53 @@
   color: #e5e7eb;
 }
 
+/* Typing Indicator */
+.gleano-chat-bubble .typing-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.gleano-chat-bubble .typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #9ca3af;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.gleano-chat-bubble .typing-dots span:nth-child(1) { animation-delay: 0s; }
+.gleano-chat-bubble .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.gleano-chat-bubble .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
 /* Chat Input */
 .gleano-chat-input {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
+  gap: 10px;
+  padding: 16px 20px;
   background: #f9fafb;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .gleano-panel.dark .gleano-chat-input {
-  border-top-color: #374151;
   background: #111827;
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 
 .gleano-chat-input input {
   flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
   font-size: 14px;
   background: white;
-  color: #374151;
+  color: #1f2937;
+  transition: all 0.2s;
 }
 
 .gleano-panel.dark .gleano-chat-input input {
@@ -339,55 +376,77 @@
 .gleano-chat-input input:focus {
   outline: none;
   border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.gleano-chat-input input::placeholder {
+  color: #9ca3af;
 }
 
 .gleano-send-btn {
-  padding: 10px 14px;
-  background: #10b981;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .gleano-send-btn:hover {
-  background: #059669;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.gleano-send-btn:active {
+  transform: scale(0.95);
+}
+
+.gleano-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Footer Actions */
 .gleano-footer {
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
+  padding: 12px 20px 16px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .gleano-panel.dark .gleano-footer {
-  border-top-color: #374151;
+  background: #1f2937;
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 
 .gleano-action-btn {
-  padding: 8px 12px;
+  padding: 10px 16px;
   background: #f3f4f6;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   color: #6b7280;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s;
 }
 
 .gleano-action-btn:hover {
   background: #e5e7eb;
   color: #374151;
+  transform: translateY(-1px);
 }
 
 .gleano-panel.dark .gleano-action-btn {
@@ -403,22 +462,46 @@
 /* Toast */
 .gleano-toast {
   position: absolute;
-  bottom: 80px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%) translateY(10px);
   background: #1f2937;
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-size: 13px;
+  font-weight: 500;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .gleano-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Scrollbar */
+.gleano-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gleano-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gleano-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.gleano-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.gleano-panel.dark .gleano-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
 }
 
 /* Responsive */
@@ -431,7 +514,8 @@
   .gleano-toggle-btn {
     bottom: 80px;
     right: 16px;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
   }
 }

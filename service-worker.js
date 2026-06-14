@@ -1389,37 +1389,63 @@ ${contextTranscript}
 
 // ─── Article Reader Handlers ─────────────────────────────────────────────────
 
+/**
+ * Detect language from text sample
+ */
+function detectTextLanguage(text) {
+  if (!text) return 'auto';
+  const sample = text.substring(0, 200).toLowerCase();
+  
+  if (/[şğüöçıİŞĞÜÖÇ]/.test(sample) || /\b(ve|bir|bu|için|ile|da|de|mi|mı|ne|nasıl|neden)\b/.test(sample)) return 'tr';
+  if (/[\u0600-\u06FF]/.test(sample)) return 'ar';
+  if (/[\u4e00-\u9fff]/.test(sample)) return 'zh';
+  if (/[\u3040-\u30ff]/.test(sample)) return 'ja';
+  if (/[\uac00-\ud7af]/.test(sample)) return 'ko';
+  if (/[\u0400-\u04FF]/.test(sample)) return 'ru';
+  if (/[áéíóúñ¿¡]/.test(sample) || /\b(el|la|los|las|es|son|que|por|para|qué|cómo)\b/.test(sample)) return 'es';
+  if (/[àâçéèêëîïôùûü]/.test(sample) || /\b(le|la|les|est|sont|que|pour|dans|quoi|comment)\b/.test(sample)) return 'fr';
+  if (/[äöüß]/.test(sample) || /\b(der|die|das|und|ist|sind|für|was|wie)\b/.test(sample)) return 'de';
+  
+  return 'auto';
+}
+
 const ARTICLE_SYSTEM_PROMPTS = {
-  summary: `You are an expert article analyst. Given a web article, provide a clear and concise summary in 3-5 paragraphs.
+  summary: `You are a news summarizer. Summarize the article in 2-3 SHORT sentences maximum.
+
+CRITICAL RULES:
+- Maximum 50-60 words total
+- NO headers, NO "===SUMMARY===", NO bullet points
+- Just plain text sentences
+- Include ONLY the most important fact/news
+- Be direct and factual`,
+
+  chat: `You are a helpful assistant that answers questions about this specific article only.
 
 RULES:
-- Capture the main thesis, key arguments, and conclusions.
-- Include specific evidence: names, dates, statistics, and references mentioned.
-- Use markdown formatting with bold for key terms.
-- Be precise — do not generalize or add information not in the article.`,
-
-  chat: `You are an article-grounded assistant. You ONLY answer based on the article content provided below.
-
-RULES:
-- Answer ONLY from the article. If something is not mentioned, say "The article does not mention this."
-- Never make up information or draw from external knowledge.
-- Use markdown where appropriate (bold, lists).
-- Keep responses focused and relevant to the question.`
+- Answer in 1-3 sentences, be concise
+- If not in the article, say "Bu bilgi makalede yer almıyor" or equivalent in the user's language
+- Match the user's language exactly
+- NO lengthy explanations`
 };
 
 /**
  * Handle article summary request
  */
 async function handleArticleSummary(data) {
-  const { articleContent, articleTitle, articleUrl, language } = data;
+  const { articleContent, articleTitle, articleUrl, language, articleLang } = data;
 
   if (!articleContent || articleContent.trim().length < 100) {
     throw new Error('INSUFFICIENT_CONTENT');
   }
 
-  const languageInstruction = language && language !== 'en' && language !== 'auto'
-    ? `\n\nIMPORTANT: Respond in ${language}. All content must be in that language.`
-    : '';
+  // Determine response language - prefer article language or detected language
+  const responseLang = (language && language !== 'auto') ? language : (articleLang || 'en');
+  const langNames = {
+    tr: 'Turkish', en: 'English', es: 'Spanish', fr: 'French', de: 'German',
+    ja: 'Japanese', ko: 'Korean', zh: 'Chinese', ar: 'Arabic', ru: 'Russian',
+    pt: 'Portuguese', it: 'Italian', nl: 'Dutch', pl: 'Polish', hi: 'Hindi'
+  };
+  const langName = langNames[responseLang] || responseLang;
 
   const maxChars = 80000;
   let content = articleContent;
@@ -1427,18 +1453,19 @@ async function handleArticleSummary(data) {
     content = content.substring(0, maxChars) + '\n... [Content truncated]';
   }
 
-  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.summary}${languageInstruction}
+  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.summary}
+
+LANGUAGE: Respond ONLY in ${langName}. This is mandatory.
 
 --- ARTICLE ---
 Title: ${articleTitle || 'Unknown'}
-URL: ${articleUrl || 'Unknown'}
 
 ${content}
 ---------------`;
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: 'Please provide a comprehensive summary of this article.' }
+    { role: 'user', content: `Summarize this article in ${langName}. Maximum 2-3 sentences.` }
   ];
 
   const mode = await getManagedMode();
@@ -1479,7 +1506,7 @@ ${content}
  * Handle article chat request
  */
 async function handleArticleChat(data) {
-  const { articleContent, articleTitle, articleUrl, question, history, language } = data;
+  const { articleContent, articleTitle, articleUrl, question, history, language, articleLang } = data;
 
   if (!articleContent || articleContent.trim().length < 100) {
     throw new Error('INSUFFICIENT_CONTENT');
@@ -1489,9 +1516,16 @@ async function handleArticleChat(data) {
     throw new Error('EMPTY_QUESTION');
   }
 
-  const languageInstruction = language && language !== 'en' && language !== 'auto'
-    ? `\n\nIMPORTANT: Respond in ${language}. All content must be in that language.`
-    : '';
+  // Detect question language and respond in same language
+  const questionLang = detectTextLanguage(question);
+  const responseLang = questionLang !== 'auto' ? questionLang : (language !== 'auto' ? language : (articleLang || 'en'));
+  
+  const langNames = {
+    tr: 'Turkish', en: 'English', es: 'Spanish', fr: 'French', de: 'German',
+    ja: 'Japanese', ko: 'Korean', zh: 'Chinese', ar: 'Arabic', ru: 'Russian',
+    pt: 'Portuguese', it: 'Italian', nl: 'Dutch', pl: 'Polish', hi: 'Hindi'
+  };
+  const langName = langNames[responseLang] || 'the same language as the question';
 
   const maxChars = 80000;
   let content = articleContent;
@@ -1499,11 +1533,12 @@ async function handleArticleChat(data) {
     content = content.substring(0, maxChars) + '\n... [Content truncated]';
   }
 
-  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.chat}${languageInstruction}
+  const systemPrompt = `${ARTICLE_SYSTEM_PROMPTS.chat}
+
+CRITICAL: Answer in ${langName}. Match the user's language exactly.
 
 --- ARTICLE ---
 Title: ${articleTitle || 'Unknown'}
-URL: ${articleUrl || 'Unknown'}
 
 ${content}
 ---------------`;

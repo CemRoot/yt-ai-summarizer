@@ -102,22 +102,25 @@ class ArticleController {
       return;
     }
 
-    this.#ui.appendChatMessage('user', message);
+    // Add user message to history first
     this.#chatHistory.push({ role: 'user', content: message });
+    this.#ui.showChat(this.#chatHistory);
 
     this.#isProcessing = true;
-    this.#ui.appendChatMessage('assistant', '...');
+    
+    // Show typing indicator
+    const typingHistory = [...this.#chatHistory, { role: 'assistant', content: '...' }];
+    this.#ui.showChat(typingHistory);
 
     try {
       const response = await this.#sendToAI('chat', message);
       
-      this.#chatHistory.pop();
-      this.#chatHistory.push({ role: 'user', content: message });
+      // Add AI response to history
       this.#chatHistory.push({ role: 'assistant', content: response });
-      
       this.#ui.showChat(this.#chatHistory);
     } catch (err) {
       console.error('[ArticleController] Chat error:', err);
+      // Remove the user message on error
       this.#chatHistory.pop();
       this.#ui.showChat(this.#chatHistory);
       this.#ui.showToast('Failed to get response. Please try again.');
@@ -174,12 +177,18 @@ class ArticleController {
   async #sendToAI(action, question = null) {
     const settings = await this.#getSettings();
     
+    // Auto-detect language from article or use user's question language
+    const articleLang = this.#articleContent.lang || 'auto';
+    const detectedLang = this.#detectLanguage(question || this.#articleContent.textContent.substring(0, 500));
+    const language = settings.language !== 'auto' ? settings.language : (detectedLang || articleLang);
+    
     const payload = {
       action: action === 'summary' ? 'articleSummary' : 'articleChat',
       articleContent: this.#articleContent.textContent.substring(0, 80000),
       articleTitle: this.#articleContent.title,
       articleUrl: this.#articleContent.url,
-      language: settings.language || 'en'
+      articleLang: articleLang,
+      language: language
     };
 
     if (action === 'chat') {
@@ -202,6 +211,32 @@ class ArticleController {
         resolve(response?.content || response?.result || 'No response received.');
       });
     });
+  }
+
+  #detectLanguage(text) {
+    if (!text) return 'en';
+    const sample = text.substring(0, 200).toLowerCase();
+    
+    // Turkish indicators
+    if (/[şğüöçıİŞĞÜÖÇ]/.test(sample) || /\b(ve|bir|bu|için|ile|da|de|mi|mı)\b/.test(sample)) return 'tr';
+    // Arabic
+    if (/[\u0600-\u06FF]/.test(sample)) return 'ar';
+    // Chinese
+    if (/[\u4e00-\u9fff]/.test(sample)) return 'zh';
+    // Japanese
+    if (/[\u3040-\u30ff]/.test(sample)) return 'ja';
+    // Korean
+    if (/[\uac00-\ud7af]/.test(sample)) return 'ko';
+    // Russian/Cyrillic
+    if (/[\u0400-\u04FF]/.test(sample)) return 'ru';
+    // Spanish
+    if (/[áéíóúñ¿¡]/.test(sample) || /\b(el|la|los|las|es|son|que|por|para)\b/.test(sample)) return 'es';
+    // French
+    if (/[àâçéèêëîïôùûü]/.test(sample) || /\b(le|la|les|est|sont|que|pour|dans)\b/.test(sample)) return 'fr';
+    // German
+    if (/[äöüß]/.test(sample) || /\b(der|die|das|und|ist|sind|für)\b/.test(sample)) return 'de';
+    
+    return 'auto';
   }
 
   async #getSettings() {

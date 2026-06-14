@@ -274,11 +274,17 @@ class ArticleUI {
       return;
     }
 
-    result.innerHTML = messages.map(msg => `
-      <div class="gleano-chat-msg ${msg.role}">
-        <div class="gleano-chat-bubble">${this.#formatMarkdown(msg.content)}</div>
-      </div>
-    `).join('');
+    result.innerHTML = messages.map(msg => {
+      const isTyping = msg.content === '...';
+      const content = isTyping 
+        ? '<div class="typing-dots"><span></span><span></span><span></span></div>'
+        : this.#formatMarkdown(msg.content);
+      return `
+        <div class="gleano-chat-msg ${msg.role}">
+          <div class="gleano-chat-bubble">${content}</div>
+        </div>
+      `;
+    }).join('');
 
     result.scrollTop = result.scrollHeight;
   }
