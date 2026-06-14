@@ -25,7 +25,7 @@ zip -r "$ZIP" \
   welcome/ \
   utils/ \
   _locales/ \
-  -x "*.DS_Store" "*/.git/*" "*.test.js" "*/.*.swp"
+  -x "*.DS_Store" "*/.git/*" "*.test.js" "*/.*.swp" "icons/gleano-logo-source.png"
 
 echo "Created: $ZIP"
 unzip -l "$ZIP" | tail -8
