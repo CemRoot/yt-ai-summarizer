@@ -74,7 +74,7 @@
 <br />
 
 <div align="center">
-  <img src="docs/3.png" alt="Gleano — panel preview" width="780" />
+  <img src="docs/3.png?v=2.1.0" alt="Gleano — panel preview" width="780" />
   <br /><sub>The in-extension <i>What's New</i> panel — same design language as the summary panel, welcome flow, and popup.</sub>
 </div>
 
