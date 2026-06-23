@@ -229,9 +229,9 @@ For the **AI Podcast** (BYOK), also add a free **Gemini API key** ([aistudio.goo
 </details>
 
 <details>
-<summary><b>Managed AI (server-side)</b> — DeepSeek + Gemini behind Supabase Edge</summary>
+<summary><b>Managed AI (server-side)</b> — resilient multi-provider chain behind Supabase Edge</summary>
 
-Summary and Chat run on **DeepSeek** text models; Podcast TTS runs on **Gemini 2.5 Flash Preview TTS**. Costs are metered per token (real `usageMetadata`, not flat rates) and gated by a server-side pre-flight credit estimator so you can never be charged for a call you cannot afford.
+Summary and Chat run on a fallback chain — **Ollama Cloud → Gemini 2.5 Flash (with automatic retry on transient "high demand" errors) → Cerebras `gpt-oss-120b` (last resort)** — so a single provider outage no longer fails your request. Podcast TTS runs on **Gemini 2.5 Flash Preview TTS**. Costs are metered per token (real `usageMetadata`, not flat rates) and gated by a server-side pre-flight credit estimator so you can never be charged for a call you cannot afford. The Cerebras tier activates only when the operator sets the `CEREBRAS_API_KEY` Edge secret.
 
 </details>
 
@@ -267,6 +267,12 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 ---
 
 ## What's new
+
+### v2.1.1 — June 2026
+
+- **🛡️ "AI service temporarily unavailable" reliability fix** — when Google's Gemini servers return a transient "high demand" error, summaries and chat no longer fail outright. The backend now automatically retries Gemini (with exponential backoff) and, if it is still overloaded, falls back to an additional independent AI provider so your request still completes.
+- **🔁 Stronger managed-AI fallback chain** — managed text now flows Ollama Cloud → Gemini 2.5 Flash (with retry) → Cerebras (`gpt-oss-120b`) as a last resort. No user action required; quality and credit costs are unchanged for everyday use.
+- **🔐 Backend-only change** — no new extension permissions and no UI changes. Operators must set the `CEREBRAS_API_KEY` Supabase Edge secret to activate the Cerebras safety-net tier (optional).
 
 ### v2.1.0 — June 2026 (Gleano)
 

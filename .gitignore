@@ -15,6 +15,10 @@ AGENTS.md
 # Contains: rate limits, AI provider logic, abuse thresholds, cost calculations, DB schema
 backend/
 
+# Supabase CLI scratch dir created at repo root when a command is run from the
+# wrong cwd (the real project lives under backend/supabase/). Never commit it.
+/supabase/
+
 # Internal documentation — everything under docs/ stays private EXCEPT the GitHub Pages
 # public-facing assets (landing page + uninstall feedback).
 docs/**

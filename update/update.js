@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.1.1',
+      date: '2026-06-23',
+      changes: [
+        { type: 'fixed',    text: 'c211_ai_unavailable' },
+        { type: 'improved', text: 'c211_fallback_chain' },
+      ]
+    },
+    {
       version: '2.1.0',
       date: '2026-06-14',
       changes: [
@@ -166,6 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c211_ai_unavailable: 'Fixed "AI service temporarily unavailable" errors — when Google\u2019s AI servers are briefly overloaded, summaries and chat now retry automatically and fall back to another provider instead of failing',
+      c211_fallback_chain: 'More resilient managed AI — text now flows through Ollama Cloud → Gemini 2.5 Flash (with retry) → a last-resort provider, so a single outage no longer stops your request',
+
       c210_rebrand_gleano: 'Rebranded to Gleano — the extension name is now "Gleano" in all 21 locales, reflecting video + article reading beyond YouTube',
       c210_article_reader: 'Article Reader — summarize and chat about any news article or blog post. Open from the popup on supported pages; uses on-demand injection via activeTab (no broad host permissions)',
       c210_memory: 'Memory optimization — LRU eviction for in-memory caches (max 20 videos), proper cleanup of MutationObservers and event listeners on panel teardown',
@@ -238,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupImproved: 'İyileştirme',
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
+
+      c211_ai_unavailable: '"Yapay zeka hizmeti geçici olarak kullanılamıyor" hataları giderildi — Google\'ın yapay zeka sunucuları kısa süreli yoğunken özetler ve sohbet artık otomatik olarak yeniden deniyor ve başka bir sağlayıcıya geçiyor',
+      c211_fallback_chain: 'Daha dayanıklı yönetilen yapay zeka — metin artık Ollama Cloud → Gemini 2.5 Flash (yeniden denemeli) → son çare sağlayıcı sırasıyla işleniyor; tek bir kesinti isteğinizi durdurmuyor',
 
       c210_rebrand_gleano: 'Gleano markası — uzantı adı artık 21 dilde "Gleano"; YouTube\'un ötesinde video + makale okuma kapsamını yansıtıyor',
       c210_article_reader: 'Makale Okuyucu — haber ve blog yazılarını özetleyin ve sohbet edin. Desteklenen sayfalarda popup\'tan açın; activeTab ile isteğe bağlı enjeksiyon (geniş host izni yok)',

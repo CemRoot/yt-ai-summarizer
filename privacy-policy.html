@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy Policy for Gleano v2.1.0 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
+  <meta name="description" content="Privacy Policy for Gleano v2.1.1 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
   <meta name="theme-color" content="#eceef2">
   <title>Privacy Policy — Gleano</title>
-  <link rel="icon" href="icons/icon32.png?v=2.1.0" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/icon32.png?v=2.1.1" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -590,15 +590,15 @@
         <div class="doc-header-inner">
           <p class="doc-eyebrow">Privacy &amp; legal</p>
           <div class="doc-brand">
-            <img class="doc-logo" src="icons/icon48.png?v=2.1.0" width="48" height="48" alt="" aria-hidden="true">
+            <img class="doc-logo" src="icons/icon48.png?v=2.1.1" width="48" height="48" alt="" aria-hidden="true">
             <div class="doc-title-block">
               <h1>Privacy Policy</h1>
               <p class="doc-lead">Gleano — how we handle data. v2 offers <strong>optional managed AI</strong> (Google sign-in + our Supabase backend) alongside <strong>bring-your-own-key (BYOK)</strong>. We do not run ads or analytics telemetry in the extension.</p>
             </div>
           </div>
           <div class="doc-meta">
-            <span class="meta-pill">Last updated · June 14, 2026</span>
-            <span class="meta-pill meta-pill--version">Extension v2.1.0</span>
+            <span class="meta-pill">Last updated · June 23, 2026</span>
+            <span class="meta-pill meta-pill--version">Extension v2.1.1</span>
           </div>
         </div>
       </header>
@@ -693,7 +693,7 @@
           <p class="spaced-top"><strong>Managed AI path</strong></p>
           <ul>
             <li><strong>Auth &amp; credits</strong> — Your session JWT and fingerprint are sent to Supabase Edge Functions (e.g. <span class="inline-code">auth-callback</span>, <span class="inline-code">check-credits</span>) to create/update your account, enforce free-tier and Pro limits, and return checkout links when applicable.</li>
-            <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>DeepSeek</strong> and <strong>Google Gemini</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Results return to your browser.</li>
+            <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>DeepSeek</strong>, <strong>Google Gemini</strong>, and <strong>Cerebras</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Results return to your browser.</li>
             <li><strong>Article Reader (managed)</strong> — Article text and chat prompts follow the same managed path through <span class="inline-code">summarize</span> when you explicitly request a summary or send a chat message. Credits are consumed per request.</li>
             <li><strong>Billing</strong> — If you subscribe, <strong>Stripe</strong> processes payment; we store subscription status in our database as needed to unlock Pro features. Opening checkout uses Stripe-hosted pages (and may set Stripe cookies under their domain).</li>
           </ul>
@@ -734,6 +734,7 @@
             <li><strong>Stripe</strong> — Payments and Customer Portal when you upgrade. <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">Stripe privacy</a></li>
             <li><strong>DeepSeek</strong> — Server-side text generation for managed summaries/chat when our Edge Function calls their API. See DeepSeek’s current privacy terms on <a href="https://www.deepseek.com" target="_blank" rel="noopener noreferrer">deepseek.com</a>.</li>
             <li><strong>Google Gemini</strong> — Also used from our servers for parts of managed generation/TTS per deployment configuration.</li>
+            <li><strong>Cerebras</strong> — Server-side text generation used only as a last-resort fallback for managed summaries/chat when our other providers are temporarily unavailable. See Cerebras’ current privacy terms on <a href="https://www.cerebras.ai" target="_blank" rel="noopener noreferrer">cerebras.ai</a>.</li>
           </ul>
           <p class="spaced-top-sm">We do not embed analytics SDKs, ads, or cross-site trackers in the extension.</p>
         </div>
@@ -811,7 +812,7 @@
       </div>
 
       <footer class="site-footer">
-        Gleano · v2.1.0 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
+        Gleano · v2.1.1 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
       </footer>
     </main>
   </div>
