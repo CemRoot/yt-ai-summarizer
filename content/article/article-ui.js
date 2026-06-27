@@ -317,12 +317,14 @@ class ArticleUI {
     }
   }
 
-  showError(message) {
+  showError(message, title = '') {
     const result = document.getElementById('gleanoResult');
     if (result) {
+      const safeTitle = title ? `<p class="gleano-error-title">${this.#escape(title)}</p>` : '';
       result.innerHTML = `
         <div class="gleano-error">
-          <p>${message}</p>
+          ${safeTitle}
+          <p>${this.#escape(message)}</p>
         </div>
       `;
     }

@@ -268,6 +268,12 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.1.2 — June 2026
+
+- **📰 Clear Article Reader errors** — the Article side now mirrors YouTube's specificity. Instead of a generic "Something went wrong", you get the exact reason and fix: not signed in / no API key, wrong-provider key, invalid key, out of credits, provider rate limit, endpoint/model not found (404), or a transient service/network issue. A fast `if/else` normalizer plus a single frozen presentation map keeps this cheap (no extra memory or latency).
+- **💬 Smarter Article chat** — chat no longer robotically replies "this isn't in the article". It now answers questions about the article's topic using general knowledge (clearly flagged), while still declining clearly unrelated tasks (writing code, recipes, homework). No live web access; uses the model's own knowledge.
+- **🐛 Article settings/credits fix** — the Article reader read a non-existent nested `settings` object, so the language preference and the managed credit badge silently never worked; it now reads the correct top-level keys.
+
 ### v2.1.1 — June 2026
 
 - **🛡️ "AI service temporarily unavailable" reliability fix** — when Google's Gemini servers return a transient "high demand" error, summaries and chat no longer fail outright. The backend now automatically retries Gemini (with exponential backoff) and, if it is still overloaded, falls back to an additional independent AI provider so your request still completes.

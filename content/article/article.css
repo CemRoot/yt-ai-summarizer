@@ -443,6 +443,30 @@
   color: #e5e7eb;
 }
 
+/* Error chat bubble (left-aligned, distinct from assistant) */
+.gleano-chat-msg.error {
+  justify-content: flex-start;
+}
+
+.gleano-chat-msg.error .gleano-chat-bubble {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.gleano-panel.dark .gleano-chat-msg.error .gleano-chat-bubble {
+  background: #451a1a;
+  color: #fca5a5;
+  border-color: #7f1d1d;
+}
+
+.gleano-error-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
 /* Typing Indicator */
 .gleano-chat-bubble .typing-dots {
   display: inline-flex;

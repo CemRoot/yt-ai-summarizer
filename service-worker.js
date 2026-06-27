@@ -761,17 +761,17 @@ async function getProviderConfig() {
 async function getManagedMode() {
   try {
     const session = await SupabaseAuth.getInstance().getSession();
-    if (!session) return { managed: false };
+    if (!session) return { managed: false, signedIn: false };
     let credits = null;
     try {
       credits = await ApiClient.getInstance().checkCredits();
     } catch (e) { /* credits check failed */ }
     if (credits && credits.can_use) {
-      return { managed: true, session, credits };
+      return { managed: true, signedIn: true, session, credits };
     }
-    return { managed: false, credits };
+    return { managed: false, signedIn: true, credits };
   } catch (outerErr) {
-    return { managed: false };
+    return { managed: false, signedIn: false };
   }
 }
 
@@ -840,6 +840,30 @@ async function requireByokApiKeyForProvider(mode, provider, apiKey) {
     throw e;
   }
   throw buildNoByokKeyError(mode);
+}
+
+/**
+ * Article BYOK gate. Mirrors {@link requireByokApiKeyForProvider} but first surfaces the
+ * "truly anonymous" case (never signed in AND no BYOK key) with a single clear code so the
+ * article UI can prompt the user to sign in OR add a key — instead of the misleading
+ * MANAGED_UNAVAILABLE ("try again in a moment") that {@link buildNoByokKeyError} would emit.
+ * @param {{ managed?: boolean, signedIn?: boolean, credits?: object }} mode from {@link getManagedMode}
+ * @param {'groq'|'ollama'} provider
+ * @param {string|undefined} apiKey
+ */
+async function requireArticleAiAccess(mode, provider, apiKey) {
+  if (!mode.managed && !mode.signedIn) {
+    let anyKey = false;
+    try {
+      anyKey = await StorageHelper.hasAnyByokApiKey();
+    } catch { /* ignore */ }
+    if (!anyKey) {
+      const e = new Error('Sign in with Google or add your own API key in Settings to use Gleano.');
+      e.code = 'NEEDS_AUTH_OR_KEY';
+      throw e;
+    }
+  }
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 }
 
 /**
@@ -1419,13 +1443,19 @@ CRITICAL RULES:
 - Include ONLY the most important fact/news
 - Be direct and factual`,
 
-  chat: `You are a helpful assistant that answers questions about this specific article only.
+  chat: `You are a helpful assistant for this article and its topic.
 
-RULES:
-- Answer in 1-3 sentences, be concise
-- If not in the article, say "Bu bilgi makalede yer almıyor" or equivalent in the user's language
-- Match the user's language exactly
-- NO lengthy explanations`
+ANSWERING:
+- Prefer facts from the article. If the answer is in the article, use it directly.
+- If the answer is NOT in the article but the question is about the article's subject/domain (background, context, related news, definitions, who/what/why), ANSWER IT using your own general knowledge. Do NOT refuse and do NOT just repeat the article.
+- When you go beyond the article, start with a short natural cue in the user's language (e.g. "In general:" / "Genel bilgi:") so the user knows it is background knowledge, then answer.
+
+DECLINE (only these): requests unrelated to the article's topic — writing code, recipes, homework, math/translation tasks, or general chit-chat. For those, reply with ONE short polite line in the user's language, e.g. "I can only help with this article and its topic." Do not attempt the task.
+
+STYLE:
+- Be concise: 1-4 short sentences.
+- Match the user's language exactly.
+- No lengthy explanations, no headers, no bullet lists unless asked.`
 };
 
 /**
@@ -1501,7 +1531,7 @@ ${content}
   }
 
   const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) throw new Error('NO_API_KEY');
+  await requireArticleAiAccess(mode, provider, apiKey);
 
   const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };
@@ -1571,7 +1601,7 @@ ${content}
       }));
       // Keep answers short: instruct brevity in the chat message itself since the
       // deployed chat prompt is YouTube-oriented.
-      const briefQuestion = `${question}\n\n(Answer in ${langName}, 1-3 short sentences only, based only on the article above.)`;
+      const briefQuestion = `${question}\n\n(Answer in ${langName}, 1-4 short sentences. Prefer the article above; if the answer is not in it but the question is about the article's topic, answer from general knowledge and prefix a short cue like "Genel bilgi:"/"In general:". Decline only clearly unrelated tasks such as writing code, recipes, or homework with one short polite line.)`;
       const edgeResult = await ApiClient.getInstance().summarize({
         videoId: `article:${Date.now()}`,
         transcript: content,
@@ -1598,7 +1628,7 @@ ${content}
   }
 
   const { provider, apiKey, model } = await getProviderConfig();
-  if (!apiKey) throw new Error('NO_API_KEY');
+  await requireArticleAiAccess(mode, provider, apiKey);
 
   const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };

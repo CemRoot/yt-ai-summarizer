@@ -11,6 +11,83 @@ class ArticleController {
     windowMs: 60000
   };
 
+  /**
+   * Canonical error code -> user-facing presentation. Frozen once (single object in
+   * memory, O(1) lookup) so error rendering never allocates or branches on every call.
+   */
+  static #ERROR_PRESENTATION = Object.freeze({
+    NEEDS_AUTH_OR_KEY: {
+      title: 'Sign in or add an API key',
+      message: 'Sign in with Google, or add your own API key in Settings, to use Gleano.',
+      retryable: false
+    },
+    PROVIDER_KEY_MISSING: {
+      title: 'Provider API key missing',
+      message: 'The selected AI provider has no API key saved. Open Settings and add the key for that provider, or switch to the provider whose key you already added.',
+      retryable: false
+    },
+    API_KEY_INVALID: {
+      title: 'Invalid API key',
+      message: 'Your API key looks invalid or was rejected. Check it in Settings.',
+      retryable: false
+    },
+    NO_CREDITS: {
+      title: 'Credits exhausted',
+      message: 'You are out of credits. Upgrade to Pro, or add your own API key in Settings.',
+      retryable: false
+    },
+    INSUFFICIENT_CREDITS: {
+      title: 'Not enough credits',
+      message: 'This needs more credits than you have. Upgrade to Pro, add your own API key, or try a shorter article.',
+      retryable: false
+    },
+    SESSION_EXPIRED: {
+      title: 'Session expired',
+      message: 'Your session expired. Please sign in again from Settings.',
+      retryable: false
+    },
+    PROVIDER_RATE_LIMIT: {
+      title: 'Rate limited',
+      message: 'Too many requests right now. Please wait a moment and try again.',
+      retryable: true
+    },
+    PROVIDER_NOT_FOUND: {
+      title: 'AI endpoint not found',
+      message: 'The AI endpoint or model was not found (404). Check the selected model/provider in Settings.',
+      retryable: false
+    },
+    PROVIDER_UNAVAILABLE: {
+      title: 'Service unavailable',
+      message: 'The AI service is temporarily unavailable. Please try again soon.',
+      retryable: true
+    },
+    MANAGED_UNAVAILABLE: {
+      title: 'Cloud AI unavailable',
+      message: 'Cloud AI is temporarily unreachable. Please try again in a moment, or add your own API key in Settings.',
+      retryable: true
+    },
+    AI_QUOTA_EXCEEDED: {
+      title: 'AI temporarily unavailable',
+      message: 'The AI service is temporarily over capacity on our side. Please try again later; if it persists, open a support ticket.',
+      retryable: true
+    },
+    NETWORK_ERROR: {
+      title: 'Network issue',
+      message: 'Network connection issue detected. Check your connection and try again.',
+      retryable: true
+    },
+    EMPTY_CONTENT: {
+      title: 'Article unavailable',
+      message: 'The article content could not be read. Please refresh the page and try again.',
+      retryable: true
+    },
+    UNKNOWN_ERROR: {
+      title: 'Something went wrong',
+      message: 'Something went wrong. Please try again.',
+      retryable: true
+    }
+  });
+
   #extractor = null;
   #ui = null;
   #articleContent = null;
@@ -89,11 +166,12 @@ class ArticleController {
 
   #loadInitialCredits() {
     try {
-      chrome.storage.local.get(['settings'], (result) => {
-        const s = result?.settings || {};
+      // StorageHelper writes settings as TOP-LEVEL keys (not nested under `settings`).
+      chrome.storage.local.get(['userPlan', 'credits'], (result) => {
+        const s = result || {};
         const plan = String(s.userPlan || '').toLowerCase();
         // Only show credits for managed (signed-in) users, not BYOK.
-        if (plan && plan !== 'anonymous' && typeof s.credits === 'number') {
+        if (plan && plan !== 'anonymous' && typeof s.credits === 'number' && s.credits >= 0) {
           this.#ui.updateCredits(s.credits);
         }
       });
@@ -138,6 +216,12 @@ class ArticleController {
       return;
     }
 
+    // Pre-flight: instant, no network round-trip when the user has neither a key nor a session.
+    if (!(await this.#hasLocalAccess())) {
+      this.#showChatError({ code: 'NEEDS_AUTH_OR_KEY' });
+      return;
+    }
+
     // Add user message to history first
     this.#chatHistory.push({ role: 'user', content: message });
     this.#ui.showChat(this.#chatHistory);
@@ -157,13 +241,21 @@ class ArticleController {
       this.#updateCredits(credits);
     } catch (err) {
       console.error('[ArticleController] Chat error:', err);
-      // Remove the user message on error
+      // Remove the failed user turn from the AI history, then show a persistent error bubble.
       this.#chatHistory.pop();
-      this.#ui.showChat(this.#chatHistory);
-      this.#ui.showToast(this.#friendlyError(err));
+      this.#showChatError(err);
     } finally {
       this.#isProcessing = false;
     }
+  }
+
+  /**
+   * Render a persistent error bubble after the current history WITHOUT polluting
+   * `#chatHistory` (the array sent to the AI), so retries stay clean and memory is unaffected.
+   */
+  #showChatError(err) {
+    const { message } = this.#presentError(err);
+    this.#ui.showChat([...this.#chatHistory, { role: 'error', content: message }]);
   }
 
   #updateCredits(credits) {
@@ -172,31 +264,77 @@ class ArticleController {
     }
   }
 
-  #friendlyError(err) {
-    // Prefer the structured error code; fall back to matching the message text.
+  /**
+   * Map a raw error (structured code or message text) to a canonical error code.
+   * Ordered if/else: most specific first. Pure string work — no allocation beyond a few
+   * locals — so it stays cheap on the error path.
+   */
+  #normalizeErrorCode(err) {
     const code = String(err?.code || '').toUpperCase();
-    const msg = String(err?.message || '');
-    const has = (re) => re.test(code) || re.test(msg);
+    const msg = String(err?.message || err || '').trim();
+    if (!code && !msg) return 'UNKNOWN_ERROR';
 
-    if (has(/NO_CREDITS|INSUFFICIENT_CREDITS/)) {
-      return 'You are out of credits. Upgrade to Pro or add your own API key in settings.';
+    // 1) Structured codes (set by the service worker / ApiClient).
+    if (code === 'NEEDS_AUTH_OR_KEY') return 'NEEDS_AUTH_OR_KEY';
+    if (code === 'PROVIDER_KEY_MISSING') return 'PROVIDER_KEY_MISSING';
+    if (code === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
+    if (code === 'NO_CREDITS') return 'NO_CREDITS';
+    if (code === 'RATE_LIMITED') return 'PROVIDER_RATE_LIMIT';
+    if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
+    if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
+    if (code === 'API_KEY_INVALID' || code === 'GEMINI_KEY_INVALID') return 'API_KEY_INVALID';
+    if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
+
+    // 2) Plain message strings thrown by the service worker / providers.
+    if (msg === 'NEEDS_AUTH_OR_KEY' || msg === 'NO_API_KEY') return 'NEEDS_AUTH_OR_KEY';
+    if (msg === 'PROVIDER_KEY_MISSING') return 'PROVIDER_KEY_MISSING';
+    if (msg === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
+    if (msg === 'NO_CREDITS') return 'NO_CREDITS';
+    if (msg === 'INVALID_API_KEY' || msg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
+    if (msg === 'RATE_LIMITED' || msg === 'GEMINI_RATE_LIMITED' || /too many requests/i.test(msg)) return 'PROVIDER_RATE_LIMIT';
+    if (msg === 'INSUFFICIENT_CONTENT' || msg === 'EMPTY_QUESTION') return 'EMPTY_CONTENT';
+
+    if (/exceeded your current quota|resource exhausted|GEMINI_QUOTA/i.test(msg)) return 'AI_QUOTA_EXCEEDED';
+
+    // 3) BYOK provider HTTP errors: "API_ERROR: <status> - <message>".
+    if (msg.startsWith('API_ERROR')) {
+      const statusMatch = msg.match(/API_ERROR:\s*(\d{3})/);
+      const status = statusMatch ? Number(statusMatch[1]) : null;
+      if (status === 401 || status === 403) return 'API_KEY_INVALID';
+      if (status === 404) return 'PROVIDER_NOT_FOUND';
+      if (status === 429) return 'PROVIDER_RATE_LIMIT';
+      if (status && status >= 500) return 'PROVIDER_UNAVAILABLE';
+      return 'PROVIDER_UNAVAILABLE';
     }
-    // Provider-side exhaustion/failure (Gemini/Ollama) — this is a system issue,
-    // NOT the user's own rate cap. Tell them it's on us and to open a ticket.
-    if (has(/AI_QUOTA_EXCEEDED|GEMINI_QUOTA|PROVIDER_UNAVAILABLE|SERVER_ERROR|PROVIDER_EMPTY_RESPONSE/)) {
-      return 'System error: the AI service is temporarily unavailable. Please try again later, and if it persists, open a support ticket.';
-    }
-    // Our own per-account burst cap.
-    if (has(/RATE_LIMITED|TOO MANY REQUESTS/)) {
-      return "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.";
-    }
-    if (has(/NO_API_KEY/)) {
-      return 'Please sign in or add an API key in settings.';
-    }
-    if (has(/SESSION_EXPIRED|NOT_AUTHENTICATED/)) {
-      return 'Your session expired. Please sign in again.';
-    }
-    return 'Something went wrong. Please try again.';
+
+    if (/failed to fetch|networkerror|network request failed|err_network/i.test(msg)) return 'NETWORK_ERROR';
+    if (msg === 'PROVIDER_UNAVAILABLE') return 'PROVIDER_UNAVAILABLE';
+
+    return 'UNKNOWN_ERROR';
+  }
+
+  #presentError(err) {
+    const code = this.#normalizeErrorCode(err);
+    const map = ArticleController.#ERROR_PRESENTATION;
+    return map[code] || map.UNKNOWN_ERROR;
+  }
+
+  /**
+   * Fast, presence-only access pre-flight. API keys are stored obfuscated, so we cannot
+   * (and must not) deobfuscate here — but a non-empty stored value still means a key exists.
+   * Mirrors the YouTube `hasAccess()` intent (any BYOK key OR an active session).
+   */
+  async #hasLocalAccess() {
+    const s = await this.#getSettings();
+    const hasKey = !!(
+      String(s.groqApiKey || '').trim()
+      || String(s.ollamaApiKey || '').trim()
+      || String(s.geminiApiKey || '').trim()
+    );
+    if (hasKey) return true;
+    const signedIn = !!String(s.supabaseAccessToken || '').trim()
+      || (!!s.userPlan && String(s.userPlan).toLowerCase() !== 'anonymous');
+    return signedIn;
   }
 
   async #onRefresh() {
@@ -224,6 +362,13 @@ class ArticleController {
       return;
     }
 
+    // Pre-flight: avoid the spinner when the user has neither a key nor a session.
+    if (!(await this.#hasLocalAccess())) {
+      const { title, message } = this.#presentError({ code: 'NEEDS_AUTH_OR_KEY' });
+      this.#ui.showError(message, title);
+      return;
+    }
+
     this.#isProcessing = true;
     this.#ui.showLoading('Generating summary...');
 
@@ -234,7 +379,8 @@ class ArticleController {
       this.#updateCredits(credits);
     } catch (err) {
       console.error('[ArticleController] Summary error:', err);
-      this.#ui.showError(this.#friendlyError(err));
+      const { title, message } = this.#presentError(err);
+      this.#ui.showError(message, title);
     } finally {
       this.#isProcessing = false;
     }
@@ -315,10 +461,13 @@ class ArticleController {
   }
 
   async #getSettings() {
+    // StorageHelper persists settings as TOP-LEVEL keys (not nested under `settings`).
+    // Read only the fields the article controller needs to avoid pulling caches.
     return new Promise((resolve) => {
-      chrome.storage.local.get(['settings'], (result) => {
-        resolve(result.settings || {});
-      });
+      chrome.storage.local.get(
+        ['language', 'groqApiKey', 'ollamaApiKey', 'geminiApiKey', 'supabaseAccessToken', 'userPlan', 'credits'],
+        (result) => resolve(result || {})
+      );
     });
   }
 
