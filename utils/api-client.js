@@ -77,6 +77,14 @@ class ApiClient {
         await auth.signOut();
         throw new ApiError('SESSION_EXPIRED', 'Session expired. Please sign in again.');
       }
+
+      // Refresh succeeded but the backend still rejects the token — the session
+      // is effectively dead. Surface it as SESSION_EXPIRED instead of letting it
+      // fall through to the opaque SERVER_ERROR branch below.
+      if (res.status === 401) {
+        await auth.signOut();
+        throw new ApiError('SESSION_EXPIRED', 'Session expired. Please sign in again.');
+      }
     }
 
     const data = await res.json().catch(() => ({}));
@@ -105,7 +113,21 @@ class ApiClient {
       if (/^GEMINI_API_KEY_INVALID/i.test(errStr)) {
         throw new ApiError('GEMINI_KEY_INVALID', errStr.slice(0, 500));
       }
-      throw new ApiError('SERVER_ERROR', data.error || `Server error (${res.status})`);
+      // Pass the backend's own error code through so the UI can explain it
+      // instead of collapsing everything into a generic "something went wrong".
+      const knownCodes = [
+        'PROVIDER_EMPTY_RESPONSE',
+        'NO_CREDITS',
+        'INSUFFICIENT_CREDITS',
+        'RATE_LIMITED'
+      ];
+      const serverCode = knownCodes.includes(errStr) ? errStr : 'SERVER_ERROR';
+      const serverErr = new ApiError(
+        serverCode,
+        data.error || data.message || `Server error (${res.status})`
+      );
+      serverErr.status = res.status;
+      throw serverErr;
     }
 
     return data;

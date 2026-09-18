@@ -79,6 +79,45 @@ jobs:
             echo "status=fail" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Test IOS fallback client
+        id: ios_probe
+        run: |
+          IOS_VER=$(grep -A4 "clientName: 'IOS'" content/transcript.js | grep -oP "clientVersion:\s*'([^']+)'" | grep -oP "'[^']+'" | tr -d "'")
+          echo "IOS client version from source: ${IOS_VER:-<none>}"
+          if [ -z "$IOS_VER" ]; then
+            echo "::warning::Could not read the IOS client version from content/transcript.js"
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COUNT=$(curl -sS -X POST \
+            'https://www.youtube.com/youtubei/v1/player?prettyPrint=false' \
+            -H 'Content-Type: application/json' \
+            -d "{\"context\":{\"client\":{\"clientName\":\"IOS\",\"clientVersion\":\"$IOS_VER\",\"deviceModel\":\"iPhone16,2\",\"osVersion\":\"18.3.2.22D82\",\"hl\":\"en\",\"gl\":\"US\",\"platform\":\"MOBILE\"}},\"videoId\":\"dQw4w9WgXcQ\"}" 2>/dev/null \
+            | python3 -c "
+          import sys, json
+          try:
+              d = json.load(sys.stdin)
+              print(len(d['captions']['playerCaptionsTracklistRenderer']['captionTracks']))
+          except Exception:
+              print(0)
+          " 2>/dev/null)
+
+          echo "IOS tracks found: $COUNT"
+          if [ "$COUNT" -gt 0 ] 2>/dev/null; then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::IOS fallback client returned no caption tracks — ANDROID is now a single point of failure."
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail if every caption client is down
+        if: steps.probe.outputs.status != 'ok' && steps.ios_probe.outputs.status != 'ok'
+        run: |
+          echo "FAIL: both the ANDROID and IOS innertube clients returned no caption tracks."
+          echo "Caption extraction is fully broken — this needs a same-day fix."
+          exit 1
+
       - name: Test timedtext fetch
         if: steps.probe.outputs.status == 'ok'
         id: timedtext

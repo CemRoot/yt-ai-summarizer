@@ -999,6 +999,7 @@ class SummarizerController {
   #errorFromSwResponse(response) {
     const err = new Error(response.error || 'Unknown error');
     if (response.errorCode) err.code = response.errorCode;
+    if (typeof response.status === 'number') err.status = response.status;
     if (response.upgradeUrl) err.upgradeUrl = response.upgradeUrl;
     if (typeof response.estimated_credits === 'number') err.estimatedCredits = response.estimated_credits;
     if (typeof response.available_credits === 'number') err.availableCredits = response.available_credits;
@@ -1006,65 +1007,16 @@ class SummarizerController {
   }
 
   #normalizeErrorCode(error) {
-    const code = error?.code || '';
-    const errorMsg = String(error?.message || error || '').trim();
-    if (!errorMsg && !code) return 'UNKNOWN_ERROR';
-
-    if (code === 'INSUFFICIENT_CREDITS' || errorMsg === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
-    if (code === 'NO_CREDITS' || errorMsg === 'NO_CREDITS') return 'NO_CREDITS';
-    if (code === 'PROVIDER_KEY_MISSING' || errorMsg === 'PROVIDER_KEY_MISSING') {
-      return 'PROVIDER_KEY_MISSING';
-    }
-    if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
-    if (code === 'GEMINI_KEY_INVALID') return 'GEMINI_MANAGED_TTS_KEY';
-    if (code === 'RATE_LIMITED') return 'MANAGED_RATE_LIMIT';
-    if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
-    if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
-
-    if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
-    if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
-    if (errorMsg === 'API_KEY_MISSING') return 'API_KEY_MISSING';
-    if (errorMsg === 'INVALID_API_KEY' || errorMsg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
-    if (errorMsg === 'RATE_LIMITED' || errorMsg === 'GEMINI_RATE_LIMITED') return 'PROVIDER_RATE_LIMIT';
-
-    if (
-      errorMsg.startsWith('GEMINI_QUOTA_EXCEEDED')
-      || /exceeded your current quota|Resource exhausted|GEMINI_QUOTA/i.test(errorMsg)
-    ) {
-      return 'AI_QUOTA_EXCEEDED';
-    }
-
-    if (
-      errorMsg === 'NO_TRANSCRIPT'
-      || errorMsg === 'TRANSCRIPT_UNAVAILABLE'
-      || errorMsg === 'TRANSCRIPT_NOT_READY'
-      || errorMsg === 'TRANSCRIPT_EMPTY_RETRYABLE'
-      || errorMsg === 'TRANSCRIPT_EMPTY_FINAL'
-      || errorMsg === 'EMPTY_TRANSCRIPT'
-      || errorMsg === 'TRANSCRIPT_REQUEST_STALE'
-    ) {
-      return 'TRANSCRIPT_UNAVAILABLE';
-    }
-
-    if (/failed to fetch|networkerror|network request failed|err_network/i.test(errorMsg)) {
-      return 'NETWORK_ERROR';
-    }
-
-    if (errorMsg.startsWith('API_ERROR')) {
-      const statusMatch = errorMsg.match(/API_ERROR:\s*(\d{3})/);
-      const status = statusMatch ? Number(statusMatch[1]) : null;
-      if (status === 401 || status === 403) return 'API_KEY_INVALID';
-      if (status === 429) return 'PROVIDER_RATE_LIMIT';
-      if (status && status >= 500) return 'PROVIDER_UNAVAILABLE';
-      return 'PROVIDER_UNAVAILABLE';
-    }
-
-    if (errorMsg === 'PROVIDER_UNAVAILABLE') return 'PROVIDER_UNAVAILABLE';
-    return 'UNKNOWN_ERROR';
+    return ytaiNormalizeErrorCode(error);
   }
 
   async #handleError(error) {
     const code = this.#normalizeErrorCode(error);
+    console.error('[YTAI] request failed:', code, {
+      code: error?.code,
+      status: error?.status,
+      message: error?.message
+    });
     if (code === 'NO_CREDITS') {
       if (await storage.hasAnyByokApiKey()) {
         ui.showReadyPrompt();
@@ -1092,98 +1044,197 @@ class SummarizerController {
   /* original #handleError removed — replaced by the method above */
 
   #getErrorPresentation(errorCode) {
-    const errorMap = {
-      NO_CREDITS: {
-        title: 'Credits Exhausted',
-        message: 'Your free credits are used up. Upgrade to Pro or use your own API key.',
-        retryable: false
-      },
-      INSUFFICIENT_CREDITS: {
-        title: 'Not Enough Credits',
-        message: 'This video needs more credits than you have. Upgrade to Pro, use your own API key, or try a shorter video.',
-        retryable: false
-      },
-      MANAGED_RATE_LIMIT: {
-        title: 'Slow down a little',
-        message: "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.",
-        retryable: true
-      },
-      SESSION_EXPIRED: {
-        title: 'Session Expired',
-        message: 'Your session has expired. Please sign in again from Settings.',
-        retryable: false
-      },
-      NOT_ON_VIDEO_PAGE: {
-        title: 'Open a Video',
-        message: 'You are not on a YouTube video page. Open a video to use Chat.',
-        retryable: false
-      },
-      VIDEO_ID_MISSING: {
-        title: 'Video Not Ready',
-        message: 'We could not detect this video yet. Wait a moment and try again.',
-        retryable: true
-      },
-      TRANSCRIPT_UNAVAILABLE: {
-        title: chrome.i18n?.getMessage('noTranscript') || 'No Transcript',
-        message: "This video's captions are unavailable right now.",
-        retryable: true
-      },
-      API_KEY_MISSING: {
-        title: 'API Key Required',
-        message: 'Please add your API key in Settings to use Chat.',
-        retryable: false
-      },
-      PROVIDER_KEY_MISSING: {
-        title: 'Provider API Key Missing',
-        message:
-          'The AI provider you selected has no API key saved. Open Settings, paste the key for that provider, or switch to the provider whose key you already added.',
-        retryable: false
-      },
-      API_KEY_INVALID: {
-        title: 'Invalid API Key',
-        message: 'Your API key looks invalid. Please check your settings.',
-        retryable: false
-      },
-      MANAGED_UNAVAILABLE: {
-        title: 'Managed AI Unavailable',
-        message: 'Cloud AI is temporarily unreachable (session or credits check failed). Please try again in a moment, or add your own API key in Settings.',
-        retryable: true
-      },
-      PROVIDER_RATE_LIMIT: {
-        title: 'Rate Limited',
-        message: 'Too many requests right now. Please wait a moment and try again.',
-        retryable: true
-      },
-      PROVIDER_UNAVAILABLE: {
-        title: 'Service Unavailable',
-        message: 'The AI service is temporarily unavailable. Please try again soon.',
-        retryable: true
-      },
-      NETWORK_ERROR: {
-        title: 'Network Issue',
-        message: 'Network connection issue detected. Check your connection and try again.',
-        retryable: true
-      },
-      AI_QUOTA_EXCEEDED: {
-        title: 'System Error',
-        message:
-          'Something went wrong on our side (the AI service is temporarily unavailable). Please try again later. If it keeps happening, please open a support ticket.',
-        retryable: true
-      },
-      GEMINI_MANAGED_TTS_KEY: {
-        title: 'Gemini key (podcast audio)',
-        message:
-          'Supabase GEMINI_API_KEY failed for TTS (invalid key or no access). Regenerate in Google AI Studio and update Edge secrets, or use your own Gemini key in Settings for podcast.',
-        retryable: false
-      },
-      UNKNOWN_ERROR: {
-        title: chrome.i18n?.getMessage('errorGeneric') || 'Error',
-        message: 'Something went wrong. Please try again.',
-        retryable: true
-      }
-    };
-    return errorMap[errorCode] || errorMap.UNKNOWN_ERROR;
+    return ytaiErrorPresentation(errorCode);
   }
+}
+
+/**
+ * Pure error classification, kept outside the controller so it can be unit
+ * tested without booting the whole content script.
+ *
+ * Every branch here exists because an unmapped code renders as the generic
+ * "Something went wrong. Please try again." — which is unactionable for the
+ * user and undiagnosable for us. Add a branch before adding a new error code.
+ */
+function ytaiNormalizeErrorCode(error) {
+  const code = error?.code || '';
+  const errorMsg = String(error?.message || error || '').trim();
+  if (!errorMsg && !code) return 'UNKNOWN_ERROR';
+
+  if (code === 'INSUFFICIENT_CREDITS' || errorMsg === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
+  if (code === 'NO_CREDITS' || errorMsg === 'NO_CREDITS') return 'NO_CREDITS';
+  if (code === 'PROVIDER_KEY_MISSING' || errorMsg === 'PROVIDER_KEY_MISSING') {
+    return 'PROVIDER_KEY_MISSING';
+  }
+  if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
+  if (code === 'GEMINI_KEY_INVALID') return 'GEMINI_MANAGED_TTS_KEY';
+  if (code === 'RATE_LIMITED') return 'MANAGED_RATE_LIMIT';
+  if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
+  if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
+
+  if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
+  if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
+  if (errorMsg === 'API_KEY_MISSING') return 'API_KEY_MISSING';
+  if (errorMsg === 'INVALID_API_KEY' || errorMsg === 'API_KEY_INVALID') return 'API_KEY_INVALID';
+  if (errorMsg === 'RATE_LIMITED' || errorMsg === 'GEMINI_RATE_LIMITED') return 'PROVIDER_RATE_LIMIT';
+
+  if (
+    errorMsg.startsWith('GEMINI_QUOTA_EXCEEDED')
+    || /exceeded your current quota|Resource exhausted|GEMINI_QUOTA/i.test(errorMsg)
+  ) {
+    return 'AI_QUOTA_EXCEEDED';
+  }
+
+  if (
+    errorMsg === 'NO_TRANSCRIPT'
+    || errorMsg === 'TRANSCRIPT_UNAVAILABLE'
+    || errorMsg === 'TRANSCRIPT_NOT_READY'
+    || errorMsg === 'TRANSCRIPT_EMPTY_RETRYABLE'
+    || errorMsg === 'TRANSCRIPT_EMPTY_FINAL'
+    || errorMsg === 'EMPTY_TRANSCRIPT'
+    || errorMsg === 'TRANSCRIPT_REQUEST_STALE'
+  ) {
+    return 'TRANSCRIPT_UNAVAILABLE';
+  }
+
+  if (/failed to fetch|networkerror|network request failed|err_network/i.test(errorMsg)) {
+    return 'NETWORK_ERROR';
+  }
+
+  if (errorMsg.startsWith('API_ERROR')) {
+    const statusMatch = errorMsg.match(/API_ERROR:\s*(\d{3})/);
+    const status = statusMatch ? Number(statusMatch[1]) : null;
+    if (status === 401 || status === 403) return 'API_KEY_INVALID';
+    if (status === 429) return 'PROVIDER_RATE_LIMIT';
+    if (status && status >= 500) return 'PROVIDER_UNAVAILABLE';
+    return 'PROVIDER_UNAVAILABLE';
+  }
+
+  if (errorMsg === 'PROVIDER_UNAVAILABLE') return 'PROVIDER_UNAVAILABLE';
+
+  // Backend (Edge Function) failures: these used to fall through to
+  // UNKNOWN_ERROR, which hid the real cause behind "Something went wrong".
+  if (code === 'PROVIDER_EMPTY_RESPONSE' || errorMsg === 'PROVIDER_EMPTY_RESPONSE') {
+    return 'PROVIDER_EMPTY_RESPONSE';
+  }
+  if (code === 'AUTH_MISSING') return 'SESSION_EXPIRED';
+  if (code === 'SERVER_ERROR') {
+    const status = Number(error?.status);
+    if (status === 401 || status === 403) return 'SESSION_EXPIRED';
+    if (status >= 500) return 'PROVIDER_UNAVAILABLE';
+    return 'SERVER_ERROR';
+  }
+
+  return 'UNKNOWN_ERROR';
+}
+
+function ytaiErrorPresentation(errorCode) {
+  const errorMap = {
+    NO_CREDITS: {
+      title: 'Credits Exhausted',
+      message: 'Your free credits are used up. Upgrade to Pro or use your own API key.',
+      retryable: false
+    },
+    INSUFFICIENT_CREDITS: {
+      title: 'Not Enough Credits',
+      message: 'This video needs more credits than you have. Upgrade to Pro, use your own API key, or try a shorter video.',
+      retryable: false
+    },
+    MANAGED_RATE_LIMIT: {
+      title: 'Slow down a little',
+      message: "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.",
+      retryable: true
+    },
+    SESSION_EXPIRED: {
+      title: 'Session Expired',
+      message: 'Your session has expired. Please sign in again from Settings.',
+      retryable: false
+    },
+    NOT_ON_VIDEO_PAGE: {
+      title: 'Open a Video',
+      message: 'You are not on a YouTube video page. Open a video to use Chat.',
+      retryable: false
+    },
+    VIDEO_ID_MISSING: {
+      title: 'Video Not Ready',
+      message: 'We could not detect this video yet. Wait a moment and try again.',
+      retryable: true
+    },
+    TRANSCRIPT_UNAVAILABLE: {
+      title: chrome.i18n?.getMessage('noTranscript') || 'No Transcript',
+      message: "This video's captions are unavailable right now.",
+      retryable: true
+    },
+    API_KEY_MISSING: {
+      title: 'API Key Required',
+      message: 'Please add your API key in Settings to use Chat.',
+      retryable: false
+    },
+    PROVIDER_KEY_MISSING: {
+      title: 'Provider API Key Missing',
+      message:
+        'The AI provider you selected has no API key saved. Open Settings, paste the key for that provider, or switch to the provider whose key you already added.',
+      retryable: false
+    },
+    API_KEY_INVALID: {
+      title: 'Invalid API Key',
+      message: 'Your API key looks invalid. Please check your settings.',
+      retryable: false
+    },
+    MANAGED_UNAVAILABLE: {
+      title: 'Managed AI Unavailable',
+      message: 'Cloud AI is temporarily unreachable (session or credits check failed). Please try again in a moment, or add your own API key in Settings.',
+      retryable: true
+    },
+    PROVIDER_RATE_LIMIT: {
+      title: 'Rate Limited',
+      message: 'Too many requests right now. Please wait a moment and try again.',
+      retryable: true
+    },
+    PROVIDER_UNAVAILABLE: {
+      title: 'Service Unavailable',
+      message: 'The AI service is temporarily unavailable. Please try again soon.',
+      retryable: true
+    },
+    NETWORK_ERROR: {
+      title: 'Network Issue',
+      message: 'Network connection issue detected. Check your connection and try again.',
+      retryable: true
+    },
+    AI_QUOTA_EXCEEDED: {
+      title: 'System Error',
+      message:
+        'Something went wrong on our side (the AI service is temporarily unavailable). Please try again later. If it keeps happening, please open a support ticket.',
+      retryable: true
+    },
+    GEMINI_MANAGED_TTS_KEY: {
+      title: 'Gemini key (podcast audio)',
+      message:
+        'Supabase GEMINI_API_KEY failed for TTS (invalid key or no access). Regenerate in Google AI Studio and update Edge secrets, or use your own Gemini key in Settings for podcast.',
+      retryable: false
+    },
+    PROVIDER_EMPTY_RESPONSE: {
+      title: 'Empty AI Response',
+      message: 'The AI returned nothing for this video (it may have been blocked by a safety filter, or the transcript is too long). Try another mode or a different video.',
+      retryable: true
+    },
+    SERVER_ERROR: {
+      title: 'Server Error',
+      message: 'The Gleano backend rejected this request. Open the extension service worker console for the exact reason, or try again in a moment.',
+      retryable: true
+    },
+    UNKNOWN_ERROR: {
+      title: chrome.i18n?.getMessage('errorGeneric') || 'Error',
+      message: 'Something went wrong. Please try again.',
+      retryable: true
+    }
+  };
+  return errorMap[errorCode] || errorMap.UNKNOWN_ERROR;
+}
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.ytaiNormalizeErrorCode = ytaiNormalizeErrorCode;
+  globalThis.ytaiErrorPresentation = ytaiErrorPresentation;
 }
 
 // Instantiate — constructor wires everything up
