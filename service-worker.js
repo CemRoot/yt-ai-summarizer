@@ -224,6 +224,7 @@ try {
 function serializeError(err) {
   const resp = { error: err?.message || 'Unknown error' };
   if (err?.code) resp.errorCode = err.code;
+  if (typeof err?.status === 'number') resp.status = err.status;
   if (err?.upgradeUrl) resp.upgradeUrl = err.upgradeUrl;
   if (typeof err?.estimatedCredits === 'number') resp.estimated_credits = err.estimatedCredits;
   if (typeof err?.availableCredits === 'number') resp.available_credits = err.availableCredits;
@@ -1961,6 +1962,13 @@ async function proxyFetchCaptionTracks(videoId) {
     androidSdkVersion: 35, osVersion: '15', hl: 'en', gl: 'US', platform: 'MOBILE'
   };
 
+  // Independent second client — see #IOS_CFG in content/transcript.js.
+  const IOS_CFG = {
+    clientName: 'IOS', clientVersion: '20.10.4',
+    deviceModel: 'iPhone16,2', osVersion: '18.3.2.22D82',
+    hl: 'en', gl: 'US', platform: 'MOBILE'
+  };
+
   async function swInnertubeRequest(vid, cfg) {
     const r = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
       method: 'POST', credentials: 'include',
@@ -1990,6 +1998,9 @@ async function proxyFetchCaptionTracks(videoId) {
   try {
     const tracks = await swInnertubeRequest(videoId, ANDROID_CFG);
     if (tracks) return { tracks };
+
+    const iosTracks = await swInnertubeRequest(videoId, IOS_CFG);
+    if (iosTracks) return { tracks: iosTracks };
 
     const webVer = await extractWebVersionFromSW();
     if (webVer) {

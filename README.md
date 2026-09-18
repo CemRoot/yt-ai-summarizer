@@ -268,6 +268,14 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.1.3 — September 2026
+
+- **🔎 Real error messages instead of "Something went wrong"** — any backend failure that wasn't a credit or rate-limit problem used to collapse into a single generic message, so retrying never helped and the real cause was never shown or logged. Server errors, empty AI responses and dead sessions now each get their own explanation, the failing HTTP status travels all the way to the UI, and every failure is written to the console for support.
+- **🔑 Expired sessions are detected properly** — a token that still fails after a refresh now says "sign in again" instead of showing the generic error forever.
+- **📝 Caption extraction no longer depends on one client** — YouTube began serving caption URLs that return HTTP 200 with an empty body, so a source could report captions that were all unusable. Extraction now walks every source (Android → iOS → Web → page → background) until one returns a real transcript, instead of giving up on the first source that merely listed tracks. An independent iOS client was added so an Android-side block can no longer take captions down on its own.
+- **⚡ Fewer wasted requests** — a caption URL that comes back empty is recognised as dead and is no longer refetched in a second format or retried by another source.
+- **✅ Tests now run in CI** — the unit suites were never executed by the pipeline. They run on every push now, including a guard that fails the build if any error code could reach users as the generic message.
+
 ### v2.1.2 — June 2026
 
 - **📰 Clear Article Reader errors** — the Article side now mirrors YouTube's specificity. Instead of a generic "Something went wrong", you get the exact reason and fix: not signed in / no API key, wrong-provider key, invalid key, out of credits, provider rate limit, endpoint/model not found (404), or a transient service/network issue. A fast `if/else` normalizer plus a single frozen presentation map keeps this cheap (no extra memory or latency).

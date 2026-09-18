@@ -285,7 +285,20 @@ jobs:
             echo "OK: No unexpected remote script loading detected"
           fi
 
-  # ─── 4. Version Consistency ───
+  # ─── 4. Unit Tests ───
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Run node:test suites
+        run: node --test $(find content utils -name '*.test.js' | sort)
+
+  # ─── 5. Version Consistency ───
   version-check:
     name: Version Consistency
     runs-on: ubuntu-latest
@@ -327,11 +340,11 @@ jobs:
           print('OK: All version numbers are consistent')
           "
 
-  # ─── 5. Build & Package ───
+  # ─── 6. Build & Package ───
   build:
     name: Build & Package
     runs-on: ubuntu-latest
-    needs: [manifest-check, js-lint, security-audit, version-check]
+    needs: [manifest-check, js-lint, security-audit, unit-tests, version-check]
     steps:
       - uses: actions/checkout@v5
 

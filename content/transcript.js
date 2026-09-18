@@ -3,11 +3,18 @@
  * @architecture Singleton class
  * @version 2.0.0 — OOP refactor
  *
- * Method priority for caption track discovery:
- *  0. Innertube player API (ANDROID client — most reliable)
- *  1. Page bridge (MAIN world) — YouTube's live player object
- *  2. Script-tag parsing — embedded JSON in page HTML
- *  3. Service-worker proxy — re-fetches watch page server-side
+ * Caption track sources, tried in order until one yields a real transcript
+ * (see #getTrackSources):
+ *  1. Innertube player API — ANDROID client
+ *  2. Innertube player API — IOS client (independent of the ANDROID version)
+ *  3. Innertube player API — WEB client
+ *  4. Page bridge (MAIN world) — YouTube's live player object
+ *  5. Script-tag parsing — embedded JSON in page HTML
+ *  6. Service-worker proxy — re-fetches watch page server-side
+ *
+ * A source is only "done" once its track actually returns entries. YouTube
+ * serves caption URLs that answer HTTP 200 with an empty body, so a source
+ * can list tracks that are all unusable; the next source must still be tried.
  *
  * Transcript fetch priority:
  *  1. Direct content-script fetch (JSON3, then XML)
@@ -23,6 +30,17 @@ class TranscriptExtractor {
     clientVersion: '21.03.36',
     androidSdkVersion: 35,
     osVersion: '15',
+    platform: 'MOBILE'
+  };
+
+  // Independent second client: a different clientName with its own version
+  // string, so a block or version bump on ANDROID cannot take captions down
+  // on its own. Verified to return identical caption tracks to ANDROID.
+  #IOS_CFG = {
+    clientName: 'IOS',
+    clientVersion: '20.10.4',
+    deviceModel: 'iPhone16,2',
+    osVersion: '18.3.2.22D82',
     platform: 'MOBILE'
   };
 
@@ -273,25 +291,24 @@ class TranscriptExtractor {
     return data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null;
   }
 
-  // ─── Method 0: Innertube (ANDROID primary, WEB fallback) ──────────
+  // ─── Innertube player API (ANDROID / IOS / WEB clients) ───────────
 
-  async #getCaptionTracksViaInnertube() {
+  async #getCaptionTracksForClient(clientConfig) {
     try {
       const videoId = this.getVideoId();
       if (!videoId) return null;
-
-      const tracks = await this.#innertubePlayerRequest(videoId, this.#ANDROID_CFG);
+      const tracks = await this.#innertubePlayerRequest(videoId, clientConfig);
       if (tracks?.length) return tracks.map(t => this.#mapRawTrack(t));
-
-      const webVer = this.#extractWebClientVersion();
-      if (webVer) {
-        const webTracks = await this.#innertubePlayerRequest(videoId, {
-          clientName: 'WEB', clientVersion: webVer, platform: 'DESKTOP'
-        });
-        if (webTracks?.length) return webTracks.map(t => this.#mapRawTrack(t));
-      }
     } catch {}
     return null;
+  }
+
+  async #getCaptionTracksViaWebClient() {
+    const webVer = this.#extractWebClientVersion();
+    if (!webVer) return null;
+    return this.#getCaptionTracksForClient({
+      clientName: 'WEB', clientVersion: webVer, platform: 'DESKTOP'
+    });
   }
 
   // ─── Method 1: Page bridge (MAIN world) ───────────────────────────
@@ -366,17 +383,35 @@ class TranscriptExtractor {
 
   // ─── Orchestrator ─────────────────────────────────────────────────
 
+  /**
+   * Ordered caption-track sources, each loaded lazily.
+   *
+   * Sources are tried one after another until one yields a *usable* transcript
+   * — not merely a non-empty track list. This matters because YouTube now
+   * serves caption URLs that look fine (HTTP 200) but return an empty body:
+   * a source can hand back 7 tracks whose every URL is dead. Stopping at the
+   * first source that produced tracks, as the previous implementation did,
+   * turned that into a hard failure with working sources left untried.
+   */
+  #getTrackSources() {
+    return [
+      { name: 'innertube-android', load: () => this.#getCaptionTracksForClient(this.#ANDROID_CFG) },
+      { name: 'innertube-ios', load: () => this.#getCaptionTracksForClient(this.#IOS_CFG) },
+      { name: 'innertube-web', load: () => this.#getCaptionTracksViaWebClient() },
+      { name: 'page-bridge', load: () => this.#getCaptionTracksFromPageBridge() },
+      { name: 'page-scripts', load: async () => this.#extractTracksFromPageScripts() },
+      { name: 'sw-proxy', load: () => this.#fetchCaptionTracksViaProxy() }
+    ];
+  }
+
   async #getCaptionTracks() {
-    const inntTracks = await this.#getCaptionTracksViaInnertube();
-    if (inntTracks?.length) return inntTracks;
-
-    const bridgeTracks = await this.#getCaptionTracksFromPageBridge();
-    if (bridgeTracks?.length) return bridgeTracks;
-
-    const scriptTracks = this.#extractTracksFromPageScripts();
-    if (scriptTracks?.length) return scriptTracks;
-
-    return await this.#fetchCaptionTracksViaProxy();
+    for (const source of this.#getTrackSources()) {
+      try {
+        const tracks = await source.load();
+        if (tracks?.length) return tracks;
+      } catch {}
+    }
+    return null;
   }
 
   // ─── Transcript fetching ───────────────────────────────────────────
@@ -408,7 +443,17 @@ class TranscriptExtractor {
         if (body?.length > 2) {
           const entries = this.#parseJSON3Events(JSON.parse(body));
           if (entries) return entries;
+        } else {
+          // HTTP 200 with an empty body: YouTube's way of rejecting a caption
+          // URL that lacks the params its issuing client was expected to
+          // carry. Not a network error — the URL is dead in every format, so
+          // retrying it as XML only doubles the requests. Bail out and let the
+          // caller move on to the next source.
+          this.#debugLog('dead-caption-url (200/empty)', url.origin + url.pathname);
+          return null;
         }
+      } else {
+        this.#debugLog(`caption fetch failed status=${resp.status}`);
       }
     } catch {}
 
@@ -586,75 +631,95 @@ class TranscriptExtractor {
     }
 
     let lastError = null;
+    let sawAnyTrack = false;
     const attempts = Math.max(1, retryCfg.maxAttempts);
 
     for (let attempt = 1; attempt <= attempts; attempt++) {
       this.#assertRequestContext(requestCtx);
       const playerPrefs = await this.#getPlayerPrefsFromBridge();
-      const tracks = await this.#getCaptionTracks();
 
-      if (!tracks?.length) {
-        lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
-      } else {
+      // Walk every source until one yields real entries. A source whose tracks
+      // all resolve to dead URLs must not block the sources behind it.
+      const triedUrls = new Set();
+      let attemptSawTrack = false;
+
+      for (const source of this.#getTrackSources()) {
+        this.#assertRequestContext(requestCtx);
+
+        let tracks = null;
+        try {
+          tracks = await source.load();
+        } catch {
+          tracks = null;
+        }
+        if (!tracks?.length) continue;
+
         const { track: selectedTrack } = this.#selectBestTrack(tracks, preferredLang, playerPrefs);
+        if (!selectedTrack?.baseUrl) continue;
 
-        if (!selectedTrack?.baseUrl) {
-          lastError = this.#getAvailabilityErrorForAttempt(attempt, attempts);
-        } else {
-          this.#debugLog(
-            `attempt=${attempt}`,
-            `track=${selectedTrack.vssId || 'n/a'}`,
-            `lang=${selectedTrack.language}`,
-            'fetch=direct'
-          );
+        attemptSawTrack = true;
+        sawAnyTrack = true;
 
-          if (
-            cached
-            && cached.language === selectedTrack.language
-            && !!cached.isAutoGenerated === !!selectedTrack.isAutoGenerated
-          ) {
-            this.#debugLog(`attempt=${attempt}`, 'cache-hit=true');
-            return cached;
-          }
+        if (
+          cached
+          && cached.language === selectedTrack.language
+          && !!cached.isAutoGenerated === !!selectedTrack.isAutoGenerated
+        ) {
+          this.#debugLog(`attempt=${attempt}`, `source=${source.name}`, 'cache-hit=true');
+          return cached;
+        }
 
-          let fetchMode = 'direct';
-          let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
-          if (!entries) {
-            fetchMode = 'proxy';
-            entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
-          }
+        // Two sources often hand back the identical signed URL; refetching it
+        // would just reproduce the same failure.
+        if (triedUrls.has(selectedTrack.baseUrl)) {
+          this.#debugLog(`attempt=${attempt}`, `source=${source.name}`, 'skip=duplicate-url');
+          continue;
+        }
+        triedUrls.add(selectedTrack.baseUrl);
 
-          this.#debugLog(
-            `attempt=${attempt}`,
-            `track=${selectedTrack.vssId || 'n/a'}`,
-            `lang=${selectedTrack.language}`,
-            `fetch=${fetchMode}`,
-            `entries=${entries?.length || 0}`
-          );
+        let fetchMode = 'direct';
+        let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
+        if (!entries) {
+          fetchMode = 'proxy';
+          entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
+        }
 
-          if (entries?.length) {
-            this.#assertRequestContext(requestCtx);
-            const result = {
-              videoId,
-              entries,
-              fullText: entries.map(e => e.text).join(' '),
-              language: selectedTrack.language,
-              trackName: selectedTrack.name,
-              isAutoGenerated: selectedTrack.isAutoGenerated,
-              availableTracks: tracks.map(t => ({
-                language: t.language,
-                name: t.name,
-                isAutoGenerated: t.isAutoGenerated
-              }))
-            };
+        this.#debugLog(
+          `attempt=${attempt}`,
+          `source=${source.name}`,
+          `track=${selectedTrack.vssId || 'n/a'}`,
+          `lang=${selectedTrack.language}`,
+          `fetch=${fetchMode}`,
+          `entries=${entries?.length || 0}`
+        );
 
-            await StorageHelper.cacheTranscript(videoId, result);
-            return result;
-          }
+        if (entries?.length) {
+          this.#assertRequestContext(requestCtx);
+          const result = {
+            videoId,
+            entries,
+            fullText: entries.map(e => e.text).join(' '),
+            language: selectedTrack.language,
+            trackName: selectedTrack.name,
+            isAutoGenerated: selectedTrack.isAutoGenerated,
+            source: source.name,
+            availableTracks: tracks.map(t => ({
+              language: t.language,
+              name: t.name,
+              isAutoGenerated: t.isAutoGenerated
+            }))
+          };
 
-          lastError = this.#getEmptyTranscriptErrorForAttempt(attempt, attempts);
+          await StorageHelper.cacheTranscript(videoId, result);
+          return result;
         }
       }
+
+      // Classify against the whole call, not this attempt: if any source ever
+      // produced a track, the video has captions and the fetch is what failed.
+      lastError = (attemptSawTrack || sawAnyTrack)
+        ? this.#getEmptyTranscriptErrorForAttempt(attempt, attempts)
+        : this.#getAvailabilityErrorForAttempt(attempt, attempts);
 
       if (attempt < attempts) {
         const delayMs = this.#retryDelayForAttempt(attempt, retryCfg.retryDelaysMs);
