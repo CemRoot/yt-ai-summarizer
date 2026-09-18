@@ -44,6 +44,12 @@ class TranscriptExtractor {
     platform: 'MOBILE'
   };
 
+  // URLs proven dead for the current request (see #fetchTranscriptDirect).
+  // Measured against live YouTube: such a URL returns 200/empty for json3,
+  // srv3, vtt and ttml alike, with or without credentials — so neither
+  // another format nor the service-worker proxy can rescue it.
+  #deadCaptionUrls = new Set();
+
   #cachedWebVersion = null;
   #requestGeneration = 0;
   #activeRequestVideoId = null;
@@ -450,6 +456,7 @@ class TranscriptExtractor {
           // retrying it as XML only doubles the requests. Bail out and let the
           // caller move on to the next source.
           this.#debugLog('dead-caption-url (200/empty)', url.origin + url.pathname);
+          this.#deadCaptionUrls.add(trackUrl);
           return null;
         }
       } else {
@@ -620,6 +627,9 @@ class TranscriptExtractor {
     const videoId = this.getVideoId();
     if (!videoId) throw new Error('NO_VIDEO_ID');
     const requestCtx = this.#beginRequestContext(videoId);
+    // Signed caption URLs expire, so dead-URL knowledge must not outlive the
+    // request that established it.
+    this.#deadCaptionUrls.clear();
     const retryCfg = this.#getRuntimeConfig();
 
     const cached = await StorageHelper.getCachedTranscript(videoId);
@@ -671,8 +681,8 @@ class TranscriptExtractor {
 
         // Two sources often hand back the identical signed URL; refetching it
         // would just reproduce the same failure.
-        if (triedUrls.has(selectedTrack.baseUrl)) {
-          this.#debugLog(`attempt=${attempt}`, `source=${source.name}`, 'skip=duplicate-url');
+        if (triedUrls.has(selectedTrack.baseUrl) || this.#deadCaptionUrls.has(selectedTrack.baseUrl)) {
+          this.#debugLog(`attempt=${attempt}`, `source=${source.name}`, 'skip=already-tried-or-dead');
           continue;
         }
         triedUrls.add(selectedTrack.baseUrl);
@@ -680,8 +690,14 @@ class TranscriptExtractor {
         let fetchMode = 'direct';
         let entries = await this.#fetchTranscriptDirect(selectedTrack.baseUrl);
         if (!entries) {
-          fetchMode = 'proxy';
-          entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
+          if (this.#deadCaptionUrls.has(selectedTrack.baseUrl)) {
+            // The URL itself is rejected by YouTube, not blocked by the
+            // content-script context — the proxy would fetch the same nothing.
+            fetchMode = 'skipped-proxy-dead-url';
+          } else {
+            fetchMode = 'proxy';
+            entries = await this.#fetchTranscriptViaProxy(selectedTrack.baseUrl);
+          }
         }
 
         this.#debugLog(

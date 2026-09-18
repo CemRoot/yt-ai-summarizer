@@ -30,6 +30,7 @@ function createHarness(options = {}) {
   const listeners = new Map();
   const videoId = 'video12345678';
   const liveUrls = new Set(options.liveUrls || [LIVE]);
+  const networkErrorUrls = new Set(options.networkErrorUrls || []);
   const calls = { clients: [], captionFetches: [], proxyTranscript: 0 };
 
   class CustomEvent {
@@ -120,6 +121,7 @@ function createHarness(options = {}) {
 
       const base = raw.split('&fmt=')[0];
       calls.captionFetches.push(base);
+      if (networkErrorUrls.has(base)) throw new TypeError('Failed to fetch');
       if (liveUrls.has(base)) {
         return { ok: true, text: async () => JSON.stringify({ events: [{ tStartMs: 0, segs: [{ utf8: 'live transcript' }] }] }) };
       }
@@ -133,8 +135,8 @@ function createHarness(options = {}) {
 
   context.globalThis = context;
   context.__YTAI_TRANSCRIPT_RUNTIME_CONFIG = {
-    maxAttempts: 1,
-    retryDelaysMs: [0],
+    maxAttempts: options.maxAttempts || 1,
+    retryDelaysMs: [0, 0, 0],
     readinessTimeoutMs: 20,
     readinessPollMs: 5
   };
@@ -197,6 +199,50 @@ test('reports EMPTY_FINAL (not UNAVAILABLE) when tracks exist but never resolve'
   });
 
   await assert.rejects(() => h.tx.getTranscript(), /TRANSCRIPT_EMPTY_FINAL/);
+});
+
+test('a URL proven dead is never sent to the service-worker proxy', async () => {
+  // A 200/empty response means YouTube rejected the URL itself — verified
+  // against live YouTube to be identical for json3, srv3, vtt and ttml, with
+  // and without credentials. The proxy would fetch the same nothing.
+  const h = createHarness({
+    clientTracks: { ANDROID: [{ baseUrl: DEAD }], IOS: [{ baseUrl: LIVE }] }
+  });
+
+  const result = await h.tx.getTranscript();
+  assert.equal(result.source, 'innertube-ios');
+  assert.equal(h.calls.proxyTranscript, 0, 'dead URL must not trigger a proxy fetch');
+});
+
+test('a dead URL is not retried by a later source or a later attempt', async () => {
+  const h = createHarness({
+    clientTracks: { ANDROID: [{ baseUrl: DEAD }], IOS: [{ baseUrl: DEAD }] },
+    bridgeTracks: [{ baseUrl: DEAD }],
+    proxyTracks: [{ baseUrl: DEAD }],
+    liveUrls: [],
+    maxAttempts: 3
+  });
+
+  await assert.rejects(() => h.tx.getTranscript(), /TRANSCRIPT_EMPTY_FINAL/);
+  assert.deepEqual(
+    h.calls.captionFetches,
+    [DEAD],
+    'one fetch total across every source and attempt'
+  );
+  assert.equal(h.calls.proxyTranscript, 0);
+});
+
+test('a non-dead direct failure still falls back to the proxy', async () => {
+  // Distinguishes "URL is dead" from "this context could not fetch it" — the
+  // latter is exactly what the service-worker proxy exists to rescue.
+  const h = createHarness({
+    clientTracks: { ANDROID: [{ baseUrl: 'https://x/timedtext?lang=en&neterr=1' }] },
+    networkErrorUrls: ['https://x/timedtext?lang=en&neterr=1'],
+    liveUrls: []
+  });
+
+  await assert.rejects(() => h.tx.getTranscript(), /TRANSCRIPT_EMPTY_FINAL/);
+  assert.equal(h.calls.proxyTranscript, 1, 'a transport failure must still try the proxy');
 });
 
 test('reports UNAVAILABLE when no source produces any track at all', async () => {
