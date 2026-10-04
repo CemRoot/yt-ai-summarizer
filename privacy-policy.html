@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy Policy for Gleano v2.1.3 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
+  <meta name="description" content="Privacy Policy for Gleano v2.1.4 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
   <meta name="theme-color" content="#eceef2">
   <title>Privacy Policy — Gleano</title>
-  <link rel="icon" href="icons/icon32.png?v=2.1.3" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/icon32.png?v=2.1.4" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -590,7 +590,7 @@
         <div class="doc-header-inner">
           <p class="doc-eyebrow">Privacy &amp; legal</p>
           <div class="doc-brand">
-            <img class="doc-logo" src="icons/icon48.png?v=2.1.3" width="48" height="48" alt="" aria-hidden="true">
+            <img class="doc-logo" src="icons/icon48.png?v=2.1.4" width="48" height="48" alt="" aria-hidden="true">
             <div class="doc-title-block">
               <h1>Privacy Policy</h1>
               <p class="doc-lead">Gleano — how we handle data. v2 offers <strong>optional managed AI</strong> (Google sign-in + our Supabase backend) alongside <strong>bring-your-own-key (BYOK)</strong>. We do not run ads or analytics telemetry in the extension.</p>
@@ -598,7 +598,7 @@
           </div>
           <div class="doc-meta">
             <span class="meta-pill">Last updated · June 23, 2026</span>
-            <span class="meta-pill meta-pill--version">Extension v2.1.3</span>
+            <span class="meta-pill meta-pill--version">Extension v2.1.4</span>
           </div>
         </div>
       </header>
@@ -670,7 +670,7 @@
           <h2><span class="num">1</span> Data we access</h2>
           <ul>
             <li><strong>YouTube transcripts</strong> — Captions for the video on the tab you are viewing are read only when you start a summary, chat, or podcast flow. We do not scrape unrelated pages.</li>
-            <li><strong>Web article text (Article Reader)</strong> — When you open Article Reader on a page, the extension extracts the main article body from the DOM of the <strong>active tab you chose</strong> (title, author, and readable text). Extraction runs locally in your browser. Article text is sent to your AI provider (BYOK) or our managed Edge Functions only when you request a summary or send a chat message — not automatically on page load.</li>
+            <li><strong>Web article text (Article Reader)</strong> — When you click the Gleano button on an article page (or open Article Reader from the popup), the extension extracts the main article body from the DOM of that tab (title, author, and readable text). Extraction runs locally in your browser. Article text is sent to your AI provider (BYOK) or our managed Edge Functions only when that click starts a summary or you send a chat message — not automatically on page load. The button script itself does not read the article.</li>
             <li><strong>BYOK: your API keys</strong> (Groq, Ollama Cloud, Google Gemini for TTS) — Stored <strong>locally</strong> in the extension (obfuscated). Used only to authenticate to those providers when you use BYOK.</li>
             <li><strong>Managed AI: Google account</strong> — If you sign in, Supabase receives standard OAuth tokens from Google. We use Google’s identifiers to create your app account. We do not receive your Google password.</li>
             <li><strong>Device identifier for abuse prevention</strong> — For managed sign-in, the extension derives a <strong>browser/device fingerprint</strong> (FingerprintJS-based) and a <strong>persistent local ID</strong> (<span class="inline-code">chrome.storage.local</span>). A fingerprint value is sent to our backend during auth registration so we can limit free-tier abuse (e.g. many accounts on one device). This is not used for advertising.</li>
@@ -686,7 +686,7 @@
           <ul>
             <li><strong>Summaries</strong> — Transcript text is sent to <strong>your</strong> chosen AI provider (Groq or Ollama Cloud) to generate summary, key points, and detailed analysis. Responses return to your browser.</li>
             <li><strong>Chat</strong> — Your messages, transcript context, and recent conversation history go to that same provider. The extension publisher does not proxy those requests.</li>
-            <li><strong>Article Reader</strong> — Extracted article text and your questions go to your configured provider when you click Generate Summary or send a chat message.</li>
+            <li><strong>Article Reader</strong> — Extracted article text and your questions go to your configured provider when you click the on-page article button (the summary starts then) or send a chat message.</li>
             <li><strong>Podcast</strong> — A generated script may be sent to <strong>Google Gemini TTS</strong> (using your key when in BYOK mode) to produce audio, played in the browser and optionally cached locally.</li>
             <li><strong>API keys</strong> — Used only to authenticate to the vendors you configured. They are not sent to the extension author.</li>
           </ul>
@@ -756,7 +756,7 @@
             <span class="chip"><code>storage</code> — settings, session, keys, caches locally</span>
             <span class="chip"><code>activeTab</code> — access the current tab when you use the extension (YouTube panel or Article Reader)</span>
             <span class="chip"><code>identity</code> — Google OAuth redirect for Supabase sign-in (managed AI)</span>
-            <span class="chip"><code>scripting</code> — inject Article Reader scripts into the active tab only when you open it from the popup</span>
+            <span class="chip"><code>scripting</code> — inject Article Reader scripts when you click the on-page button or open it from the popup</span>
           </div>
           <p class="spaced-top"><strong>Host access</strong> (declared in the manifest)</p>
           <div class="chips">
@@ -765,6 +765,7 @@
             <span class="chip">ollama.com</span>
             <span class="chip">generativelanguage.googleapis.com</span>
             <span class="chip">*.supabase.co (project API + Auth)</span>
+            <span class="chip">http://*/* and https://*/* — so the on-page article button can inject the reader (not used to read the page until you click)</span>
           </div>
           <p class="spaced-top">Checkout and Customer Portal links open in the browser under <strong>Stripe</strong>’s domain (not listed as a static host permission because links are created at runtime from your account/checkout configuration).</p>
         </div>
@@ -812,7 +813,7 @@
       </div>
 
       <footer class="site-footer">
-        Gleano · v2.1.3 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
+        Gleano · v2.1.4 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
       </footer>
     </main>
   </div>

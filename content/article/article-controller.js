@@ -131,13 +131,24 @@ class ArticleController {
 
   #setupEventHandlers() {
     this.#ui.on('panelOpen', () => this.#onPanelOpen());
+    this.#ui.on('start-summary', () => this.#onStartSummary());
     this.#ui.on('modeChange', (data) => this.#onModeChange(data.mode));
     this.#ui.on('chatMessage', (data) => this.#onChatMessage(data.message));
     this.#ui.on('generateSummary', () => this.#showSummary(true));
     this.#ui.on('refresh', () => this.#onRefresh());
   }
 
+  #forgetArticleIfPageChanged() {
+    const current = location.href;
+    if (!this.#articleContent || this.#articleContent.url === current) return;
+    this.#articleContent = null;
+    this.#summaryCache = null;
+    this.#chatHistory = [];
+    this.#extractor?.clearCache();
+  }
+
   #ensureArticleContent() {
+    this.#forgetArticleIfPageChanged();
     if (this.#articleContent) return true;
 
     const result = this.#extractor.extract();
@@ -155,13 +166,27 @@ class ArticleController {
     // Show current credit balance if available (managed users).
     this.#loadInitialCredits();
 
-    // Default to Chat tab — do NOT auto-generate the summary (saves credits).
-    const mode = this.#ui.getCurrentMode();
-    if (mode === 'summary') {
-      this.#showSummaryState();
+    // The button and the popup inject both open on Summary and start it.
+    // Chat is a tab the user can choose afterwards.
+    if (this.#ui.getCurrentMode() === 'summary') {
+      await this.#showSummary(false);
     } else {
       this.#showChatHistory();
     }
+  }
+
+  /**
+   * Floating button or service-worker inject. Switches to Summary, opens the
+   * panel, and starts one summary. A second call while one is running returns
+   * inside #showSummary.
+   */
+  #onStartSummary() {
+    this.#ui.activateSummary();
+    if (!this.#ui.isOpen()) {
+      this.#ui.open();
+      return;
+    }
+    void this.#showSummary(false);
   }
 
   #loadInitialCredits() {
@@ -182,6 +207,10 @@ class ArticleController {
     if (!this.#ensureArticleContent()) return;
 
     if (mode === 'summary') {
+      if (this.#isProcessing) {
+        this.#ui.showLoading('Generating summary...');
+        return;
+      }
       this.#showSummaryState();
     } else if (mode === 'chat') {
       this.#showChatHistory();
@@ -205,16 +234,14 @@ class ArticleController {
 
   async #onChatMessage(message) {
     if (!message.trim() || this.#isProcessing) return;
+    this.#forgetArticleIfPageChanged();
     
     if (!this.#checkRateLimit()) {
       this.#ui.showToast('Too many requests. Please wait a moment.');
       return;
     }
 
-    if (!this.#articleContent) {
-      this.#ui.showError('Article content not available. Please refresh.');
-      return;
-    }
+    if (!this.#ensureArticleContent()) return;
 
     // Pre-flight: instant, no network round-trip when the user has neither a key nor a session.
     if (!(await this.#hasLocalAccess())) {
@@ -348,39 +375,53 @@ class ArticleController {
   }
 
   async #showSummary(forceRefresh = false) {
+    this.#forgetArticleIfPageChanged();
     if (this.#summaryCache && !forceRefresh) {
-      this.#ui.showResult(this.#summaryCache);
+      if (this.#ui.getCurrentMode() === 'summary') {
+        this.#ui.showResult(this.#summaryCache);
+      }
       return;
     }
 
-    if (!this.#ensureArticleContent()) return;
-
     if (this.#isProcessing) return;
+
+    if (!this.#ensureArticleContent()) return;
 
     if (!this.#checkRateLimit()) {
       this.#ui.showToast('Too many requests. Please wait a moment.');
       return;
     }
 
-    // Pre-flight: avoid the spinner when the user has neither a key nor a session.
-    if (!(await this.#hasLocalAccess())) {
-      const { title, message } = this.#presentError({ code: 'NEEDS_AUTH_OR_KEY' });
-      this.#ui.showError(message, title);
-      return;
-    }
-
+    // Set before the first await so a second click cannot pass the guard.
     this.#isProcessing = true;
-    this.#ui.showLoading('Generating summary...');
-
     try {
+      // Pre-flight: avoid the spinner when the user has neither a key nor a session.
+      if (!(await this.#hasLocalAccess())) {
+        const { title, message } = this.#presentError({ code: 'NEEDS_AUTH_OR_KEY' });
+        if (this.#ui.getCurrentMode() === 'summary') {
+          this.#ui.showError(message, title);
+        }
+        return;
+      }
+
+      if (this.#ui.getCurrentMode() === 'summary') {
+        this.#ui.showLoading('Generating summary...');
+      }
+
+      const requestedUrl = this.#articleContent?.url;
       const { content, credits } = await this.#sendToAI('summary');
+      if (location.href !== requestedUrl) return;
       this.#summaryCache = content;
-      this.#ui.showResult(content);
+      if (this.#ui.getCurrentMode() === 'summary') {
+        this.#ui.showResult(content);
+      }
       this.#updateCredits(credits);
     } catch (err) {
       console.error('[ArticleController] Summary error:', err);
       const { title, message } = this.#presentError(err);
-      this.#ui.showError(message, title);
+      if (this.#ui.getCurrentMode() === 'summary') {
+        this.#ui.showError(message, title);
+      }
     } finally {
       this.#isProcessing = false;
     }

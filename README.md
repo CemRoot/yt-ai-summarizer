@@ -74,7 +74,7 @@
 <br />
 
 <div align="center">
-  <img src="docs/3.png?v=2.1.0" alt="Gleano — panel preview" width="780" />
+  <img src="docs/3.png?v=2.1.4" alt="Gleano — panel preview" width="780" />
   <br /><sub>The in-extension <i>What's New</i> panel — same design language as the summary panel, welcome flow, and popup.</sub>
 </div>
 
@@ -113,7 +113,7 @@
 3. **4-layer parser** — delimiters → regex → headings → split. Resilient to models that drift from the requested format.
 4. **Instant tab switching** — in-memory + persistent LRU cache (max 20 videos). Summary / Key Points / Detailed render from cache while background work continues.
 5. **Credit-aware** — managed calls are gated by a server-side pre-flight estimator; no overdraft, no "3 credits showing but charged 7".
-6. **Article Reader** — on any news/blog page, open the popup → **Open Article Reader**. Scripts inject via `activeTab` + `scripting` (no `<all_urls>`). The extractor reads main article text locally; summary/chat goes through the same BYOK or managed AI paths as YouTube.
+6. **Article Reader** — on an ordinary news page, the Gleano button on the page opens Summary and starts it. Chat stays a tab. The popup action still works. A content script on `http`/`https` (not YouTube) draws the button, and host access `http://*/*` plus `https://*/*` lets that click inject the reader. Banking, mail, login, and checkout URLs are skipped. The extractor reads main article text locally; summary and chat use the same BYOK or managed AI paths as YouTube.
 
 ---
 
@@ -257,7 +257,7 @@ Summary and Chat run on a fallback chain — **Ollama Cloud → Gemini 2.5 Flash
     </td>
     <td valign="top">
       <h3>✅ Minimal permissions</h3>
-      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, <code>scripting</code>, plus explicit host access for YouTube, BYOK vendors, and our Supabase project. See <a href="manifest.json"><code>manifest.json</code></a>.
+      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, <code>scripting</code>, plus host access for YouTube, BYOK vendors, our Supabase project, and ordinary <code>http</code>/<code>https</code> pages so the article button can inject the reader. See <a href="manifest.json"><code>manifest.json</code></a>.
     </td>
   </tr>
 </table>
@@ -267,6 +267,12 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 ---
 
 ## What's new
+
+### v2.1.4 — October 2026
+
+- **🛡️ Caption fetches stay on YouTube** — transcript downloads from the background now accept only `https` links on YouTube and its caption hosts. A page cannot point that fetch at another site.
+- **🧩 Same summary panel** — no layout change on YouTube. Reload the extension after you install this version.
+- **📰 Article button on the page** — on a news article, the Gleano button on the page opens Summary and starts it; Chat stays a tab. A content script on ordinary `http`/`https` pages (not YouTube) draws that button, and `host_permissions` include `http://*/*` and `https://*/*` so the click can inject the reader.
 
 ### v2.1.3 — September 2026
 
@@ -437,7 +443,7 @@ yt-ai-summarizer/
 │   ├── ui.js                       Panel UI, tabs, onboarding tooltip, credit badges
 │   ├── podcast.js                  Podcast audio player
 │   ├── page-bridge.js              MAIN-world bridge for YT internal data
-│   └── article/                    Article Reader (extractor, UI, controller, CSS)
+│   └── article/                    Article Reader (launcher button, extractor, UI, controller, CSS)
 ├── popup/                          Settings popup (dual provider + managed account + Article Reader)
 ├── welcome/                        Onboarding flow (Sign in with Google or BYOK)
 ├── update/                         "What's New" page shown after updates

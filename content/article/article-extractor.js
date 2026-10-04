@@ -6,15 +6,6 @@
 class ArticleExtractor {
   static #instance = null;
 
-  static #BLOCKED_PATTERNS = [
-    /banking|bank\./i,
-    /mail\.(google|yahoo|outlook)/i,
-    /login|signin|auth|oauth/i,
-    /checkout|payment|cart/i,
-    /account\..*\.(com|org|net)/i,
-    /password|credential/i
-  ];
-
   static #MIN_CONTENT_LENGTH = 500;
   static #MAX_CONTENT_LENGTH = 100000;
 
@@ -38,7 +29,7 @@ class ArticleExtractor {
    * Check if current URL is blocked (sensitive pages)
    */
   isBlockedPage(url = window.location.href) {
-    return ArticleExtractor.#BLOCKED_PATTERNS.some(pattern => pattern.test(url));
+    return ArticlePageEligibility.isSensitivePage(url);
   }
 
   /**

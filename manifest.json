@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "default_locale": "en",
   "minimum_chrome_version": "111",
 
@@ -20,7 +20,9 @@
     "https://api.groq.com/*",
     "https://ollama.com/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://smvnsfznxctkegjbckmt.supabase.co/*"
+    "https://smvnsfznxctkegjbckmt.supabase.co/*",
+    "http://*/*",
+    "https://*/*"
   ],
 
   "background": {
@@ -59,11 +61,27 @@
         "content/transcript.js",
         "content/podcast.js",
         "utils/gemini-pcm-wav.js",
+        "utils/markdown-html.js",
         "content/ui.js",
         "content/content.js"
       ],
       "css": ["content/content.css"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "exclude_matches": [
+        "*://*.youtube.com/*",
+        "*://youtube.com/*",
+        "*://youtu.be/*",
+        "*://*.youtu.be/*"
+      ],
+      "js": [
+        "utils/article-page-eligibility.js",
+        "content/article/article-launcher.js"
+      ],
+      "css": ["content/article/article.css"],
+      "run_at": "document_idle"
     }
   ],
 

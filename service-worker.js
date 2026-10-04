@@ -3,7 +3,14 @@
  * Handles Groq API calls, onboarding, and cross-component messaging
  */
 
-importScripts('utils/storage.js', 'utils/auth-debug-log.js', 'utils/supabase-auth.js', 'utils/api-client.js');
+importScripts(
+  'utils/storage.js',
+  'utils/auth-debug-log.js',
+  'utils/supabase-auth.js',
+  'utils/api-client.js',
+  'utils/transcript-url-allowlist.js',
+  'utils/article-page-eligibility.js'
+);
 
 // Production uninstall page: hosted on developer domain (Vercel). Source file in
 // repo: docs/uninstall.html — copy to portfolio public/yt-ai-summarizer/ when it changes.
@@ -456,7 +463,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'injectArticleReader') {
-    injectArticleReader(message.tabId)
+    const tabId = message.tabId || sender.tab?.id;
+    injectArticleReader(tabId, { startSummary: message.startSummary !== false })
       .then(sendResponse)
       .catch((err) => sendResponse({ error: err?.message || 'Injection failed' }));
     return true;
@@ -1635,10 +1643,17 @@ ${content}
   return { content: result.content, model: result.model, provider };
 }
 
+/** Tabs currently receiving article-reader files. A second click does not inject again. */
+const articleInjectInFlight = new Set();
+
 /**
- * Inject article reader content scripts into a tab
+ * Inject article reader content scripts into a tab.
+ * Opens Summary and starts it unless startSummary is false.
+ * chrome.scripting.executeScript needs host permission for the tab; a content
+ * script match alone does not grant it.
+ * @see https://developer.chrome.com/docs/extensions/reference/api/scripting
  */
-async function injectArticleReader(tabId) {
+async function injectArticleReader(tabId, { startSummary = true } = {}) {
   if (!tabId) {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     tabId = activeTab?.id;
@@ -1646,31 +1661,57 @@ async function injectArticleReader(tabId) {
 
   if (!tabId) throw new Error('NO_ACTIVE_TAB');
 
-  const tab = await chrome.tabs.get(tabId);
-  if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-    throw new Error('UNSUPPORTED_PAGE');
+  if (articleInjectInFlight.has(tabId)) {
+    return { ok: true, tabId, pending: true };
   }
+  articleInjectInFlight.add(tabId);
 
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    files: ['utils/readability.js']
-  });
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    const decision = ArticlePageEligibility.classify(tab.url || '');
+    if (!tab.url || !decision.isArticle) throw new Error('UNSUPPORTED_PAGE');
 
-  await chrome.scripting.insertCSS({
-    target: { tabId },
-    files: ['content/article/article.css']
-  });
+    const [{ result: already }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => typeof ArticleController === 'function',
+    });
 
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    files: [
-      'content/article/article-extractor.js',
-      'content/article/article-ui.js',
-      'content/article/article-controller.js'
-    ]
-  });
+    if (!already) {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['utils/readability.js']
+      });
 
-  return { ok: true, tabId };
+      await chrome.scripting.insertCSS({
+        target: { tabId },
+        files: ['content/article/article.css']
+      });
+
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: [
+          'utils/article-page-eligibility.js',
+          'utils/markdown-html.js',
+          'content/article/article-extractor.js',
+          'content/article/article-ui.js',
+          'content/article/article-controller.js'
+        ]
+      });
+    }
+
+    if (startSummary) {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          document.dispatchEvent(new CustomEvent('gleano:start-summary'));
+        },
+      });
+    }
+
+    return { ok: true, tabId };
+  } finally {
+    articleInjectInFlight.delete(tabId);
+  }
 }
 
 /**
@@ -1686,25 +1727,8 @@ async function checkArticlePage(tabId) {
 
   const tab = await chrome.tabs.get(tabId);
   const url = tab.url || '';
-
-  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
-    return { isArticle: false, reason: 'BROWSER_PAGE' };
-  }
-
-  if (/youtube\.com|youtu\.be/i.test(url)) {
-    return { isArticle: false, reason: 'YOUTUBE', isYouTube: true };
-  }
-
-  const blockedPatterns = [
-    /banking|bank\./i,
-    /mail\.(google|yahoo|outlook)/i,
-    /login|signin|auth|oauth/i,
-    /checkout|payment|cart/i
-  ];
-
-  if (blockedPatterns.some(p => p.test(url))) {
-    return { isArticle: false, reason: 'BLOCKED_PAGE' };
-  }
+  const decision = ArticlePageEligibility.classify(url);
+  if (!decision.isArticle) return decision;
 
   return { isArticle: true, url, title: tab.title };
 }
@@ -1894,9 +1918,10 @@ async function validateKey(apiKey, provider = 'groq') {
 /**
  * Fetch transcript content from a caption track URL.
  * Service worker fetch avoids CORS / redirect issues that content scripts hit.
+ * The URL is content-script input, so it must pass TranscriptUrlAllowlist first.
  */
 async function proxyFetchTranscript(trackUrl) {
-  if (!trackUrl || typeof trackUrl !== 'string') return { entries: null };
+  if (!TranscriptUrlAllowlist.isAllowed(trackUrl)) return { entries: null };
 
   const fetchOpts = { credentials: 'include' };
 

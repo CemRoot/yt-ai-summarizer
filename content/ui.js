@@ -1168,22 +1168,7 @@ class SummarizerUI {
   // ─── Markdown renderer ────────────────────────────────────────────
 
   #markdownToHtml(text) {
-    if (!text) return '';
-    let html = text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-      .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^# (.+)$/gm, '<h3>$1</h3>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^\d+\.\s+(.+)$/gm, '<oli>$1</oli>')
-      .replace(/^[-*]\s+(.+)$/gm, '<uli>$1</uli>')
-      .replace(/((?:<oli>.*<\/oli>\n?)+)/g, m => `<ol>${m.replace(/<\/?oli>/g, t => t === '<oli>' ? '<li>' : '</li>')}</ol>`)
-      .replace(/((?:<uli>.*<\/uli>\n?)+)/g, m => `<ul>${m.replace(/<\/?uli>/g, t => t === '<uli>' ? '<li>' : '</li>')}</ul>`)
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br>');
-    if (!html.startsWith('<')) html = `<p>${html}</p>`;
-    return html;
+    return MarkdownHtml.renderVideoPanel(text);
   }
 
   // ─── Copy result ──────────────────────────────────────────────────

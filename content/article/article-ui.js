@@ -30,7 +30,7 @@ class ArticleUI {
 
   #panelRoot = null;
   #isOpen = false;
-  #currentMode = 'chat';
+  #currentMode = 'summary';
   #isDarkMode = false;
   #chatMessages = [];
   #eventHandlers = {};
@@ -106,13 +106,23 @@ class ArticleUI {
   }
 
   #createToggleButton() {
-    const btn = document.createElement('button');
-    btn.id = 'gleano-article-toggle';
-    btn.className = 'gleano-toggle-btn' + (this.#isDarkMode ? ' dark' : '');
-    btn.innerHTML = ArticleUI.#ICONS.article;
-    btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano - Read & Chat');
-    btn.addEventListener('click', () => this.toggle());
-    document.body.appendChild(btn);
+    let btn = document.getElementById('gleano-article-toggle');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'gleano-article-toggle';
+      btn.type = 'button';
+      btn.innerHTML = ArticleUI.#ICONS.article;
+      btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano');
+      document.body.appendChild(btn);
+    }
+    btn.classList.add('gleano-toggle-btn');
+    btn.classList.toggle('dark', this.#isDarkMode);
+    if (!btn.title) btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano');
+    if (!btn.innerHTML.trim()) btn.innerHTML = ArticleUI.#ICONS.article;
+
+    const bound = btn.cloneNode(true);
+    btn.replaceWith(bound);
+    bound.addEventListener('click', () => this.#emitEvent('start-summary'));
   }
 
   #createPanel() {
@@ -133,22 +143,22 @@ class ArticleUI {
       </div>
       
       <nav class="gleano-tabs">
-        <button class="gleano-tab active" data-mode="chat">${ArticleUI.#msg('articleChatTab', 'Chat')}</button>
-        <button class="gleano-tab" data-mode="summary">${ArticleUI.#msg('articleSummaryTab', 'Summary')}</button>
+        <button class="gleano-tab active" data-mode="summary">${ArticleUI.#msg('articleSummaryTab', 'Summary')}</button>
+        <button class="gleano-tab" data-mode="chat">${ArticleUI.#msg('articleChatTab', 'Chat')}</button>
       </nav>
       
       <div class="gleano-content">
         <div class="gleano-result" id="gleanoResult"></div>
       </div>
       
-      <div class="gleano-chat-input" id="gleanoChatInput">
+      <div class="gleano-chat-input" id="gleanoChatInput" style="display: none;">
         <input type="text" placeholder="${ArticleUI.#msg('articleChatPlaceholder', 'Ask about this article...')}" id="gleanoChatText" />
         <button class="gleano-send-btn" id="gleanoChatSend">${ArticleUI.#ICONS.send}</button>
       </div>
       
       <div class="gleano-footer">
         <button class="gleano-action-btn" id="gleanoCopy" title="Copy">${ArticleUI.#ICONS.copy}</button>
-        <button class="gleano-action-btn" id="gleanoRefresh" title="Regenerate" style="display: none;">${ArticleUI.#ICONS.refresh}</button>
+        <button class="gleano-action-btn" id="gleanoRefresh" title="Regenerate">${ArticleUI.#ICONS.refresh}</button>
       </div>
     `;
     
@@ -181,13 +191,11 @@ class ArticleUI {
     document.getElementById('gleanoRefresh')?.addEventListener('click', () => this.#emitEvent('refresh'));
   }
 
-  #switchMode(mode) {
-    if (this.#currentMode === mode) return;
-    
+  #applyMode(mode) {
     this.#currentMode = mode;
-    
-    const tabs = this.#panelRoot.querySelectorAll('.gleano-tab');
-    tabs.forEach(tab => {
+
+    const tabs = this.#panelRoot?.querySelectorAll('.gleano-tab');
+    tabs?.forEach(tab => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
 
@@ -200,8 +208,17 @@ class ArticleUI {
     if (refreshBtn) {
       refreshBtn.style.display = mode === 'summary' ? 'flex' : 'none';
     }
+  }
 
+  #switchMode(mode) {
+    if (this.#currentMode === mode) return;
+    this.#applyMode(mode);
     this.#emitEvent('modeChange', { mode });
+  }
+
+  /** Summary tab, without a modeChange event. The opener decides whether to run. */
+  activateSummary() {
+    this.#applyMode('summary');
   }
 
   #sendChatMessage() {
@@ -241,15 +258,23 @@ class ArticleUI {
 
   open() {
     if (!this.#panelRoot) this.init();
+    const wasOpen = this.#isOpen;
     this.#panelRoot.classList.add('open');
     this.#isOpen = true;
-    this.#emitEvent('panelOpen');
+    this.#syncToggle();
+    if (!wasOpen) this.#emitEvent('panelOpen');
   }
 
   close() {
     this.#panelRoot?.classList.remove('open');
     this.#isOpen = false;
+    this.#syncToggle();
     this.#emitEvent('panelClose');
+  }
+
+  #syncToggle() {
+    const btn = document.getElementById('gleano-article-toggle');
+    if (btn) btn.style.display = this.#isOpen ? 'none' : '';
   }
 
   isOpen() {
@@ -380,34 +405,11 @@ class ArticleUI {
   }
 
   #escape(text) {
-    if (!text) return '';
-    return String(text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    return MarkdownHtml.escapeText(text);
   }
 
   #formatMarkdown(text) {
-    if (!text) return '';
-    
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-      .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/^(.+)$/gm, (match) => {
-        if (match.startsWith('<')) return match;
-        return `<p>${match}</p>`;
-      })
-      .replace(/<p><\/p>/g, '');
+    return MarkdownHtml.renderArticlePanel(text);
   }
 }
 

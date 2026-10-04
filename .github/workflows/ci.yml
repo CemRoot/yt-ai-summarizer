@@ -304,41 +304,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
 
       - name: Check version numbers match across files
-        run: |
-          python3 -c "
-          import json, re, sys
-
-          manifest_ver = json.load(open('manifest.json'))['version']
-          print(f'manifest.json: {manifest_ver}')
-
-          errors = []
-
-          # privacy-policy.html
-          with open('privacy-policy.html') as f:
-              html = f.read()
-          pp_matches = re.findall(r'v(\d+\.\d+\.\d+)', html)
-          pp_versions = set(pp_matches)
-          for v in pp_versions:
-              if v != manifest_ver:
-                  errors.append(f'privacy-policy.html has v{v}, expected v{manifest_ver}')
-          print(f'privacy-policy.html versions: {pp_versions}')
-
-          # README.md — latest changelog entry
-          with open('README.md') as f:
-              readme = f.read()
-          changelog_versions = re.findall(r'### v(\d+\.\d+\.\d+)', readme)
-          if changelog_versions and changelog_versions[0] != manifest_ver:
-              errors.append(f'README.md latest changelog is v{changelog_versions[0]}, expected v{manifest_ver}')
-          print(f'README.md latest changelog: v{changelog_versions[0] if changelog_versions else \"NONE\"}')
-
-          if errors:
-              for e in errors:
-                  print(f'FAIL: {e}')
-              sys.exit(1)
-          print('OK: All version numbers are consistent')
-          "
+        run: node scripts/verify-version-consistency.mjs
 
   # ─── 6. Build & Package ───
   build:
