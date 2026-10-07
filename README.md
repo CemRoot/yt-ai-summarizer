@@ -257,7 +257,7 @@ Summary and Chat run on a fallback chain — **Ollama Cloud → Gemini 2.5 Flash
     </td>
     <td valign="top">
       <h3>✅ Minimal permissions</h3>
-      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, <code>scripting</code>, plus host access for YouTube, BYOK vendors, our Supabase project, and ordinary <code>http</code>/<code>https</code> pages so the article button can inject the reader. See <a href="manifest.json"><code>manifest.json</code></a>.
+      <code>storage</code>, <code>activeTab</code>, <code>identity</code>, <code>scripting</code>, plus host access for YouTube, BYOK vendors, our Supabase project, and ordinary <code>http</code>/<code>https</code> pages so the article button can check the page on-device and inject the reader when clicked. See <a href="manifest.json"><code>manifest.json</code></a>.
     </td>
   </tr>
 </table>

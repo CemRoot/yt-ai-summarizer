@@ -597,7 +597,7 @@
             </div>
           </div>
           <div class="doc-meta">
-            <span class="meta-pill">Last updated · June 23, 2026</span>
+            <span class="meta-pill">Last updated · October 7, 2026</span>
             <span class="meta-pill meta-pill--version">Extension v2.1.5</span>
           </div>
         </div>
@@ -670,7 +670,8 @@
           <h2><span class="num">1</span> Data we access</h2>
           <ul>
             <li><strong>YouTube transcripts</strong> — Captions for the video on the tab you are viewing are read only when you start a summary, chat, or podcast flow. We do not scrape unrelated pages.</li>
-            <li><strong>Web article text (Article Reader)</strong> — When you click the Gleano button on an article page (or open Article Reader from the popup), the extension extracts the main article body from the DOM of that tab (title, author, and readable text). Extraction runs locally in your browser. Article text is sent to your AI provider (BYOK) or our managed Edge Functions only when that click starts a summary or you send a chat message — not automatically on page load. The button script itself does not read the article.</li>
+            <li><strong>Web article text (Article Reader)</strong> — When you click the Gleano button on an article page (or open Article Reader from the popup), the extension extracts the main article body from the DOM of that tab (title, author, and readable text). Extraction runs locally in your browser. Article text is sent to your AI provider (BYOK) or our managed Edge Functions only when that click starts a summary or you send a chat message — not automatically on page load.</li>
+            <li><strong>Article button check (on-device only)</strong> — On ordinary <span class="inline-code">http</span>/<span class="inline-code">https</span> pages, a small script decides whether to show the Gleano button. It looks at the page address and at page structure (article or forum metadata such as <span class="inline-code">og:type</span> or schema.org types, and how much paragraph text the page has). Social, search, shopping and app sites never get the button. This check runs entirely in your browser: nothing from it is stored or sent anywhere, and it does not record which pages you visit.</li>
             <li><strong>BYOK: your API keys</strong> (Groq, Ollama Cloud, Google Gemini for TTS) — Stored <strong>locally</strong> in the extension (obfuscated). Used only to authenticate to those providers when you use BYOK.</li>
             <li><strong>Managed AI: Google account</strong> — If you sign in, Supabase receives standard OAuth tokens from Google. We use Google’s identifiers to create your app account. We do not receive your Google password.</li>
             <li><strong>Device identifier for abuse prevention</strong> — For managed sign-in, the extension derives a <strong>browser/device fingerprint</strong> (FingerprintJS-based) and a <strong>persistent local ID</strong> (<span class="inline-code">chrome.storage.local</span>). A fingerprint value is sent to our backend during auth registration so we can limit free-tier abuse (e.g. many accounts on one device). This is not used for advertising.</li>
@@ -697,7 +698,7 @@
             <li><strong>Article Reader (managed)</strong> — Article text and chat prompts follow the same managed path through <span class="inline-code">summarize</span> when you explicitly request a summary or send a chat message. Credits are consumed per request.</li>
             <li><strong>Billing</strong> — If you subscribe, <strong>Stripe</strong> processes payment; we store subscription status in our database as needed to unlock Pro features. Opening checkout uses Stripe-hosted pages (and may set Stripe cookies under their domain).</li>
           </ul>
-          <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your full browsing history. For managed users, account email and usage metadata may exist on Supabase as described above; IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
+          <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your browsing history: the article button check stays on your device, and article URLs are not sent to our backend. For managed users, account email and usage records may exist on Supabase as described above (for each request: the action, the YouTube video ID when you summarize a video, token counts, cost and latency — used to enforce credits and limits); IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
         </div>
       </div>
 
@@ -764,8 +765,8 @@
             <span class="chip">api.groq.com</span>
             <span class="chip">ollama.com</span>
             <span class="chip">generativelanguage.googleapis.com</span>
-            <span class="chip">*.supabase.co (project API + Auth)</span>
-            <span class="chip">http://*/* and https://*/* — so the on-page article button can inject the reader (not used to read the page until you click)</span>
+            <span class="chip">smvnsfznxctkegjbckmt.supabase.co (project API + Auth)</span>
+            <span class="chip">http://*/* and https://*/* — runs the on-device article button check, and lets the reader be injected into the tab when you click (article text is only extracted after that click)</span>
           </div>
           <p class="spaced-top">Checkout and Customer Portal links open in the browser under <strong>Stripe</strong>’s domain (not listed as a static host permission because links are created at runtime from your account/checkout configuration).</p>
         </div>
@@ -795,7 +796,7 @@
       <div class="section" id="compliance">
         <div class="card">
           <h2><span class="num">9</span> Compliance &amp; safety</h2>
-          <p>Open-source extension codebase (MIT) — you can review client behavior on <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">GitHub</a>. Server-side Edge Function source lives in the same repository under <span class="inline-code">backend/supabase/functions</span> for transparency of managed-AI flows (deployment config and secrets are not in the repo).</p>
+          <p>Open-source extension codebase (MIT) — you can review client behavior on <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">GitHub</a>. The managed-AI Edge Functions run on our Supabase project; their source is not published. This policy describes what they receive and store.</p>
           <p class="spaced-top-sm">The extension does not ship analytics or ads. Diagnostic messages may appear in the browser extension context (e.g. console) when something fails; they are not used for cross-site tracking.</p>
           <p class="spaced-top-sm">When this policy changes, we update the <strong>Last updated</strong> date above. Continued use after an update means you accept the revised policy.</p>
         </div>
