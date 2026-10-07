@@ -14,7 +14,7 @@ importScripts(
 
 // Production uninstall page: hosted on developer domain (Vercel). Source file in
 // repo: docs/uninstall.html — copy to portfolio public/yt-ai-summarizer/ when it changes.
-const UNINSTALL_FEEDBACK_URL = 'https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html';
+const UNINSTALL_FEEDBACK_URL = 'https://cemkoyluoglu.tech/yt-ai-summarizer/uninstall.html';
 chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';

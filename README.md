@@ -14,8 +14,8 @@
   <img alt="Install on Chrome Web Store" src="https://img.shields.io/badge/Install%20on%20Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" />
 </a>
 &nbsp;
-<a href="https://cemkoyluoglu.codes/yt-ai-summarizer/">
-  <img alt="Product site" src="https://img.shields.io/badge/Product%20site-cemkoyluoglu.codes-111?style=for-the-badge&logo=vercel&logoColor=white" />
+<a href="https://cemkoyluoglu.tech/yt-ai-summarizer/">
+  <img alt="Product site" src="https://img.shields.io/badge/Product%20site-cemkoyluoglu.tech-111?style=for-the-badge&logo=vercel&logoColor=white" />
 </a>
 &nbsp;
 <a href="privacy-policy.html">
@@ -272,6 +272,7 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 - **🎯 Article button only where it belongs** — the floating Gleano button showed up on every site, including Instagram, X, Facebook and web apps. It now needs two checks to pass. The URL must not be a social, chat, search, video, shop or app host, and must not be a site homepage. The page itself must look like a story: `NewsArticle` / `Article` / `BlogPosting` / `DiscussionForumPosting` schema, `og:type=article`, forum software thread markup (Discourse, phpBB, XenForo, vBulletin, SMF, Invision), or a long body of sibling paragraphs. Reddit, Hacker News, Stack Exchange, Ekşi Sözlük and Technopat threads are recognised by URL. Pages that render late are checked again for a few seconds.
 - **📰 Popup unchanged** — the popup's "Open Article Reader" still works on any ordinary page, because there you ask for it.
+- **🔗 New site domain** — the uninstall feedback page and product links moved from `cemkoyluoglu.codes` (expired) to `cemkoyluoglu.tech`.
 
 ### v2.1.4 — October 2026
 
@@ -516,7 +517,7 @@ node --test content/transcript.orchestration.test.js
 <details>
 <summary><b>Uninstall feedback URL</b></summary>
 
-The post-uninstall page is served **only** from the portfolio deployment at **<https://cemkoyluoglu.codes/yt-ai-summarizer/uninstall.html>**. `docs/uninstall.html` in this repo is the source-of-truth template; it does **not** change what users see until it is copied into the portfolio repo and redeployed (Vercel).
+The post-uninstall page is served **only** from the portfolio deployment at **<https://cemkoyluoglu.tech/yt-ai-summarizer/uninstall.html>**. `docs/uninstall.html` in this repo is the source-of-truth template; it does **not** change what users see until it is copied into the portfolio repo and redeployed (Vercel).
 
 The constant `UNINSTALL_FEEDBACK_URL` in `service-worker.js` must match the live URL exactly, including `www` vs apex if you standardize on one.
 
