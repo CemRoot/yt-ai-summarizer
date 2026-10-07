@@ -268,6 +268,11 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.1.5 — October 2026
+
+- **🎯 Article button only where it belongs** — the floating Gleano button showed up on every site, including Instagram, X, Facebook and web apps. It now needs two checks to pass. The URL must not be a social, chat, search, video, shop or app host, and must not be a site homepage. The page itself must look like a story: `NewsArticle` / `Article` / `BlogPosting` / `DiscussionForumPosting` schema, `og:type=article`, forum software thread markup (Discourse, phpBB, XenForo, vBulletin, SMF, Invision), or a long body of sibling paragraphs. Reddit, Hacker News, Stack Exchange, Ekşi Sözlük and Technopat threads are recognised by URL. Pages that render late are checked again for a few seconds.
+- **📰 Popup unchanged** — the popup's "Open Article Reader" still works on any ordinary page, because there you ask for it.
+
 ### v2.1.4 — October 2026
 
 - **🛡️ Caption fetches stay on YouTube** — transcript downloads from the background now accept only `https` links on YouTube and its caption hosts. A page cannot point that fetch at another site.

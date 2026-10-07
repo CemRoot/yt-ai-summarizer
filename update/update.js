@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.1.5',
+      date: '2026-10-07',
+      changes: [
+        { type: 'fixed',    text: 'c215_article_button_scope' },
+        { type: 'changed',  text: 'c215_no_homepage_button' },
+      ]
+    },
+    {
       version: '2.1.4',
       date: '2026-10-04',
       changes: [
@@ -203,6 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c215_article_button_scope: 'The article button now appears only on news stories, blog posts and forum threads — not on Instagram, X, Facebook, search, shops or apps',
+      c215_no_homepage_button: 'Site homepages and section pages no longer show the button; open the story itself',
       c214_caption_hosts: 'Caption downloads stay on YouTube hosts (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'On an article, the Gleano button on the page starts the summary. Chat stays a tab.',
       c214_no_permissions: 'Article button: content script on ordinary http(s) pages, not YouTube',
@@ -291,6 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
 
+      c215_article_button_scope: 'Makale düğmesi artık yalnızca haber, blog yazısı ve forum başlıklarında çıkar — Instagram, X, Facebook, arama, alışveriş ve uygulamalarda çıkmaz',
+      c215_no_homepage_button: 'Site ana sayfaları ve kategori sayfaları düğme göstermez; haberin kendisini açın',
       c214_caption_hosts: 'Altyazı indirmeleri YouTube sunucularında kalır (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'Makale sayfasında Gleano düğmesi özeti hemen başlatır. Sohbet üstte sekme olarak kalır.',
       c214_no_permissions: 'Makale düğmesi: YouTube dışında sıradan http(s) sayfalarında içerik betiği',
@@ -379,6 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corregido',
       groupChanged: 'Cambiado',
 
+      c215_article_button_scope: 'El botón de artículo ahora solo aparece en noticias, entradas de blog y hilos de foros — no en Instagram, X, Facebook, buscadores, tiendas ni apps',
+      c215_no_homepage_button: 'Las portadas y páginas de sección ya no muestran el botón; abre la noticia',
       c214_caption_hosts: 'Las descargas de subtítulos se quedan en hosts de YouTube (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'En un artículo, el botón de Gleano en la página inicia el resumen. El chat sigue como pestaña.',
       c214_no_permissions: 'Botón de artículo: script de contenido en páginas http(s), no en YouTube',
@@ -420,6 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corrigé',
       groupChanged: 'Modifié',
 
+      c215_article_button_scope: 'Le bouton article n\'apparaît plus que sur les articles de presse, billets de blog et fils de forum — pas sur Instagram, X, Facebook, la recherche, les boutiques ou les applis',
+      c215_no_homepage_button: 'Les pages d\'accueil et de rubrique n\'affichent plus le bouton ; ouvrez l\'article',
       c214_caption_hosts: 'Les téléchargements de sous-titres restent sur les hôtes YouTube (https : youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'Sur un article, le bouton Gleano sur la page lance le résumé. Le chat reste un onglet.',
       c214_no_permissions: 'Bouton article : script de contenu sur les pages http(s), pas sur YouTube',
@@ -461,6 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Behoben',
       groupChanged: 'Geändert',
 
+      c215_article_button_scope: 'Die Artikel-Schaltfläche erscheint nur noch auf Nachrichtenartikeln, Blogposts und Forenthreads — nicht auf Instagram, X, Facebook, Suche, Shops oder Apps',
+      c215_no_homepage_button: 'Startseiten und Rubrikseiten zeigen die Schaltfläche nicht mehr; öffne den Artikel selbst',
       c214_caption_hosts: 'Untertitel-Downloads bleiben auf YouTube-Hosts (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'Auf einem Artikel startet die Gleano-Schaltfläche auf der Seite die Zusammenfassung. Der Chat bleibt ein Tab.',
       c214_no_permissions: 'Artikel-Schaltfläche: Inhaltsskript auf normalen http(s)-Seiten, nicht auf YouTube',
@@ -502,6 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '修正',
       groupChanged: '変更',
 
+      c215_article_button_scope: '記事ボタンはニュース記事・ブログ投稿・フォーラムのスレッドにのみ表示されます（Instagram、X、Facebook、検索、ショップ、アプリには表示されません）',
+      c215_no_homepage_button: 'サイトのトップページやカテゴリページにはボタンを表示しません。記事本体を開いてください',
       c214_caption_hosts: '字幕のダウンロードは YouTube のホストに限定されます（https: youtube.com、youtu.be、googlevideo.com、ytimg.com）',
       c214_article_button: '記事ページの Gleano ボタンで要約が始まります。チャットはタブのままです。',
       c214_no_permissions: '記事ボタン: YouTube 以外の通常の http(s) ページにコンテンツスクリプト',
@@ -543,6 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '수정',
       groupChanged: '변경',
 
+      c215_article_button_scope: '기사 버튼은 이제 뉴스 기사, 블로그 글, 포럼 스레드에서만 표시됩니다 — Instagram, X, Facebook, 검색, 쇼핑, 앱에서는 표시되지 않습니다',
+      c215_no_homepage_button: '사이트 홈페이지와 섹션 페이지에는 버튼이 표시되지 않습니다. 기사 자체를 여세요',
       c214_caption_hosts: '자막 다운로드는 YouTube 호스트에만 머뭅니다 (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: '기사 페이지의 Gleano 버튼이 요약을 시작합니다. 채팅은 탭으로 남습니다.',
       c214_no_permissions: '기사 버튼: YouTube가 아닌 일반 http(s) 페이지의 콘텐츠 스크립트',
@@ -584,6 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '修复',
       groupChanged: '变更',
 
+      c215_article_button_scope: '文章按钮现在只出现在新闻、博客文章和论坛帖子上——不会出现在 Instagram、X、Facebook、搜索、购物网站或应用中',
+      c215_no_homepage_button: '网站首页和栏目页不再显示按钮；请打开具体文章',
       c214_caption_hosts: '字幕下载仅限 YouTube 主机（https：youtube.com、youtu.be、googlevideo.com、ytimg.com）',
       c214_article_button: '在文章页上，页面上的 Gleano 按钮会开始摘要。聊天仍是标签。',
       c214_no_permissions: '文章按钮：在普通 http(s) 页面注入内容脚本（不含 YouTube）',
@@ -625,6 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corrigido',
       groupChanged: 'Alterado',
 
+      c215_article_button_scope: 'O botão de artigo agora só aparece em notícias, posts de blog e tópicos de fórum — não no Instagram, X, Facebook, buscas, lojas ou apps',
+      c215_no_homepage_button: 'Páginas iniciais e de seção não mostram mais o botão; abra a matéria',
       c214_caption_hosts: 'Os downloads de legendas ficam nos hosts do YouTube (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'Num artigo, o botão Gleano na página inicia o resumo. O chat continua como aba.',
       c214_no_permissions: 'Botão de artigo: script de conteúdo em páginas http(s), exceto YouTube',
@@ -666,6 +692,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'تم الإصلاح',
       groupChanged: 'تم التغيير',
 
+      c215_article_button_scope: 'زر المقال يظهر الآن فقط في الأخبار وتدوينات المدونات وموضوعات المنتديات — وليس في Instagram أو X أو Facebook أو البحث أو المتاجر أو التطبيقات',
+      c215_no_homepage_button: 'لم تعد الصفحات الرئيسية وصفحات الأقسام تعرض الزر؛ افتح الخبر نفسه',
       c214_caption_hosts: 'تنزيلات الترجمة تبقى على مضيفات YouTube (https: youtube.com و youtu.be و googlevideo.com و ytimg.com)',
       c214_article_button: 'في صفحة المقال، زر Gleano على الصفحة يبدأ الملخص. تبقى الدردشة تبويبًا.',
       c214_no_permissions: 'زر المقال: سكربت محتوى على صفحات http(s) العادية، وليس يوتيوب',
@@ -707,6 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'ठीक किया',
       groupChanged: 'बदला',
 
+      c215_article_button_scope: 'लेख बटन अब केवल समाचार, ब्लॉग पोस्ट और फ़ोरम थ्रेड पर दिखता है — Instagram, X, Facebook, खोज, शॉपिंग या ऐप्स पर नहीं',
+      c215_no_homepage_button: 'साइट के होमपेज और सेक्शन पेज पर बटन नहीं दिखता; खबर खुद खोलें',
       c214_caption_hosts: 'कैप्शन डाउनलोड YouTube होस्ट पर ही रहते हैं (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
       c214_article_button: 'लेख पृष्ठ पर Gleano बटन सारांश शुरू करता है। चैट टैब बनी रहती है।',
       c214_no_permissions: 'लेख बटन: YouTube को छोड़कर साधारण http(s) पृष्ठों पर कंटेंट स्क्रिप्ट',
