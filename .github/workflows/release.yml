@@ -1,0 +1,76 @@
+name: Release
+
+# Publishes a GitHub release (tag vX.Y.Z + extension ZIP) whenever main carries a
+# manifest version that has no tag yet. Notes come from the README "What's new"
+# section, the title from the popup's one-line "What's new" summary.
+# Run it by hand (Actions → Release → Run workflow) to publish a missed version.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Read version and check for an existing tag
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "Tag v$VERSION already exists; nothing to publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "previous=$(git tag --list 'v*' --sort=-v:refname | head -1)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check versions and run tests
+        if: steps.version.outputs.exists == 'false'
+        run: |
+          node scripts/verify-version-consistency.mjs
+          node --test $(find content utils -name '*.test.js' | sort)
+
+      - name: Build the extension ZIP
+        if: steps.version.outputs.exists == 'false'
+        run: bash scripts/package-extension.sh
+
+      - name: Write release notes
+        if: steps.version.outputs.exists == 'false'
+        id: notes
+        run: |
+          TITLE=$(node scripts/release-notes.mjs release-notes.md "${{ steps.version.outputs.previous }}")
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the release
+        if: steps.version.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TITLE: ${{ steps.notes.outputs.title }}
+        run: |
+          gh release create "v$VERSION" "dist/youtube-ai-summarizer-v$VERSION.zip" \
+            --target "$GITHUB_SHA" \
+            --title "$TITLE" \
+            --notes-file release-notes.md \
+            --latest
