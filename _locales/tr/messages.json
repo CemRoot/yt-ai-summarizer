@@ -118,5 +118,63 @@
   "articleError": {
     "message": "Makale işlenemedi",
     "description": "Article reader UI text"
+  },
+  "articleCloseLabel": {
+    "message": "Kapat",
+    "description": "Close button of the article panel"
+  },
+  "authSignedOutTitle": {
+    "message": "Oturum açmadınız",
+    "description": "Title when no Google session and no API key"
+  },
+  "authSignedOutMessage": {
+    "message": "Gmail (Google) hesabınızla oturum açmadınız. Gleano'yu kullanmak için Google ile giriş yapın veya Ayarlar'dan kendi API anahtarınızı ekleyin.",
+    "description": "Body when no Google session and no API key"
+  },
+  "authSessionEndedTitle": {
+    "message": "Google oturumunuz sona erdi",
+    "description": "Title when Supabase ended the session"
+  },
+  "authSessionEndedMessage": {
+    "message": "$EMAIL$ hesabının Google oturumu sona erdi. Devam etmek için lütfen tekrar giriş yapın. Planınız ve kredileriniz korunuyor.",
+    "description": "Body when the session ended; $EMAIL$ is the account",
+    "placeholders": {
+      "email": {
+        "content": "$1",
+        "example": "user@gmail.com"
+      }
+    }
+  },
+  "authSessionEndedMessageNoEmail": {
+    "message": "Google oturumunuz sona erdi. Devam etmek için lütfen tekrar giriş yapın. Planınız ve kredileriniz korunuyor.",
+    "description": "Body when the session ended and no email is known"
+  },
+  "authUnavailableTitle": {
+    "message": "Hesabınıza ulaşılamıyor",
+    "description": "Title when the sign-in service is unreachable"
+  },
+  "authUnavailableMessage": {
+    "message": "Oturumunuz hâlâ açık, ancak bir bağlantı sorunu nedeniyle doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+    "description": "Body when the sign-in service is unreachable"
+  },
+  "authSignInButton": {
+    "message": "Google ile giriş yap",
+    "description": "Button that starts Google sign-in"
+  },
+  "authSigningIn": {
+    "message": "Giriş yapılıyor…",
+    "description": "Sign-in button while waiting"
+  },
+  "authSignInFailed": {
+    "message": "Giriş tamamlanamadı. Lütfen tekrar deneyin.",
+    "description": "Toast after a failed sign-in"
+  },
+  "authUseOwnKeyButton": {
+    "message": "Kendi API anahtarımı kullan",
+    "description": "Button that opens Settings for a BYOK key"
+  },
+  "retryButton": {
+    "message": "Tekrar dene",
+    "description": "Retry button"
   }
 }

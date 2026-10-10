@@ -1,6 +1,11 @@
 /**
  * Gleano - Article UI
- * Side panel UI for article summarization and chat
+ * Side panel UI for article summarization and chat.
+ *
+ * Every node lives in the closed shadow root from GleanoShadowHost, so page CSS
+ * cannot restyle it. UI → controller events go through a private EventTarget:
+ * events on `document` can be dispatched by the page itself, which would let a
+ * site start paid summaries.
  */
 
 class ArticleUI {
@@ -21,11 +26,11 @@ class ArticleUI {
   }
 
   static #ICONS = {
-    close: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
-    send: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
-    copy: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
-    refresh: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
-    article: '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>'
+    close: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+    send: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>',
+    article: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>'
   };
 
   #panelRoot = null;
@@ -33,9 +38,10 @@ class ArticleUI {
   #currentMode = 'summary';
   #isDarkMode = false;
   #chatMessages = [];
-  #eventHandlers = {};
+  #bus = new EventTarget();
   #themeMediaQuery = null;
   #themeChangeHandler = null;
+  #keydownHandler = null;
 
   constructor() {
     if (ArticleUI.#instance) {
@@ -53,7 +59,7 @@ class ArticleUI {
 
   init() {
     if (this.#panelRoot) return;
-    
+
     this.#detectTheme();
     this.#createToggleButton();
     this.#createPanel();
@@ -64,17 +70,22 @@ class ArticleUI {
     if (this.#themeMediaQuery && this.#themeChangeHandler) {
       this.#themeMediaQuery.removeEventListener('change', this.#themeChangeHandler);
     }
+    if (this.#keydownHandler) {
+      window.removeEventListener('keydown', this.#keydownHandler, true);
+    }
     this.#themeMediaQuery = null;
     this.#themeChangeHandler = null;
-    if (this.#panelRoot) {
-      this.#panelRoot.remove();
-      this.#panelRoot = null;
-    }
-    const btn = document.getElementById('gleano-article-toggle');
-    if (btn) btn.remove();
+    this.#keydownHandler = null;
+    GleanoShadowHost.remove();
+    this.#panelRoot = null;
     this.#isOpen = false;
     this.#chatMessages = [];
     ArticleUI.#instance = null;
+  }
+
+  /** Element inside the shadow root. */
+  #el(id) {
+    return GleanoShadowHost.byId(id);
   }
 
   #detectTheme() {
@@ -92,8 +103,7 @@ class ArticleUI {
 
   #applyTheme() {
     this.#panelRoot?.classList.toggle('dark', this.#isDarkMode);
-    const btn = document.getElementById('gleano-article-toggle');
-    btn?.classList.toggle('dark', this.#isDarkMode);
+    this.#el('gleano-article-toggle')?.classList.toggle('dark', this.#isDarkMode);
   }
 
   #scrollToBottom() {
@@ -106,21 +116,23 @@ class ArticleUI {
   }
 
   #createToggleButton() {
-    let btn = document.getElementById('gleano-article-toggle');
+    let btn = this.#el('gleano-article-toggle');
     if (!btn) {
       btn = document.createElement('button');
       btn.id = 'gleano-article-toggle';
       btn.type = 'button';
       btn.innerHTML = ArticleUI.#ICONS.article;
-      btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano');
-      document.body.appendChild(btn);
+      GleanoShadowHost.layer().appendChild(btn);
     }
     btn.classList.add('gleano-toggle-btn');
     btn.classList.toggle('dark', this.#isDarkMode);
-    if (!btn.title) btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano');
+    btn.title = ArticleUI.#msg('articleReaderTitle', 'Gleano');
+    btn.setAttribute('aria-label', btn.title);
     if (!btn.innerHTML.trim()) btn.innerHTML = ArticleUI.#ICONS.article;
 
+    // Drop the launcher's listener; from now on the reader handles clicks.
     const bound = btn.cloneNode(true);
+    bound.disabled = false;
     btn.replaceWith(bound);
     bound.addEventListener('click', () => this.#emitEvent('start-summary'));
   }
@@ -129,7 +141,11 @@ class ArticleUI {
     const panel = document.createElement('div');
     panel.id = 'gleano-article-panel';
     panel.className = 'gleano-panel' + (this.#isDarkMode ? ' dark' : '');
-    
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Gleano');
+
+    const closeLabel = ArticleUI.#msg('articleCloseLabel', 'Close');
+
     panel.innerHTML = `
       <div class="gleano-header">
         <div class="gleano-header-left">
@@ -138,57 +154,67 @@ class ArticleUI {
         </div>
         <div class="gleano-header-right">
           <span class="gleano-credit-badge" id="gleanoCreditBadge" title="Remaining credits" style="display: none;"></span>
-          <button class="gleano-close-btn" title="Close">${ArticleUI.#ICONS.close}</button>
+          <button type="button" class="gleano-close-btn" id="gleanoClose" title="${closeLabel}" aria-label="${closeLabel}">${ArticleUI.#ICONS.close}</button>
         </div>
       </div>
-      
+
       <nav class="gleano-tabs">
-        <button class="gleano-tab active" data-mode="summary">${ArticleUI.#msg('articleSummaryTab', 'Summary')}</button>
-        <button class="gleano-tab" data-mode="chat">${ArticleUI.#msg('articleChatTab', 'Chat')}</button>
+        <button type="button" class="gleano-tab active" data-mode="summary">${ArticleUI.#msg('articleSummaryTab', 'Summary')}</button>
+        <button type="button" class="gleano-tab" data-mode="chat">${ArticleUI.#msg('articleChatTab', 'Chat')}</button>
       </nav>
-      
+
       <div class="gleano-content">
-        <div class="gleano-result" id="gleanoResult"></div>
+        <div class="gleano-result" id="gleanoResult" aria-live="polite"></div>
       </div>
-      
+
       <div class="gleano-chat-input" id="gleanoChatInput" style="display: none;">
         <input type="text" placeholder="${ArticleUI.#msg('articleChatPlaceholder', 'Ask about this article...')}" id="gleanoChatText" />
-        <button class="gleano-send-btn" id="gleanoChatSend">${ArticleUI.#ICONS.send}</button>
+        <button type="button" class="gleano-send-btn" id="gleanoChatSend" aria-label="Send">${ArticleUI.#ICONS.send}</button>
       </div>
-      
+
       <div class="gleano-footer">
-        <button class="gleano-action-btn" id="gleanoCopy" title="Copy">${ArticleUI.#ICONS.copy}</button>
-        <button class="gleano-action-btn" id="gleanoRefresh" title="Regenerate">${ArticleUI.#ICONS.refresh}</button>
+        <button type="button" class="gleano-action-btn" id="gleanoCopy" title="Copy" aria-label="Copy">${ArticleUI.#ICONS.copy}</button>
+        <button type="button" class="gleano-action-btn" id="gleanoRefresh" title="Regenerate" aria-label="Regenerate">${ArticleUI.#ICONS.refresh}</button>
       </div>
     `;
-    
-    document.body.appendChild(panel);
+
+    GleanoShadowHost.layer().appendChild(panel);
     this.#panelRoot = panel;
   }
 
   #setupEventListeners() {
-    const closeBtn = this.#panelRoot.querySelector('.gleano-close-btn');
-    closeBtn?.addEventListener('click', () => this.close());
+    this.#el('gleanoClose')?.addEventListener('click', () => this.close());
 
     const tabs = this.#panelRoot.querySelectorAll('.gleano-tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => this.#switchMode(tab.dataset.mode));
     });
 
-    const chatInput = document.getElementById('gleanoChatText');
-    const chatSend = document.getElementById('gleanoChatSend');
-    
-    chatInput?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    const chatInput = this.#el('gleanoChatText');
+    const chatSend = this.#el('gleanoChatSend');
+
+    chatInput?.addEventListener('keydown', (e) => {
+      // Keep page shortcuts (YouTube-style hotkeys, site search) from firing while typing.
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         this.#sendChatMessage();
       }
     });
-    
+
     chatSend?.addEventListener('click', () => this.#sendChatMessage());
 
-    document.getElementById('gleanoCopy')?.addEventListener('click', () => this.#copyContent());
-    document.getElementById('gleanoRefresh')?.addEventListener('click', () => this.#emitEvent('refresh'));
+    this.#el('gleanoCopy')?.addEventListener('click', () => this.#copyContent());
+    this.#el('gleanoRefresh')?.addEventListener('click', () => this.#emitEvent('refresh'));
+
+    this.#keydownHandler = (e) => {
+      // Only the user's own key press: sites dispatch synthetic Escape events
+      // (e.g. when their consent dialog closes), which closed the panel.
+      if (e.key === 'Escape' && e.isTrusted && this.#isOpen) {
+        this.close();
+      }
+    };
+    window.addEventListener('keydown', this.#keydownHandler, true);
   }
 
   #applyMode(mode) {
@@ -199,12 +225,12 @@ class ArticleUI {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
 
-    const chatInput = document.getElementById('gleanoChatInput');
+    const chatInput = this.#el('gleanoChatInput');
     if (chatInput) {
       chatInput.style.display = mode === 'chat' ? 'flex' : 'none';
     }
 
-    const refreshBtn = document.getElementById('gleanoRefresh');
+    const refreshBtn = this.#el('gleanoRefresh');
     if (refreshBtn) {
       refreshBtn.style.display = mode === 'summary' ? 'flex' : 'none';
     }
@@ -222,30 +248,29 @@ class ArticleUI {
   }
 
   #sendChatMessage() {
-    const input = document.getElementById('gleanoChatText');
+    const input = this.#el('gleanoChatText');
     const message = input?.value?.trim();
     if (!message) return;
-    
+
     input.value = '';
     this.#emitEvent('chatMessage', { message });
   }
 
   #copyContent() {
-    const result = document.getElementById('gleanoResult');
+    const result = this.#el('gleanoResult');
     if (result?.textContent) {
       navigator.clipboard.writeText(result.textContent).then(() => {
         this.showToast(ArticleUI.#msg('copied', 'Copied to clipboard!'));
-      });
+      }).catch(() => {});
     }
   }
 
   #emitEvent(eventName, detail = {}) {
-    document.dispatchEvent(new CustomEvent(`gleano:${eventName}`, { detail }));
+    this.#bus.dispatchEvent(new CustomEvent(eventName, { detail }));
   }
 
   on(eventName, handler) {
-    this.#eventHandlers[eventName] = handler;
-    document.addEventListener(`gleano:${eventName}`, (e) => handler(e.detail));
+    this.#bus.addEventListener(eventName, (e) => handler(e.detail));
   }
 
   toggle() {
@@ -262,18 +287,23 @@ class ArticleUI {
     this.#panelRoot.classList.add('open');
     this.#isOpen = true;
     this.#syncToggle();
+    // Focus moves into the panel so Escape and Tab work even when a site's
+    // consent iframe held focus (keys typed there never reach this page).
+    if (!wasOpen) this.#el('gleanoClose')?.focus({ preventScroll: true });
     if (!wasOpen) this.#emitEvent('panelOpen');
   }
 
   close() {
+    const wasOpen = this.#isOpen;
     this.#panelRoot?.classList.remove('open');
     this.#isOpen = false;
     this.#syncToggle();
+    if (wasOpen) this.#el('gleano-article-toggle')?.focus({ preventScroll: true });
     this.#emitEvent('panelClose');
   }
 
   #syncToggle() {
-    const btn = document.getElementById('gleano-article-toggle');
+    const btn = this.#el('gleano-article-toggle');
     if (btn) btn.style.display = this.#isOpen ? 'none' : '';
   }
 
@@ -286,11 +316,14 @@ class ArticleUI {
   }
 
   updateCredits(credits) {
-    const badge = document.getElementById('gleanoCreditBadge');
+    const badge = this.#el('gleanoCreditBadge');
     if (!badge) return;
     if (typeof credits === 'number' && credits >= 0) {
       badge.textContent = `${credits} ⚡`;
       badge.style.display = 'inline-flex';
+    } else {
+      badge.textContent = '';
+      badge.style.display = 'none';
     }
   }
 
@@ -299,7 +332,7 @@ class ArticleUI {
    * Does NOT trigger AI — user must click to spend credits.
    */
   showSummaryPrompt(meta = {}) {
-    const result = document.getElementById('gleanoResult');
+    const result = this.#el('gleanoResult');
     if (!result) return;
     const title = meta.title ? this.#escape(meta.title) : '';
     const excerpt = meta.excerpt ? this.#escape(meta.excerpt) : '';
@@ -307,32 +340,32 @@ class ArticleUI {
       <div class="gleano-ready">
         ${title ? `<div class="gleano-ready-title">${title}</div>` : ''}
         ${excerpt ? `<p class="gleano-ready-excerpt">${excerpt}</p>` : ''}
-        <button class="gleano-generate-btn" id="gleanoGenerateBtn">
+        <button type="button" class="gleano-generate-btn" id="gleanoGenerateBtn">
           ${ArticleUI.#logoImg(16)}
           <span>Generate Summary</span>
         </button>
         <p class="gleano-ready-hint">Uses 1 credit. Or just ask a question in the Chat tab.</p>
       </div>
     `;
-    document.getElementById('gleanoGenerateBtn')?.addEventListener('click', () => {
+    this.#el('gleanoGenerateBtn')?.addEventListener('click', () => {
       this.#emitEvent('generateSummary');
     });
   }
 
   showLoading(message = ArticleUI.#msg('articleLoading', 'Analyzing article...')) {
-    const result = document.getElementById('gleanoResult');
+    const result = this.#el('gleanoResult');
     if (result) {
       result.innerHTML = `
         <div class="gleano-loading">
           <div class="gleano-spinner"></div>
-          <p>${message}</p>
+          <p>${this.#escape(message)}</p>
         </div>
       `;
     }
   }
 
   showResult(content, isHtml = false) {
-    const result = document.getElementById('gleanoResult');
+    const result = this.#el('gleanoResult');
     if (result) {
       if (isHtml) {
         result.innerHTML = content;
@@ -342,22 +375,39 @@ class ArticleUI {
     }
   }
 
-  showError(message, title = '') {
-    const result = document.getElementById('gleanoResult');
-    if (result) {
-      const safeTitle = title ? `<p class="gleano-error-title">${this.#escape(title)}</p>` : '';
-      result.innerHTML = `
-        <div class="gleano-error">
-          ${safeTitle}
-          <p>${this.#escape(message)}</p>
-        </div>
-      `;
-    }
+  /**
+   * Error card. `options.actions` adds buttons; a click emits `errorAction`
+   * with the action id so the controller decides what happens.
+   * @param {string} message
+   * @param {string} [title]
+   * @param {{ tone?: 'error'|'info', actions?: Array<{ id: string, label: string, primary?: boolean, google?: boolean }> }} [options]
+   */
+  showError(message, title = '', options = {}) {
+    const result = this.#el('gleanoResult');
+    if (!result) return;
+    const safeTitle = title ? `<p class="gleano-error-title">${this.#escape(title)}</p>` : '';
+    const actions = Array.isArray(options.actions) ? options.actions : [];
+    const buttons = actions.map((a) => `
+      <button type="button" class="gleano-error-btn ${a.primary ? 'primary' : 'secondary'}" data-action="${this.#escape(a.id)}">
+        ${a.google ? `<span class="gleano-google-mark">${GleanoAuthState.GOOGLE_ICON}</span>` : ''}<span>${this.#escape(a.label)}</span>
+      </button>`).join('');
+    result.innerHTML = `
+      <div class="gleano-error${options.tone === 'info' ? ' info' : ''}" role="alert">
+        ${safeTitle}
+        <p>${this.#escape(message)}</p>
+        ${buttons ? `<div class="gleano-error-actions">${buttons}</div>` : ''}
+      </div>
+    `;
+    result.querySelectorAll('.gleano-error-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.#emitEvent('errorAction', { id: btn.dataset.action, button: btn });
+      });
+    });
   }
 
   showChat(messages) {
     this.#chatMessages = messages;
-    const result = document.getElementById('gleanoResult');
+    const result = this.#el('gleanoResult');
     if (!result) return;
 
     if (messages.length === 0) {
@@ -373,7 +423,7 @@ class ArticleUI {
 
     result.innerHTML = messages.map(msg => {
       const isTyping = msg.content === '...';
-      const content = isTyping 
+      const content = isTyping
         ? '<div class="typing-dots"><span></span><span></span><span></span></div>'
         : this.#formatMarkdown(msg.content);
       return `
@@ -396,7 +446,7 @@ class ArticleUI {
     toast.className = 'gleano-toast';
     toast.textContent = message;
     this.#panelRoot?.appendChild(toast);
-    
+
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => {
       toast.classList.remove('show');

@@ -268,6 +268,13 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.1.6 — October 2026
+
+- **🧱 Article panel survives any site's CSS** — on sites such as 9to5Mac the panel slid down, its footer was cut off and the close button was an empty box, because the page's own rules (`* + * { margin-top }`, `button { … }`) reached it. The button and the panel now live in a closed shadow root, so page styles cannot touch them. The panel always fits the screen, the close button is always visible, and **Esc** closes it. The page itself no longer receives Gleano's stylesheet.
+- **🔐 Stay signed in after a restart** — every YouTube tab, the popup and the background worker used to refresh the Google session on their own. Supabase rotates refresh tokens, so after a restart two of them spent the same token; Supabase treated that as reuse and revoked the session, and the extension then called the global sign-out. A short network error at startup signed you out too. Now only the background worker refreshes, one refresh at a time; a network error keeps your session; only a token Supabase rejects ends it, and only on this browser. Manual sign-out no longer signs you out on other devices.
+- **💬 Messages you can act on** — "You are not signed in", "Your Google session for you@gmail.com has ended" and "Could not reach your account" are now separate, in English and Turkish, with a **Sign in with Google** button right in the YouTube and article panels. An old API key rejected after your Google session ended now asks you to sign in again instead of showing "Invalid API key".
+- **🛡️ Pages cannot start summaries** — panel events no longer travel through `document`, so a website cannot trigger a paid summary or chat.
+
 ### v2.1.5 — October 2026
 
 - **🎯 Article button only where it belongs** — the floating Gleano button showed up on every site, including Instagram, X, Facebook and web apps. It now needs two checks to pass. The URL must not be a social, chat, search, video, shop or app host, and must not be a site homepage. The page itself must look like a story: `NewsArticle` / `Article` / `BlogPosting` / `DiscussionForumPosting` schema, `og:type=article`, forum software thread markup (Discourse, phpBB, XenForo, vBulletin, SMF, Invision), or a long body of sibling paragraphs. Reddit, Hacker News, Stack Exchange, Ekşi Sözlük and Technopat threads are recognised by URL. Pages that render late are checked again for a few seconds.

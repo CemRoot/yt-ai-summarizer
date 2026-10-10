@@ -511,6 +511,18 @@ body {
   font-weight: 400;
 }
 
+/* Shown above "Sign in with Google" when Supabase ended the user's session. */
+.session-ended-notice {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: -4px 0 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--text);
+}
+
 /* ── Provider toggle ── */
 .provider-toggle {
   display: flex;

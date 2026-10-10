@@ -600,6 +600,38 @@
 
 .ytai-api-prompt svg { width: 40px; height: 40px; fill: var(--ytai-text-faint); }
 .ytai-api-prompt p { color: var(--ytai-text-muted); font-size: 13px; margin: 0; line-height: 1.5; }
+.ytai-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.ytai-auth-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ytai-google-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+}
+.ytai-api-prompt .ytai-google-mark svg { width: 13px; height: 13px; fill: initial; }
+.ytai-auth-actions .ytai-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ytai-api-prompt .ytai-auth-actions .ytai-btn-secondary svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
 
 /* ── Buttons ── */
 .ytai-btn {

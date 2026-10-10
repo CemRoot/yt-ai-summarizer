@@ -16,11 +16,6 @@ class ArticleController {
    * memory, O(1) lookup) so error rendering never allocates or branches on every call.
    */
   static #ERROR_PRESENTATION = Object.freeze({
-    NEEDS_AUTH_OR_KEY: {
-      title: 'Sign in or add an API key',
-      message: 'Sign in with Google, or add your own API key in Settings, to use Gleano.',
-      retryable: false
-    },
     PROVIDER_KEY_MISSING: {
       title: 'Provider API key missing',
       message: 'The selected AI provider has no API key saved. Open Settings and add the key for that provider, or switch to the provider whose key you already added.',
@@ -39,11 +34,6 @@ class ArticleController {
     INSUFFICIENT_CREDITS: {
       title: 'Not enough credits',
       message: 'This needs more credits than you have. Upgrade to Pro, add your own API key, or try a shorter article.',
-      retryable: false
-    },
-    SESSION_EXPIRED: {
-      title: 'Session expired',
-      message: 'Your session expired. Please sign in again from Settings.',
       retryable: false
     },
     PROVIDER_RATE_LIMIT: {
@@ -95,6 +85,13 @@ class ArticleController {
   #requestTimestamps = [];
   #summaryCache = null;
   #isProcessing = false;
+  /** What to re-run after "Try again" or a successful sign-in from the error card. */
+  #lastAction = null;
+
+  /** Codes whose fix is in Settings (keys, provider, credits). */
+  static #SETTINGS_CODES = new Set([
+    'PROVIDER_KEY_MISSING', 'API_KEY_INVALID', 'NO_CREDITS', 'INSUFFICIENT_CREDITS', 'PROVIDER_NOT_FOUND'
+  ]);
 
   constructor() {
     if (ArticleController.#instance) {
@@ -116,8 +113,12 @@ class ArticleController {
     
     this.#ui.init();
     this.#setupEventHandlers();
-    
-    console.log('[ArticleController] Initialized');
+    this.#watchAccountChanges();
+  }
+
+  /** Floating button / popup inject (service worker, isolated world). */
+  startSummary() {
+    this.#onStartSummary();
   }
 
   destroy() {
@@ -136,6 +137,7 @@ class ArticleController {
     this.#ui.on('chatMessage', (data) => this.#onChatMessage(data.message));
     this.#ui.on('generateSummary', () => this.#showSummary(true));
     this.#ui.on('refresh', () => this.#onRefresh());
+    this.#ui.on('errorAction', (data) => { void this.#onErrorAction(data); });
   }
 
   #forgetArticleIfPageChanged() {
@@ -195,12 +197,24 @@ class ArticleController {
       chrome.storage.local.get(['userPlan', 'credits'], (result) => {
         const s = result || {};
         const plan = String(s.userPlan || '').toLowerCase();
-        // Only show credits for managed (signed-in) users, not BYOK.
-        if (plan && plan !== 'anonymous' && typeof s.credits === 'number' && s.credits >= 0) {
-          this.#ui.updateCredits(s.credits);
-        }
+        // Only show credits for managed (signed-in) users, not BYOK. A cleared
+        // session resets credits to -1, which hides the badge.
+        const managed = plan && plan !== 'anonymous' && typeof s.credits === 'number' && s.credits >= 0;
+        this.#ui.updateCredits(managed ? s.credits : null);
       });
     } catch { /* ignore */ }
+  }
+
+  /** Sign-in, sign-out or an ended session elsewhere: keep the credit badge honest. */
+  #watchAccountChanges() {
+    try {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local') return;
+        if (changes.credits || changes.userPlan || changes.supabaseRefreshToken) {
+          this.#loadInitialCredits();
+        }
+      });
+    } catch { /* extension context gone */ }
   }
 
   #onModeChange(mode) {
@@ -243,9 +257,12 @@ class ArticleController {
 
     if (!this.#ensureArticleContent()) return;
 
+    this.#lastAction = { type: 'chat', message };
+
     // Pre-flight: instant, no network round-trip when the user has neither a key nor a session.
-    if (!(await this.#hasLocalAccess())) {
-      this.#showChatError({ code: 'NEEDS_AUTH_OR_KEY' });
+    const missing = await this.#missingAccessCode();
+    if (missing) {
+      await this.#showChatError({ code: missing });
       return;
     }
 
@@ -266,11 +283,12 @@ class ArticleController {
       this.#chatHistory.push({ role: 'assistant', content });
       this.#ui.showChat(this.#chatHistory);
       this.#updateCredits(credits);
+      this.#lastAction = null;
     } catch (err) {
-      console.error('[ArticleController] Chat error:', err);
+      console.warn('[Gleano] Chat failed:', err?.code || '', err?.message || err);
       // Remove the failed user turn from the AI history, then show a persistent error bubble.
       this.#chatHistory.pop();
-      this.#showChatError(err);
+      await this.#showChatError(err);
     } finally {
       this.#isProcessing = false;
     }
@@ -280,9 +298,14 @@ class ArticleController {
    * Render a persistent error bubble after the current history WITHOUT polluting
    * `#chatHistory` (the array sent to the AI), so retries stay clean and memory is unaffected.
    */
-  #showChatError(err) {
-    const { message } = this.#presentError(err);
-    this.#ui.showChat([...this.#chatHistory, { role: 'error', content: message }]);
+  async #showChatError(err) {
+    const presented = await this.#presentError(err);
+    // Sign-in problems need buttons, so they get the full card instead of a bubble.
+    if (presented.signIn) {
+      this.#renderErrorCard(presented);
+      return;
+    }
+    this.#ui.showChat([...this.#chatHistory, { role: 'error', content: presented.message }]);
   }
 
   #updateCredits(credits) {
@@ -302,7 +325,9 @@ class ArticleController {
     if (!code && !msg) return 'UNKNOWN_ERROR';
 
     // 1) Structured codes (set by the service worker / ApiClient).
-    if (code === 'NEEDS_AUTH_OR_KEY') return 'NEEDS_AUTH_OR_KEY';
+    if (code === 'NEEDS_AUTH_OR_KEY' || code === 'NOT_AUTHENTICATED') return 'NEEDS_AUTH_OR_KEY';
+    if (code === 'SESSION_ENDED' || code === 'SESSION_EXPIRED') return 'SESSION_ENDED';
+    if (code === 'AUTH_UNAVAILABLE') return 'AUTH_UNAVAILABLE';
     if (code === 'PROVIDER_KEY_MISSING') return 'PROVIDER_KEY_MISSING';
     if (code === 'INSUFFICIENT_CREDITS') return 'INSUFFICIENT_CREDITS';
     if (code === 'NO_CREDITS') return 'NO_CREDITS';
@@ -310,7 +335,6 @@ class ArticleController {
     if (code === 'AI_QUOTA_EXCEEDED') return 'AI_QUOTA_EXCEEDED';
     if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
     if (code === 'API_KEY_INVALID' || code === 'GEMINI_KEY_INVALID') return 'API_KEY_INVALID';
-    if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
 
     // 2) Plain message strings thrown by the service worker / providers.
     if (msg === 'NEEDS_AUTH_OR_KEY' || msg === 'NO_API_KEY') return 'NEEDS_AUTH_OR_KEY';
@@ -340,28 +364,93 @@ class ArticleController {
     return 'UNKNOWN_ERROR';
   }
 
-  #presentError(err) {
+  /**
+   * @returns {Promise<{ code: string, title: string, message: string, retryable: boolean, signIn: boolean }>}
+   */
+  async #presentError(err) {
     const code = this.#normalizeErrorCode(err);
+    if (GleanoAuthState.AUTH_CODES.includes(code)) {
+      const { email } = await GleanoAuthState.describe();
+      return { code, ...GleanoAuthState.presentation(code, { email }) };
+    }
     const map = ArticleController.#ERROR_PRESENTATION;
-    return map[code] || map.UNKNOWN_ERROR;
+    return { code, signIn: false, ...(map[code] || map.UNKNOWN_ERROR) };
+  }
+
+  /** Error card with the buttons that fix it: sign in, settings, or retry. */
+  #renderErrorCard(presented) {
+    const labels = GleanoAuthState.labels();
+    const actions = [];
+    if (presented.signIn) {
+      actions.push({ id: 'signIn', label: labels.signIn, primary: true, google: true });
+      actions.push({ id: 'settings', label: labels.useOwnKey });
+    } else if (ArticleController.#SETTINGS_CODES.has(presented.code)) {
+      actions.push({ id: 'settings', label: ArticleController.#msg('settings', 'Open Settings'), primary: true });
+    }
+    if (presented.retryable) {
+      actions.push({ id: 'retry', label: labels.retry, primary: actions.length === 0 });
+    }
+    this.#ui.showError(presented.message, presented.title, {
+      tone: presented.signIn ? 'info' : 'error',
+      actions
+    });
+  }
+
+  static #msg(key, fallback) {
+    try {
+      return chrome.i18n?.getMessage(key) || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  async #onErrorAction({ id, button } = {}) {
+    if (id === 'settings') {
+      chrome.runtime.sendMessage({ action: 'openSettings' }).catch(() => {});
+      return;
+    }
+    if (id === 'retry') {
+      await this.#rerunLastAction();
+      return;
+    }
+    if (id !== 'signIn') return;
+
+    const labels = GleanoAuthState.labels();
+    const labelEl = button?.querySelector('span:last-child');
+    if (button) button.disabled = true;
+    if (labelEl) labelEl.textContent = labels.signingIn;
+
+    const result = await GleanoAuthState.startGoogleSignIn();
+    if (result.ok) {
+      this.#loadInitialCredits();
+      await this.#rerunLastAction();
+      return;
+    }
+    if (button) button.disabled = false;
+    if (labelEl) labelEl.textContent = labels.signIn;
+    if (!/cancel/i.test(result.error || '')) this.#ui.showToast(labels.signInFailed, 3000);
+  }
+
+  async #rerunLastAction() {
+    const last = this.#lastAction;
+    if (last?.type === 'chat') {
+      if (this.#ui.getCurrentMode() !== 'chat') this.#ui.showChat(this.#chatHistory);
+      await this.#onChatMessage(last.message);
+      return;
+    }
+    if (this.#ui.getCurrentMode() !== 'summary') return;
+    await this.#showSummary(true);
   }
 
   /**
    * Fast, presence-only access pre-flight. API keys are stored obfuscated, so we cannot
    * (and must not) deobfuscate here — but a non-empty stored value still means a key exists.
-   * Mirrors the YouTube `hasAccess()` intent (any BYOK key OR an active session).
+   * @returns {Promise<null|'NEEDS_AUTH_OR_KEY'|'SESSION_ENDED'>} null when the request may go ahead
    */
-  async #hasLocalAccess() {
-    const s = await this.#getSettings();
-    const hasKey = !!(
-      String(s.groqApiKey || '').trim()
-      || String(s.ollamaApiKey || '').trim()
-      || String(s.geminiApiKey || '').trim()
-    );
-    if (hasKey) return true;
-    const signedIn = !!String(s.supabaseAccessToken || '').trim()
-      || (!!s.userPlan && String(s.userPlan).toLowerCase() !== 'anonymous');
-    return signedIn;
+  async #missingAccessCode() {
+    const { status, hasByokKey } = await GleanoAuthState.describe();
+    if (hasByokKey || status === 'signed_in') return null;
+    return status === 'session_ended' ? 'SESSION_ENDED' : 'NEEDS_AUTH_OR_KEY';
   }
 
   async #onRefresh() {
@@ -394,12 +483,13 @@ class ArticleController {
 
     // Set before the first await so a second click cannot pass the guard.
     this.#isProcessing = true;
+    this.#lastAction = { type: 'summary' };
     try {
       // Pre-flight: avoid the spinner when the user has neither a key nor a session.
-      if (!(await this.#hasLocalAccess())) {
-        const { title, message } = this.#presentError({ code: 'NEEDS_AUTH_OR_KEY' });
+      const missing = await this.#missingAccessCode();
+      if (missing) {
         if (this.#ui.getCurrentMode() === 'summary') {
-          this.#ui.showError(message, title);
+          this.#renderErrorCard(await this.#presentError({ code: missing }));
         }
         return;
       }
@@ -416,11 +506,12 @@ class ArticleController {
         this.#ui.showResult(content);
       }
       this.#updateCredits(credits);
+      this.#lastAction = null;
     } catch (err) {
-      console.error('[ArticleController] Summary error:', err);
-      const { title, message } = this.#presentError(err);
+      console.warn('[Gleano] Summary failed:', err?.code || '', err?.message || err);
+      const presented = await this.#presentError(err);
       if (this.#ui.getCurrentMode() === 'summary') {
-        this.#ui.showError(message, title);
+        this.#renderErrorCard(presented);
       }
     } finally {
       this.#isProcessing = false;
@@ -542,7 +633,12 @@ class ArticleController {
 }
 
 (function initArticleReader() {
-  if (typeof ArticleExtractor === 'undefined' || typeof ArticleUI === 'undefined') {
+  if (
+    typeof ArticleExtractor === 'undefined'
+    || typeof ArticleUI === 'undefined'
+    || typeof GleanoShadowHost === 'undefined'
+    || typeof GleanoAuthState === 'undefined'
+  ) {
     console.error('[ArticleController] Dependencies not loaded');
     return;
   }

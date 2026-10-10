@@ -4,7 +4,29 @@
  *
  * Uses raw fetch against Supabase Auth REST API.
  * No Supabase JS client needed (CSP script-src 'self' blocks CDN).
+ *
+ * Token refresh has one owner: the service worker. Every YouTube tab, the popup
+ * and the SW each load this class. When each refreshed on its own, two contexts
+ * spent the same rotating refresh token; Supabase treats reuse outside its 10 s
+ * window as theft and revokes the whole session, and the old code then called
+ * the global /logout. That is why users were signed out after a Chrome restart
+ * with several tabs open. Now:
+ * - pages ask the SW to refresh (`supabaseRefreshSession`), the SW runs one
+ *   refresh at a time and re-reads storage first;
+ * - only a refresh token that Supabase rejects ends the session, and only
+ *   locally; network errors and 5xx keep the stored tokens (AUTH_UNAVAILABLE);
+ * - user sign-out uses scope=local so other devices stay signed in.
+ * @see https://supabase.com/docs/guides/auth/sessions (refresh token reuse detection)
+ * @see https://supabase.com/docs/guides/auth/signout (sign-out scopes)
  */
+class AuthUnavailableError extends Error {
+  constructor(message) {
+    super(message || 'Could not reach the sign-in service.');
+    this.name = 'AuthUnavailableError';
+    this.code = 'AUTH_UNAVAILABLE';
+  }
+}
+
 class SupabaseAuth {
 
   static #instance = null;
@@ -13,8 +35,23 @@ class SupabaseAuth {
   #SUPABASE_ANON_KEY = 'sb_publishable_lMBLuB0JDmoIDGRT6j6e4A_GTSDHU0g';
 
   #session = null; // { access_token, refresh_token, expires_at, user }
-  #refreshTimer = null;
+  /** Service worker only: the refresh in progress, shared by concurrent callers. */
+  #refreshInFlight = null;
   #listeners = [];
+
+  /** Renew this long before expiry. */
+  static #EXPIRY_MARGIN_MS = 60_000;
+
+  /** Supabase error codes that mean the refresh token can never work again. */
+  static #DEAD_REFRESH_CODES = new Set([
+    'refresh_token_not_found',
+    'refresh_token_already_used',
+    'session_not_found',
+    'session_expired',
+    'invalid_grant',
+    'user_not_found',
+    'user_banned'
+  ]);
 
   constructor() {
     if (SupabaseAuth.#instance) return SupabaseAuth.#instance;
@@ -122,25 +159,51 @@ class SupabaseAuth {
     await this.#authDbg('info', 'signIn', 'token exchange ok', null);
     const tokens = await tokenRes.json();
     await this.#setSession(tokens);
+    await globalThis.GleanoAuthState?.clearEnded();
     return this.#session;
   }
 
+  /** User-initiated sign-out. Ends this browser's session only (scope=local). */
   async signOut() {
-    if (this.#session?.access_token) {
+    const token = this.#session?.access_token
+      || (await globalThis.StorageHelper?.getAuthState?.().catch(() => null))?.supabaseAccessToken;
+    if (token) {
       try {
-        await fetch(`${this.#SUPABASE_URL}/auth/v1/logout`, {
+        await fetch(`${this.#SUPABASE_URL}/auth/v1/logout?scope=local`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${this.#session.access_token}`,
+            Authorization: `Bearer ${token}`,
             apikey: this.#SUPABASE_ANON_KEY,
           },
         });
       } catch { /* best-effort */ }
     }
     this.#session = null;
-    this.#clearRefreshTimer();
     const store = globalThis.StorageHelper;
     if (store) await store.clearAuthState();
+    // Signing out on purpose is not "your session ended".
+    await globalThis.GleanoAuthState?.clearEnded();
+    this.#notifyListeners(null);
+  }
+
+  /**
+   * The session cannot be used any more (refresh token rejected, or the backend
+   * keeps refusing a freshly refreshed token). Clears it locally and records it
+   * so the UI can ask the user to sign in again. Never calls /logout: that would
+   * revoke the user's sessions on other devices.
+   * @param {string} reason
+   */
+  async endSession(reason) {
+    const store = globalThis.StorageHelper;
+    let email = this.#session?.user?.email || '';
+    if (!email && store) {
+      try { email = (await store.getAuthState())?.supabaseUser?.email || ''; } catch { /* ignore */ }
+    }
+    this.#session = null;
+    if (store) await store.clearAuthState();
+    await globalThis.GleanoAuthState?.markEnded({ email, reason });
+    try { await store?.bumpPanelAuthSyncNonce?.(); } catch { /* ignore */ }
+    await this.#authDbg('warn', 'session', 'ended', reason);
     this.#notifyListeners(null);
   }
 
@@ -151,32 +214,54 @@ class SupabaseAuth {
    */
   invalidateSessionCache() {
     this.#session = null;
-    this.#clearRefreshTimer();
   }
 
-  async getSession() {
-    if (this.#session && Date.now() < this.#session.expires_at - 60_000) {
+  /**
+   * A session with a usable access token, renewed when needed.
+   * Returns null when the user is not signed in or the session has ended.
+   * Throws AuthUnavailableError (code AUTH_UNAVAILABLE) when the refresh could not
+   * reach Supabase; the stored session is kept for the next try.
+   * @param {{ forceRefresh?: boolean }} [opts] forceRefresh: the backend rejected the current token
+   */
+  async getSession({ forceRefresh = false } = {}) {
+    if (!forceRefresh && this.#isFresh(this.#session)) {
       return this.#session;
     }
 
-    if (!this.#session) {
-      await this.#loadFromStorage();
-    }
+    // Another context may have refreshed (and rotated the refresh token) since we last read it.
+    await this.#loadFromStorage();
+    if (!this.#session) return null;
+    if (!forceRefresh && this.#isFresh(this.#session)) return this.#session;
 
-    if (this.#session && Date.now() >= this.#session.expires_at - 60_000) {
-      try {
-        await this.#refreshToken();
-      } catch {
-        await this.signOut();
-        return null;
-      }
-    }
-
+    await this.#refresh(this.#session.access_token);
     return this.#session;
   }
 
+  /**
+   * Stored session without refreshing it. For display only (name, email);
+   * the access token may be expired.
+   */
+  async getStoredSession() {
+    if (!this.#session) await this.#loadFromStorage();
+    return this.#session;
+  }
+
+  /**
+   * Service worker handler for `supabaseRefreshSession`.
+   * @param {string} staleAccessToken the token the caller saw as expired or rejected
+   * @returns {Promise<{ status: 'ok'|'ended'|'unavailable' }>}
+   */
+  async refreshForContext(staleAccessToken) {
+    try {
+      const status = await this.#refreshInWorker(staleAccessToken);
+      return { status };
+    } catch (err) {
+      return { status: 'unavailable', message: err?.message || '' };
+    }
+  }
+
   isAuthenticated() {
-    return !!(this.#session && Date.now() < this.#session.expires_at);
+    return this.#isFresh(this.#session);
   }
 
   getAuthHeaders() {
@@ -218,13 +303,23 @@ class SupabaseAuth {
 
   // ─── Token management ─────────────────────────────────────────────
 
+  #isFresh(session) {
+    return !!(session?.access_token && Date.now() < (session.expires_at || 0) - SupabaseAuth.#EXPIRY_MARGIN_MS);
+  }
+
+  static #isWorker() {
+    return typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope;
+  }
+
   async #setSession(tokens) {
     const expiresIn = tokens.expires_in || 3600;
     this.#session = {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_at: Date.now() + expiresIn * 1000,
-      user: tokens.user || null,
+      expires_at: typeof tokens.expires_at === 'number'
+        ? tokens.expires_at * 1000
+        : Date.now() + expiresIn * 1000,
+      user: tokens.user || this.#session?.user || null,
     };
 
     if (!this.#session.user && tokens.access_token) {
@@ -234,26 +329,107 @@ class SupabaseAuth {
     }
 
     await this.#saveToStorage();
-    this.#scheduleRefresh(expiresIn);
     this.#notifyListeners(this.#session);
   }
 
-  async #refreshToken() {
-    if (!this.#session?.refresh_token) throw new Error('No refresh token');
+  /**
+   * Renew the session. Pages delegate to the service worker so only one context
+   * ever spends a refresh token.
+   */
+  async #refresh(staleAccessToken) {
+    if (SupabaseAuth.#isWorker() || !chrome.runtime?.sendMessage) {
+      await this.#refreshInWorker(staleAccessToken);
+      return;
+    }
 
-    const res = await fetch(`${this.#SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: this.#SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({ refresh_token: this.#session.refresh_token }),
-    });
+    let res;
+    try {
+      res = await chrome.runtime.sendMessage({ action: 'supabaseRefreshSession', staleAccessToken });
+    } catch (err) {
+      throw new AuthUnavailableError(err?.message);
+    }
+    if (res?.status === 'ok') {
+      await this.#loadFromStorage();
+      return;
+    }
+    if (res?.status === 'ended') {
+      this.#session = null;
+      return;
+    }
+    throw new AuthUnavailableError(res?.message);
+  }
 
-    if (!res.ok) throw new Error(`Refresh failed (${res.status})`);
+  /** One refresh at a time per service worker; concurrent callers share it. */
+  #refreshInWorker(staleAccessToken) {
+    if (!this.#refreshInFlight) {
+      this.#refreshInFlight = this.#doRefresh(staleAccessToken)
+        .finally(() => { this.#refreshInFlight = null; });
+    }
+    return this.#refreshInFlight;
+  }
 
-    const tokens = await res.json();
-    await this.#setSession(tokens);
+  /** @returns {Promise<'ok'|'ended'>} throws AuthUnavailableError on transient failure */
+  async #doRefresh(staleAccessToken) {
+    await this.#loadFromStorage();
+    const current = this.#session;
+    if (!current) return 'ended';
+
+    // Someone already refreshed after the caller read its token: use that result.
+    if (staleAccessToken && current.access_token !== staleAccessToken && this.#isFresh(current)) {
+      return 'ok';
+    }
+
+    if (!current.refresh_token) {
+      await this.endSession('no_refresh_token');
+      return 'ended';
+    }
+
+    let res;
+    try {
+      res = await fetch(`${this.#SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: this.#SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ refresh_token: current.refresh_token }),
+      });
+    } catch (err) {
+      await this.#authDbg('warn', 'refresh', 'network error', err?.message || String(err));
+      throw new AuthUnavailableError(err?.message);
+    }
+
+    if (res.ok) {
+      const tokens = await res.json();
+      await this.#setSession(tokens);
+      return 'ok';
+    }
+
+    const body = await res.json().catch(() => ({}));
+    if (SupabaseAuth.isDeadRefreshResponse(res.status, body)) {
+      await this.#authDbg('warn', 'refresh', 'rejected', `status=${res.status} code=${body?.error_code || body?.error || ''}`);
+      await this.endSession(String(body?.error_code || body?.error || `status_${res.status}`));
+      return 'ended';
+    }
+
+    await this.#authDbg('warn', 'refresh', 'unavailable', `status=${res.status}`);
+    throw new AuthUnavailableError(`Refresh failed (${res.status})`);
+  }
+
+  /**
+   * True when Supabase says the refresh token is permanently unusable. Rate limits,
+   * 5xx and unknown 401/403 bodies (e.g. a bad anon key) are not: signing the user
+   * out for those would repeat on every restart.
+   * @param {number} status
+   * @param {{ error_code?: string, error?: string, msg?: string, message?: string }} body
+   */
+  static isDeadRefreshResponse(status, body) {
+    if (status === 400) return true;
+    if (status !== 401 && status !== 403) return false;
+    const code = String(body?.error_code || body?.error || '').toLowerCase();
+    if (SupabaseAuth.#DEAD_REFRESH_CODES.has(code)) return true;
+    const text = String(body?.msg || body?.message || body?.error_description || '');
+    return /invalid refresh token|refresh token (not found|already used)|session (not found|expired)/i.test(text);
   }
 
   async #fetchUser(accessToken) {
@@ -265,21 +441,6 @@ class SupabaseAuth {
     });
     if (!res.ok) throw new Error(`getUser failed (${res.status})`);
     return res.json();
-  }
-
-  #scheduleRefresh(expiresIn) {
-    this.#clearRefreshTimer();
-    const refreshMs = Math.max((expiresIn - 120) * 1000, 30_000);
-    this.#refreshTimer = setTimeout(() => {
-      this.#refreshToken().catch(() => this.signOut());
-    }, refreshMs);
-  }
-
-  #clearRefreshTimer() {
-    if (this.#refreshTimer) {
-      clearTimeout(this.#refreshTimer);
-      this.#refreshTimer = null;
-    }
   }
 
   // ─── Persistence via StorageHelper ─────────────────────────────────
@@ -336,4 +497,8 @@ class SupabaseAuth {
 const _supabaseAuthInstance = SupabaseAuth.getInstance();
 
 if (typeof self !== 'undefined') self.SupabaseAuth = _supabaseAuthInstance;
-if (typeof globalThis !== 'undefined') globalThis.SupabaseAuth = _supabaseAuthInstance;
+if (typeof globalThis !== 'undefined') {
+  globalThis.SupabaseAuth = _supabaseAuthInstance;
+  globalThis.SupabaseAuthClass = SupabaseAuth;
+  globalThis.AuthUnavailableError = AuthUnavailableError;
+}

@@ -251,6 +251,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch { /* ignore */ }
   }
 
+  /** "Your Google session for x@gmail.com ended" above the sign-in button, when it applies. */
+  async function renderSessionEndedNotice() {
+    const notice = $('#sessionEndedNotice');
+    if (!notice || typeof GleanoAuthState === 'undefined') return;
+    const info = await GleanoAuthState.describe().catch(() => null);
+    if (info?.status !== 'session_ended') {
+      notice.classList.add('hidden');
+      notice.textContent = '';
+      return;
+    }
+    const copy = GleanoAuthState.presentation('SESSION_ENDED', { email: info.email });
+    notice.textContent = copy?.message || '';
+    notice.classList.toggle('hidden', !notice.textContent);
+  }
+
   function renderAccountUI(session, credits) {
     const finishSignedInLayout = () => {
       void applyGoogleManagedVsByokLayout();
@@ -259,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!session) {
       accountSignedOut.classList.remove('hidden');
       accountSignedIn.classList.add('hidden');
+      void renderSessionEndedNotice();
       setProviderVisibility(false);
       _byokForced = false;
       _lastPlanNorm = 'free';
@@ -437,6 +453,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const res = await chrome.runtime.sendMessage({ action: 'supabaseGetSession' });
       if (epochAtStart !== accountRenderEpoch) return;
+      // Offline: the session is kept; keep what is on screen instead of showing "signed out".
+      if (res?.transient && _cacheHit) return;
       renderAccountUI(res?.session, res?.credits);
       const cachedSession = StorageHelper.sanitizeSessionForCache(res?.session || null);
       chrome.storage.session.set({ ytai_popup_cache: { session: cachedSession, credits: res?.credits || null } }).catch(() => {});

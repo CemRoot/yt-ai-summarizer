@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "default_locale": "en",
   "minimum_chrome_version": "111",
 
@@ -56,6 +56,7 @@
         "utils/fingerprintjs.min.js",
         "utils/fingerprint.js",
         "utils/storage.js",
+        "utils/auth-state.js",
         "utils/supabase-auth.js",
         "utils/api-client.js",
         "content/transcript.js",
@@ -78,9 +79,9 @@
       ],
       "js": [
         "utils/article-page-eligibility.js",
+        "content/article/article-shadow-host.js",
         "content/article/article-launcher.js"
       ],
-      "css": ["content/article/article.css"],
       "run_at": "document_idle"
     }
   ],
@@ -104,7 +105,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["icons/icon32.png"],
+      "resources": ["icons/icon32.png", "content/article/article.css"],
       "matches": ["<all_urls>"]
     }
   ],
