@@ -82,7 +82,11 @@ async function hasAccess() {
         _sessionCache = { session, ts: now };
         return true;
       }
-    } catch { /* no session */ }
+    } catch (err) {
+      // Signed in but Supabase is unreachable right now: let the request run so the
+      // user sees "could not reach your account", not "please sign in".
+      if (err?.code === 'AUTH_UNAVAILABLE') return true;
+    }
   }
   return false;
 }
@@ -1037,6 +1041,11 @@ class SummarizerController {
       if (typeof available === 'number') ui.updateCredits(available, 'free');
       return;
     }
+    if (code === 'NEEDS_AUTH_OR_KEY' || code === 'SESSION_ENDED') {
+      _sessionCache = { session: null, ts: 0 };
+      await ui.showApiKeyPrompt(code);
+      return;
+    }
     const mapped = this.#getErrorPresentation(code);
     ui.showError(mapped.title, mapped.message, mapped.retryable);
   }
@@ -1070,7 +1079,9 @@ function ytaiNormalizeErrorCode(error) {
   if (code === 'GEMINI_KEY_INVALID') return 'GEMINI_MANAGED_TTS_KEY';
   if (code === 'RATE_LIMITED') return 'MANAGED_RATE_LIMIT';
   if (code === 'MANAGED_UNAVAILABLE') return 'MANAGED_UNAVAILABLE';
-  if (code === 'SESSION_EXPIRED' || code === 'NOT_AUTHENTICATED') return 'SESSION_EXPIRED';
+  if (code === 'SESSION_ENDED' || code === 'SESSION_EXPIRED') return 'SESSION_ENDED';
+  if (code === 'NEEDS_AUTH_OR_KEY' || code === 'NOT_AUTHENTICATED') return 'NEEDS_AUTH_OR_KEY';
+  if (code === 'AUTH_UNAVAILABLE') return 'AUTH_UNAVAILABLE';
 
   if (errorMsg === 'NOT_ON_VIDEO_PAGE') return 'NOT_ON_VIDEO_PAGE';
   if (errorMsg === 'VIDEO_ID_MISSING' || errorMsg === 'NO_VIDEO_ID') return 'VIDEO_ID_MISSING';
@@ -1117,10 +1128,10 @@ function ytaiNormalizeErrorCode(error) {
   if (code === 'PROVIDER_EMPTY_RESPONSE' || errorMsg === 'PROVIDER_EMPTY_RESPONSE') {
     return 'PROVIDER_EMPTY_RESPONSE';
   }
-  if (code === 'AUTH_MISSING') return 'SESSION_EXPIRED';
+  if (code === 'AUTH_MISSING') return 'SESSION_ENDED';
   if (code === 'SERVER_ERROR') {
     const status = Number(error?.status);
-    if (status === 401 || status === 403) return 'SESSION_EXPIRED';
+    if (status === 401 || status === 403) return 'SESSION_ENDED';
     if (status >= 500) return 'PROVIDER_UNAVAILABLE';
     return 'SERVER_ERROR';
   }
@@ -1129,6 +1140,11 @@ function ytaiNormalizeErrorCode(error) {
 }
 
 function ytaiErrorPresentation(errorCode) {
+  // Sign-in states share their wording with the article panel and the service worker.
+  const authCopy = globalThis.GleanoAuthState?.presentation(errorCode);
+  if (authCopy) {
+    return { title: authCopy.title, message: authCopy.message, retryable: authCopy.retryable };
+  }
   const errorMap = {
     NO_CREDITS: {
       title: 'Credits Exhausted',
@@ -1144,11 +1160,6 @@ function ytaiErrorPresentation(errorCode) {
       title: 'Slow down a little',
       message: "You've made a lot of requests in a short time. Please take a short break — or upgrade to Pro to skip the wait.",
       retryable: true
-    },
-    SESSION_EXPIRED: {
-      title: 'Session Expired',
-      message: 'Your session has expired. Please sign in again from Settings.',
-      retryable: false
     },
     NOT_ON_VIDEO_PAGE: {
       title: 'Open a Video',

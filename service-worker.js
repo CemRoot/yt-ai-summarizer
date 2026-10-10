@@ -6,6 +6,7 @@
 importScripts(
   'utils/storage.js',
   'utils/auth-debug-log.js',
+  'utils/auth-state.js',
   'utils/supabase-auth.js',
   'utils/api-client.js',
   'utils/transcript-url-allowlist.js',
@@ -353,6 +354,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Content scripts and the popup never refresh tokens themselves; see SupabaseAuth.
+  if (message.action === 'supabaseRefreshSession') {
+    SupabaseAuth.getInstance().refreshForContext(message.staleAccessToken || '')
+      .then(sendResponse)
+      .catch((err) => sendResponse({ status: 'unavailable', message: err?.message || '' }));
+    return true;
+  }
+
   if (message.action === 'supabaseGetSession') {
     SupabaseAuth.getInstance().getSession()
       .then(async (session) => {
@@ -376,7 +385,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         void syncManagedCreditsToStorageIfChanged(credits);
         sendResponse({ session, credits });
       })
-      .catch(() => sendResponse({ session: null, credits: null }));
+      .catch(async (err) => {
+        // Offline right after a browser restart: still signed in, just not verifiable yet.
+        if (err?.code === 'AUTH_UNAVAILABLE') {
+          const stored = await SupabaseAuth.getInstance().getStoredSession().catch(() => null);
+          sendResponse({
+            session: StorageHelper.sanitizeSessionForCache(stored),
+            credits: null,
+            transient: true
+          });
+          return;
+        }
+        sendResponse({ session: null, credits: null });
+      });
     return true;
   }
 
@@ -744,10 +765,14 @@ async function callOllamaAPI(apiKey, model, messages, retryCount = 0, maxTokens 
  * Unified AI call — routes to the correct provider
  */
 async function callAI(provider, apiKey, model, messages, retryCount = 0, maxTokens = 2048) {
-  if (provider === 'ollama') {
-    return callOllamaAPI(apiKey, model, messages, retryCount, maxTokens);
+  try {
+    if (provider === 'ollama') {
+      return await callOllamaAPI(apiKey, model, messages, retryCount, maxTokens);
+    }
+    return await callGroqAPI(apiKey, model, messages, retryCount, maxTokens);
+  } catch (err) {
+    throw await explainByokFailure(err);
   }
-  return callGroqAPI(apiKey, model, messages, retryCount, maxTokens);
 }
 
 /**
@@ -768,19 +793,66 @@ async function getProviderConfig() {
  * Returns { managed: true, session } or { managed: false }.
  */
 async function getManagedMode() {
+  let session;
   try {
-    const session = await SupabaseAuth.getInstance().getSession();
-    if (!session) return { managed: false, signedIn: false };
-    let credits = null;
-    try {
-      credits = await ApiClient.getInstance().checkCredits();
-    } catch (e) { /* credits check failed */ }
-    if (credits && credits.can_use) {
-      return { managed: true, signedIn: true, session, credits };
-    }
-    return { managed: false, signedIn: true, credits };
-  } catch (outerErr) {
+    session = await SupabaseAuth.getInstance().getSession();
+  } catch (err) {
+    // Tokens are kept; we just could not reach Supabase to renew them.
+    if (err?.code === 'AUTH_UNAVAILABLE') return { managed: false, signedIn: true, authUnavailable: true };
     return { managed: false, signedIn: false };
+  }
+  if (!session) return { managed: false, signedIn: false };
+
+  let credits = null;
+  try {
+    credits = await ApiClient.getInstance().checkCredits();
+  } catch (e) {
+    if (e?.code === 'SESSION_EXPIRED' || e?.code === 'NOT_AUTHENTICATED') {
+      return { managed: false, signedIn: false };
+    }
+    if (e?.code === 'AUTH_UNAVAILABLE') {
+      return { managed: false, signedIn: true, authUnavailable: true };
+    }
+    /* other credit-check failures: credits stays null → MANAGED_UNAVAILABLE */
+  }
+  if (credits && credits.can_use) {
+    return { managed: true, signedIn: true, session, credits };
+  }
+  return { managed: false, signedIn: true, credits };
+}
+
+/**
+ * Error for a user who is not signed in (or whose Google session ended) and has
+ * no usable API key. SESSION_ENDED tells a returning Google user to sign in again
+ * instead of showing a key error.
+ * @returns {Promise<Error>}
+ */
+async function buildSignedOutError() {
+  const code = await GleanoAuthState.missingAccessCode();
+  const copy = GleanoAuthState.presentation(code);
+  const e = new Error(copy?.message || 'Sign in with Google or add your own API key in Settings to use Gleano.');
+  e.code = code;
+  return e;
+}
+
+/**
+ * A BYOK provider rejected the saved key while the user's Google session had
+ * ended. The user relies on Google sign-in, so ask for that instead of
+ * reporting "Invalid API key".
+ * @param {Error} err
+ * @returns {Promise<Error>}
+ */
+async function explainByokFailure(err) {
+  if (err?.message !== 'INVALID_API_KEY') return err;
+  try {
+    const { status, email } = await GleanoAuthState.describe();
+    if (status !== 'session_ended') return err;
+    const copy = GleanoAuthState.presentation('SESSION_ENDED', { email });
+    const e = new Error(copy?.message || 'Your Google session has ended. Please sign in again.');
+    e.code = 'SESSION_ENDED';
+    return e;
+  } catch {
+    return err;
   }
 }
 
@@ -798,7 +870,14 @@ async function getManagedMode() {
  *
  * @param {{ credits?: { rate_limited?: boolean, can_use?: boolean, credits?: number } }} mode
  */
-function buildNoByokKeyError(mode) {
+async function buildNoByokKeyError(mode) {
+  if (mode.authUnavailable) {
+    const copy = GleanoAuthState.presentation('AUTH_UNAVAILABLE');
+    const e = new Error(copy?.message || 'Could not reach your account. Please try again.');
+    e.code = 'AUTH_UNAVAILABLE';
+    return e;
+  }
+  if (!mode.signedIn) return buildSignedOutError();
   if (mode.credits?.rate_limited) {
     const e = new Error('Too many requests. Please wait before trying again.');
     e.code = 'RATE_LIMITED';
@@ -809,7 +888,7 @@ function buildNoByokKeyError(mode) {
     e.code = 'NO_CREDITS';
     return e;
   }
-  // mode.credits is null/undefined — session missing or checkCredits failed transiently.
+  // mode.credits is null/undefined — checkCredits failed transiently.
   const e = new Error('Managed AI is temporarily unavailable. Please try again in a moment.');
   e.code = 'MANAGED_UNAVAILABLE';
   return e;
@@ -835,6 +914,11 @@ async function requireByokApiKeyForProvider(mode, provider, apiKey) {
     }
     return;
   }
+  // A Google user whose session ended: "sign in again" beats "provider key missing".
+  if (!mode.signedIn && !mode.authUnavailable
+    && (await GleanoAuthState.missingAccessCode()) === 'SESSION_ENDED') {
+    throw await buildSignedOutError();
+  }
   let hasOther = false;
   try {
     hasOther = await StorageHelper.hasAnyByokApiKey();
@@ -848,31 +932,7 @@ async function requireByokApiKeyForProvider(mode, provider, apiKey) {
     e.code = 'PROVIDER_KEY_MISSING';
     throw e;
   }
-  throw buildNoByokKeyError(mode);
-}
-
-/**
- * Article BYOK gate. Mirrors {@link requireByokApiKeyForProvider} but first surfaces the
- * "truly anonymous" case (never signed in AND no BYOK key) with a single clear code so the
- * article UI can prompt the user to sign in OR add a key — instead of the misleading
- * MANAGED_UNAVAILABLE ("try again in a moment") that {@link buildNoByokKeyError} would emit.
- * @param {{ managed?: boolean, signedIn?: boolean, credits?: object }} mode from {@link getManagedMode}
- * @param {'groq'|'ollama'} provider
- * @param {string|undefined} apiKey
- */
-async function requireArticleAiAccess(mode, provider, apiKey) {
-  if (!mode.managed && !mode.signedIn) {
-    let anyKey = false;
-    try {
-      anyKey = await StorageHelper.hasAnyByokApiKey();
-    } catch { /* ignore */ }
-    if (!anyKey) {
-      const e = new Error('Sign in with Google or add your own API key in Settings to use Gleano.');
-      e.code = 'NEEDS_AUTH_OR_KEY';
-      throw e;
-    }
-  }
-  await requireByokApiKeyForProvider(mode, provider, apiKey);
+  throw await buildNoByokKeyError(mode);
 }
 
 /**
@@ -1540,7 +1600,7 @@ ${content}
   }
 
   const { provider, apiKey, model } = await getProviderConfig();
-  await requireArticleAiAccess(mode, provider, apiKey);
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 
   const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };
@@ -1637,7 +1697,7 @@ ${content}
   }
 
   const { provider, apiKey, model } = await getProviderConfig();
-  await requireArticleAiAccess(mode, provider, apiKey);
+  await requireByokApiKeyForProvider(mode, provider, apiKey);
 
   const result = await callAI(provider, apiKey, model, messages, 0, 512);
   return { content: result.content, model: result.model, provider };
@@ -1682,16 +1742,15 @@ async function injectArticleReader(tabId, { startSummary = true } = {}) {
         files: ['utils/readability.js']
       });
 
-      await chrome.scripting.insertCSS({
-        target: { tabId },
-        files: ['content/article/article.css']
-      });
-
+      // Styles load inside the reader's shadow root (article-shadow-host.js),
+      // not into the page, so page CSS cannot break the panel.
       await chrome.scripting.executeScript({
         target: { tabId },
         files: [
           'utils/article-page-eligibility.js',
           'utils/markdown-html.js',
+          'utils/auth-state.js',
+          'content/article/article-shadow-host.js',
           'content/article/article-extractor.js',
           'content/article/article-ui.js',
           'content/article/article-controller.js'
@@ -1700,10 +1759,11 @@ async function injectArticleReader(tabId, { startSummary = true } = {}) {
     }
 
     if (startSummary) {
+      // Runs in the extension's isolated world; the page cannot call this.
       await chrome.scripting.executeScript({
         target: { tabId },
         func: () => {
-          document.dispatchEvent(new CustomEvent('gleano:start-summary'));
+          globalThis.gleanoArticleController?.startSummary();
         },
       });
     }

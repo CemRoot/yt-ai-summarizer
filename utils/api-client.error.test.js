@@ -19,7 +19,7 @@ const source = fs.readFileSync(path.join(__dirname, 'api-client.js'), 'utf8');
  * @param responses  one entry per fetch call: { status, body }
  */
 function createClient(responses, authOptions = {}) {
-  const calls = { fetches: 0, signOut: 0, getSession: 0 };
+  const calls = { fetches: 0, signOut: 0, endSession: 0, getSession: 0, forceRefresh: 0 };
   const queue = [...responses];
 
   const context = {
@@ -42,12 +42,20 @@ function createClient(responses, authOptions = {}) {
 
   context.SupabaseAuth = {
     getAuthHeaders: () => (authOptions.noHeaders ? null : { Authorization: 'Bearer t' }),
-    getSession: async () => {
+    getSession: async (opts = {}) => {
       calls.getSession += 1;
+      if (opts.forceRefresh) calls.forceRefresh += 1;
+      if (authOptions.unavailable) {
+        const e = new Error('Refresh failed (503)');
+        e.code = 'AUTH_UNAVAILABLE';
+        throw e;
+      }
       if (authOptions.refreshFails) throw new Error('refresh failed');
+      if (opts.forceRefresh && authOptions.refreshEnds) return null;
       return authOptions.noSession ? null : { access_token: 't' };
     },
-    signOut: async () => { calls.signOut += 1; }
+    signOut: async () => { calls.signOut += 1; },
+    endSession: async () => { calls.endSession += 1; }
   };
 
   vm.createContext(context);
@@ -84,7 +92,7 @@ test('400 bad request is reported as SERVER_ERROR with its status, not swallowed
   assert.equal(err.status, 400);
 });
 
-test('a 401 that survives a token refresh becomes SESSION_EXPIRED and signs out', async () => {
+test('a 401 that survives a token refresh becomes SESSION_EXPIRED and ends the session locally', async () => {
   const { api, calls } = createClient([
     { status: 401, body: { error: 'Missing authorization header' } },
     { status: 401, body: { error: 'Missing authorization header' } }
@@ -93,7 +101,35 @@ test('a 401 that survives a token refresh becomes SESSION_EXPIRED and signs out'
 
   assert.equal(err.code, 'SESSION_EXPIRED');
   assert.equal(calls.fetches, 2, 'must retry exactly once after refreshing');
-  assert.equal(calls.signOut, 1);
+  assert.equal(calls.forceRefresh, 1, 'the retry must force a token refresh');
+  assert.equal(calls.endSession, 1);
+  assert.equal(calls.signOut, 0, 'global /logout would sign the user out on every device');
+});
+
+test('a 401 whose refresh ends the session does not retry the request', async () => {
+  const { api, calls } = createClient([{ status: 401, body: {} }], { refreshEnds: true });
+  const err = await summarize(api).then(() => null, (e) => e);
+
+  assert.equal(err.code, 'SESSION_EXPIRED');
+  assert.equal(calls.fetches, 1);
+});
+
+test('an unreachable sign-in service is AUTH_UNAVAILABLE and keeps the session', async () => {
+  const { api, calls } = createClient([], { unavailable: true });
+  const err = await summarize(api).then(() => null, (e) => e);
+
+  assert.equal(err.code, 'AUTH_UNAVAILABLE');
+  assert.equal(calls.fetches, 0);
+  assert.equal(calls.signOut, 0);
+  assert.equal(calls.endSession, 0);
+});
+
+test('no session at all is NOT_AUTHENTICATED without a network call', async () => {
+  const { api, calls } = createClient([], { noSession: true });
+  const err = await summarize(api).then(() => null, (e) => e);
+
+  assert.equal(err.code, 'NOT_AUTHENTICATED');
+  assert.equal(calls.fetches, 0);
 });
 
 test('a 401 that a refresh fixes succeeds on the retry', async () => {

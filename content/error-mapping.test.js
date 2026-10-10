@@ -14,6 +14,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8');
+const authStateSource = fs.readFileSync(path.join(__dirname, '..', 'utils', 'auth-state.js'), 'utf8');
 
 function load() {
   const context = {
@@ -29,6 +30,8 @@ function load() {
   };
   context.globalThis = context;
   vm.createContext(context);
+  // Same order as manifest.json: auth-state.js loads before content.js.
+  vm.runInContext(authStateSource, context, { filename: 'auth-state.js' });
   vm.runInContext(source, context, { filename: 'content.js' });
   return context;
 }
@@ -80,9 +83,27 @@ test('SERVER_ERROR with a 4xx status is reported as a server error, not unknown'
 test('an auth failure from the backend is routed to the sign-in message', () => {
   for (const status of [401, 403]) {
     const err = Object.assign(new Error('nope'), { code: 'SERVER_ERROR', status });
-    assert.equal(normalize(err), 'SESSION_EXPIRED', `status ${status}`);
+    assert.equal(normalize(err), 'SESSION_ENDED', `status ${status}`);
   }
-  assert.equal(normalize(Object.assign(new Error('x'), { code: 'AUTH_MISSING' })), 'SESSION_EXPIRED');
+  assert.equal(normalize(Object.assign(new Error('x'), { code: 'AUTH_MISSING' })), 'SESSION_ENDED');
+  assert.equal(normalize(Object.assign(new Error('x'), { code: 'SESSION_EXPIRED' })), 'SESSION_ENDED');
+});
+
+test('sign-in states never render as an invalid API key', () => {
+  const cases = {
+    NEEDS_AUTH_OR_KEY: 'NEEDS_AUTH_OR_KEY',
+    NOT_AUTHENTICATED: 'NEEDS_AUTH_OR_KEY',
+    SESSION_ENDED: 'SESSION_ENDED',
+    AUTH_UNAVAILABLE: 'AUTH_UNAVAILABLE'
+  };
+  for (const [raw, expected] of Object.entries(cases)) {
+    const code = normalize(Object.assign(new Error('x'), { code: raw }));
+    assert.equal(code, expected, raw);
+    assert.doesNotMatch(present(code).title, /api key/i, raw);
+  }
+  assert.match(present('NEEDS_AUTH_OR_KEY').message, /Google/);
+  assert.match(present('SESSION_ENDED').message, /sign in again/i);
+  assert.equal(present('AUTH_UNAVAILABLE').retryable, true, 'a connection problem must offer Try again');
 });
 
 test('an empty AI response gets its own explanation', () => {

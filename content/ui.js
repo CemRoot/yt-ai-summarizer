@@ -718,9 +718,62 @@ class SummarizerUI {
     this.#panelRoot?.querySelector('.ytai-manage-sub-btn')?.remove();
   }
 
-  showApiKeyPrompt() {
+  /**
+   * No usable session or key. Tells the user which one it is (never signed in,
+   * Google session ended, account unreachable) and offers Google sign-in.
+   * @param {string} [code] NEEDS_AUTH_OR_KEY | SESSION_ENDED | AUTH_UNAVAILABLE; read from storage when omitted
+   */
+  async showApiKeyPrompt(code) {
     const content = this.#panelRoot?.querySelector('.ytai-content');
     if (!content) return;
+    const authState = globalThis.GleanoAuthState;
+    if (!authState) {
+      this.#renderLegacyApiKeyPrompt(content);
+      return;
+    }
+
+    const info = await authState.describe().catch(() => ({ status: 'signed_out', email: '' }));
+    const resolved = code || (info.status === 'session_ended' ? 'SESSION_ENDED' : 'NEEDS_AUTH_OR_KEY');
+    const copy = authState.presentation(resolved, { email: info.email });
+    if (!copy) {
+      this.#renderLegacyApiKeyPrompt(content);
+      return;
+    }
+    const labels = authState.labels();
+
+    this.#stopFactRotation();
+    content.innerHTML = `
+      <div class="ytai-api-prompt ytai-auth-prompt" role="alert">
+        ${copy.signIn ? SummarizerUI.#ICONS.key : SummarizerUI.#ICONS.error}
+        <div class="ytai-error-title">${this.#escapeHtml(copy.title)}</div>
+        <p>${this.#escapeHtml(copy.message)}</p>
+        <div class="ytai-auth-actions">
+          ${copy.signIn ? `<button type="button" class="ytai-btn ytai-btn-primary ytai-auth-signin"><span class="ytai-google-mark">${authState.GOOGLE_ICON}</span><span class="ytai-auth-signin-label">${this.#escapeHtml(labels.signIn)}</span></button>` : ''}
+          ${copy.signIn ? `<button type="button" class="ytai-btn-secondary ytai-setup-btn">${SummarizerUI.#ICONS.settings}<span>${this.#escapeHtml(labels.useOwnKey)}</span></button>` : ''}
+          ${copy.retryable ? `<button type="button" class="ytai-btn ytai-btn-primary ytai-retry-btn">${this.#escapeHtml(labels.retry)}</button>` : ''}
+        </div>
+      </div>`;
+
+    content.querySelector('.ytai-setup-btn')?.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: 'openSettings' }).catch(() => {});
+    });
+    content.querySelector('.ytai-retry-btn')?.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('ytai:request-summary', { detail: { mode: this.#currentMode, forceRefresh: true } }));
+    });
+    const signInBtn = content.querySelector('.ytai-auth-signin');
+    const signInLabel = signInBtn?.querySelector('.ytai-auth-signin-label');
+    signInBtn?.addEventListener('click', async () => {
+      signInBtn.disabled = true;
+      signInLabel.textContent = labels.signingIn;
+      const result = await authState.startGoogleSignIn();
+      if (result.ok) return; // the auth-sync listener in content.js re-renders the panel
+      signInBtn.disabled = false;
+      signInLabel.textContent = labels.signIn;
+      if (!/cancel/i.test(result.error || '')) this.showToast?.(labels.signInFailed);
+    });
+  }
+
+  #renderLegacyApiKeyPrompt(content) {
     content.innerHTML = `
       <div class="ytai-api-prompt">
         ${SummarizerUI.#ICONS.key}

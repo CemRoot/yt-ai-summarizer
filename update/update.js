@@ -20,6 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const CHANGELOG = [
     {
+      version: '2.1.6',
+      date: '2026-10-10',
+      changes: [
+        { type: 'fixed',    text: 'c216_panel_layout' },
+        { type: 'fixed',    text: 'c216_stay_signed_in' },
+        { type: 'improved', text: 'c216_sign_in_messages' },
+      ]
+    },
+    {
       version: '2.1.5',
       date: '2026-10-07',
       changes: [
@@ -211,6 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Fixed',
       groupChanged: 'Changed',
 
+      c216_panel_layout: 'The article panel no longer breaks on sites such as 9to5Mac: the close button is always visible, the panel fits the screen, and Esc closes it',
+      c216_stay_signed_in: 'You stay signed in with Google after closing Chrome or restarting your computer; a short connection problem no longer signs you out',
+      c216_sign_in_messages: 'Clear messages when you are not signed in or your Google session has ended, with a one-click "Sign in with Google" — no more misleading "Invalid API key"',
       c215_article_button_scope: 'The article button now appears only on news stories, blog posts and forum threads — not on Instagram, X, Facebook, search, shops or apps',
       c215_no_homepage_button: 'Site homepages and section pages no longer show the button; open the story itself',
       c214_caption_hosts: 'Caption downloads stay on YouTube hosts (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -301,6 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Düzeltme',
       groupChanged: 'Değişiklik',
 
+      c216_panel_layout: 'Makale paneli 9to5Mac gibi sitelerde artık bozulmuyor: kapat düğmesi her zaman görünür, panel ekrana sığar ve Esc ile kapanır',
+      c216_stay_signed_in: 'Chrome\'u kapatıp bilgisayarı yeniden başlattıktan sonra Google oturumunuz açık kalır; kısa bir bağlantı sorunu artık oturumu kapatmaz',
+      c216_sign_in_messages: 'Oturum açmadığınızda veya Google oturumunuz sona erdiğinde açık bir mesaj ve tek tıkla "Google ile giriş yap" — yanıltıcı "Geçersiz API anahtarı" hatası yok',
       c215_article_button_scope: 'Makale düğmesi artık yalnızca haber, blog yazısı ve forum başlıklarında çıkar — Instagram, X, Facebook, arama, alışveriş ve uygulamalarda çıkmaz',
       c215_no_homepage_button: 'Site ana sayfaları ve kategori sayfaları düğme göstermez; haberin kendisini açın',
       c214_caption_hosts: 'Altyazı indirmeleri YouTube sunucularında kalır (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -391,6 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corregido',
       groupChanged: 'Cambiado',
 
+      c216_panel_layout: 'El panel de artículos ya no se rompe en sitios como 9to5Mac: el botón de cerrar siempre se ve, el panel cabe en la pantalla y Esc lo cierra',
+      c216_stay_signed_in: 'Sigues con la sesión de Google iniciada tras cerrar Chrome o reiniciar el equipo; un corte breve de conexión ya no cierra tu sesión',
+      c216_sign_in_messages: 'Mensajes claros cuando no has iniciado sesión o tu sesión de Google terminó, con "Iniciar sesión con Google" en un clic — sin el engañoso "Clave API no válida"',
       c215_article_button_scope: 'El botón de artículo ahora solo aparece en noticias, entradas de blog y hilos de foros — no en Instagram, X, Facebook, buscadores, tiendas ni apps',
       c215_no_homepage_button: 'Las portadas y páginas de sección ya no muestran el botón; abre la noticia',
       c214_caption_hosts: 'Las descargas de subtítulos se quedan en hosts de YouTube (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -434,6 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corrigé',
       groupChanged: 'Modifié',
 
+      c216_panel_layout: 'Le panneau d\'article ne se casse plus sur des sites comme 9to5Mac : le bouton de fermeture est toujours visible, le panneau tient dans l\'écran et Échap le ferme',
+      c216_stay_signed_in: 'Vous restez connecté à Google après avoir fermé Chrome ou redémarré l\'ordinateur ; une brève coupure réseau ne vous déconnecte plus',
+      c216_sign_in_messages: 'Messages clairs si vous n\'êtes pas connecté ou si votre session Google a expiré, avec « Se connecter avec Google » en un clic — fini le trompeur « Clé API invalide »',
       c215_article_button_scope: 'Le bouton article n\'apparaît plus que sur les articles de presse, billets de blog et fils de forum — pas sur Instagram, X, Facebook, la recherche, les boutiques ou les applis',
       c215_no_homepage_button: 'Les pages d\'accueil et de rubrique n\'affichent plus le bouton ; ouvrez l\'article',
       c214_caption_hosts: 'Les téléchargements de sous-titres restent sur les hôtes YouTube (https : youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -477,6 +498,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Behoben',
       groupChanged: 'Geändert',
 
+      c216_panel_layout: 'Das Artikel-Panel bricht auf Seiten wie 9to5Mac nicht mehr: Die Schließen-Schaltfläche ist immer sichtbar, das Panel passt auf den Bildschirm und Esc schließt es',
+      c216_stay_signed_in: 'Du bleibst nach dem Schließen von Chrome oder einem Neustart bei Google angemeldet; ein kurzer Verbindungsabbruch meldet dich nicht mehr ab',
+      c216_sign_in_messages: 'Klare Hinweise, wenn du nicht angemeldet bist oder deine Google-Sitzung beendet wurde, mit "Mit Google anmelden" per Klick — kein irreführendes "Ungültiger API-Schlüssel" mehr',
       c215_article_button_scope: 'Die Artikel-Schaltfläche erscheint nur noch auf Nachrichtenartikeln, Blogposts und Forenthreads — nicht auf Instagram, X, Facebook, Suche, Shops oder Apps',
       c215_no_homepage_button: 'Startseiten und Rubrikseiten zeigen die Schaltfläche nicht mehr; öffne den Artikel selbst',
       c214_caption_hosts: 'Untertitel-Downloads bleiben auf YouTube-Hosts (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -520,6 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '修正',
       groupChanged: '変更',
 
+      c216_panel_layout: '9to5Mac などのサイトで記事パネルが崩れなくなりました。閉じるボタンが常に表示され、パネルは画面に収まり、Esc で閉じられます',
+      c216_stay_signed_in: 'Chrome を閉じたりパソコンを再起動したりしても Google にログインしたままになります。短い接続障害でログアウトされることはありません',
+      c216_sign_in_messages: '未ログインや Google セッション切れのときに分かりやすいメッセージとワンクリックの「Google でログイン」を表示。紛らわしい「無効な API キー」は表示されません',
       c215_article_button_scope: '記事ボタンはニュース記事・ブログ投稿・フォーラムのスレッドにのみ表示されます（Instagram、X、Facebook、検索、ショップ、アプリには表示されません）',
       c215_no_homepage_button: 'サイトのトップページやカテゴリページにはボタンを表示しません。記事本体を開いてください',
       c214_caption_hosts: '字幕のダウンロードは YouTube のホストに限定されます（https: youtube.com、youtu.be、googlevideo.com、ytimg.com）',
@@ -563,6 +590,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '수정',
       groupChanged: '변경',
 
+      c216_panel_layout: '9to5Mac 같은 사이트에서 기사 패널이 더 이상 깨지지 않습니다. 닫기 버튼이 항상 보이고 패널이 화면에 맞으며 Esc로 닫을 수 있습니다',
+      c216_stay_signed_in: 'Chrome을 닫거나 컴퓨터를 다시 시작해도 Google 로그인이 유지됩니다. 잠깐의 연결 문제로 로그아웃되지 않습니다',
+      c216_sign_in_messages: '로그인하지 않았거나 Google 세션이 끝났을 때 명확한 안내와 원클릭 "Google로 로그인"을 표시합니다 — 오해를 부르는 "잘못된 API 키"는 더 이상 없습니다',
       c215_article_button_scope: '기사 버튼은 이제 뉴스 기사, 블로그 글, 포럼 스레드에서만 표시됩니다 — Instagram, X, Facebook, 검색, 쇼핑, 앱에서는 표시되지 않습니다',
       c215_no_homepage_button: '사이트 홈페이지와 섹션 페이지에는 버튼이 표시되지 않습니다. 기사 자체를 여세요',
       c214_caption_hosts: '자막 다운로드는 YouTube 호스트에만 머뭅니다 (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -606,6 +636,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: '修复',
       groupChanged: '变更',
 
+      c216_panel_layout: '文章面板在 9to5Mac 等网站上不再错位：关闭按钮始终可见，面板适配屏幕，按 Esc 即可关闭',
+      c216_stay_signed_in: '关闭 Chrome 或重启电脑后仍保持 Google 登录；短暂的网络问题不会再让你退出登录',
+      c216_sign_in_messages: '未登录或 Google 会话已结束时显示清晰提示，并提供一键“使用 Google 登录”——不再出现误导性的“API 密钥无效”',
       c215_article_button_scope: '文章按钮现在只出现在新闻、博客文章和论坛帖子上——不会出现在 Instagram、X、Facebook、搜索、购物网站或应用中',
       c215_no_homepage_button: '网站首页和栏目页不再显示按钮；请打开具体文章',
       c214_caption_hosts: '字幕下载仅限 YouTube 主机（https：youtube.com、youtu.be、googlevideo.com、ytimg.com）',
@@ -649,6 +682,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'Corrigido',
       groupChanged: 'Alterado',
 
+      c216_panel_layout: 'O painel de artigos não quebra mais em sites como o 9to5Mac: o botão de fechar fica sempre visível, o painel cabe na tela e Esc o fecha',
+      c216_stay_signed_in: 'Você continua conectado ao Google depois de fechar o Chrome ou reiniciar o computador; uma falha rápida de conexão não encerra mais a sessão',
+      c216_sign_in_messages: 'Mensagens claras quando você não está conectado ou sua sessão do Google terminou, com "Fazer login com o Google" em um clique — sem o enganoso "Chave de API inválida"',
       c215_article_button_scope: 'O botão de artigo agora só aparece em notícias, posts de blog e tópicos de fórum — não no Instagram, X, Facebook, buscas, lojas ou apps',
       c215_no_homepage_button: 'Páginas iniciais e de seção não mostram mais o botão; abra a matéria',
       c214_caption_hosts: 'Os downloads de legendas ficam nos hosts do YouTube (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',
@@ -692,6 +728,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'تم الإصلاح',
       groupChanged: 'تم التغيير',
 
+      c216_panel_layout: 'لم تعد لوحة المقالات تتعطل في مواقع مثل 9to5Mac: زر الإغلاق ظاهر دائمًا، واللوحة تناسب الشاشة، ومفتاح Esc يغلقها',
+      c216_stay_signed_in: 'تبقى مسجّلًا الدخول بحساب Google بعد إغلاق Chrome أو إعادة تشغيل الكمبيوتر؛ ولم يعد انقطاع الاتصال القصير يسجّل خروجك',
+      c216_sign_in_messages: 'رسائل واضحة عندما لا تكون مسجّلًا الدخول أو عند انتهاء جلسة Google، مع زر "تسجيل الدخول باستخدام Google" بنقرة واحدة — دون رسالة "مفتاح API غير صالح" المضللة',
       c215_article_button_scope: 'زر المقال يظهر الآن فقط في الأخبار وتدوينات المدونات وموضوعات المنتديات — وليس في Instagram أو X أو Facebook أو البحث أو المتاجر أو التطبيقات',
       c215_no_homepage_button: 'لم تعد الصفحات الرئيسية وصفحات الأقسام تعرض الزر؛ افتح الخبر نفسه',
       c214_caption_hosts: 'تنزيلات الترجمة تبقى على مضيفات YouTube (https: youtube.com و youtu.be و googlevideo.com و ytimg.com)',
@@ -735,6 +774,9 @@ document.addEventListener('DOMContentLoaded', () => {
       groupFixed: 'ठीक किया',
       groupChanged: 'बदला',
 
+      c216_panel_layout: '9to5Mac जैसी साइटों पर लेख पैनल अब नहीं बिगड़ता: बंद करने का बटन हमेशा दिखता है, पैनल स्क्रीन में फिट होता है और Esc से बंद होता है',
+      c216_stay_signed_in: 'Chrome बंद करने या कंप्यूटर रीस्टार्ट करने के बाद भी आप Google में साइन इन रहते हैं; थोड़ी देर की कनेक्शन समस्या से अब साइन आउट नहीं होता',
+      c216_sign_in_messages: 'साइन इन न होने या Google सत्र समाप्त होने पर साफ़ संदेश और एक क्लिक में "Google से साइन इन करें" — अब भ्रामक "अमान्य API कुंजी" नहीं',
       c215_article_button_scope: 'लेख बटन अब केवल समाचार, ब्लॉग पोस्ट और फ़ोरम थ्रेड पर दिखता है — Instagram, X, Facebook, खोज, शॉपिंग या ऐप्स पर नहीं',
       c215_no_homepage_button: 'साइट के होमपेज और सेक्शन पेज पर बटन नहीं दिखता; खबर खुद खोलें',
       c214_caption_hosts: 'कैप्शन डाउनलोड YouTube होस्ट पर ही रहते हैं (https: youtube.com, youtu.be, googlevideo.com, ytimg.com)',

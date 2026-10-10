@@ -58,31 +58,27 @@ class ApiClient {
     const auth = globalThis.SupabaseAuth;
     if (!auth) throw new ApiError('AUTH_MISSING', 'SupabaseAuth not available');
 
+    // getSession() renews an expired token (through the service worker) and throws
+    // AUTH_UNAVAILABLE when Supabase cannot be reached; the session is kept then.
+    const session = await this.#sessionOrThrow(auth, {});
+    if (!session) throw new ApiError('NOT_AUTHENTICATED', 'Sign in required');
     let headers = auth.getAuthHeaders();
-    if (!headers) {
-      const session = await auth.getSession();
-      if (!session) throw new ApiError('NOT_AUTHENTICATED', 'Sign in required');
-      headers = auth.getAuthHeaders();
-    }
 
     let res = await this.#fetch(method, path, headers, body);
 
     if (res.status === 401) {
-      try {
-        const session = await auth.getSession(); // triggers refresh
-        if (!session) throw new Error('Session expired');
-        headers = auth.getAuthHeaders();
-        res = await this.#fetch(method, path, headers, body);
-      } catch {
-        await auth.signOut();
+      // The backend refused a token we thought was valid: renew it once and retry.
+      const renewed = await this.#sessionOrThrow(auth, { forceRefresh: true });
+      if (!renewed) {
         throw new ApiError('SESSION_EXPIRED', 'Session expired. Please sign in again.');
       }
+      headers = auth.getAuthHeaders();
+      res = await this.#fetch(method, path, headers, body);
 
-      // Refresh succeeded but the backend still rejects the token — the session
-      // is effectively dead. Surface it as SESSION_EXPIRED instead of letting it
-      // fall through to the opaque SERVER_ERROR branch below.
+      // A freshly renewed token is still refused: the session is dead. End it on
+      // this device only (no global /logout) so the UI asks for a new sign-in.
       if (res.status === 401) {
-        await auth.signOut();
+        await auth.endSession?.('backend_rejected_token');
         throw new ApiError('SESSION_EXPIRED', 'Session expired. Please sign in again.');
       }
     }
@@ -133,6 +129,17 @@ class ApiClient {
     return data;
   }
 
+  async #sessionOrThrow(auth, opts) {
+    try {
+      return await auth.getSession(opts);
+    } catch (err) {
+      if (err?.code === 'AUTH_UNAVAILABLE') {
+        throw new ApiError('AUTH_UNAVAILABLE', err.message || 'Could not reach the sign-in service.');
+      }
+      throw err;
+    }
+  }
+
   async #fetch(method, path, headers, body) {
     const opts = { method, headers };
     if (body && method !== 'GET') opts.body = JSON.stringify(body);
@@ -142,7 +149,7 @@ class ApiClient {
 
 /**
  * Typed error for Edge Function failures.
- * code: NO_CREDITS | INSUFFICIENT_CREDITS | RATE_LIMITED | AI_QUOTA_EXCEEDED | NOT_AUTHENTICATED | SESSION_EXPIRED | AUTH_MISSING | SERVER_ERROR
+ * code: NO_CREDITS | INSUFFICIENT_CREDITS | RATE_LIMITED | AI_QUOTA_EXCEEDED | NOT_AUTHENTICATED | SESSION_EXPIRED | AUTH_UNAVAILABLE | AUTH_MISSING | SERVER_ERROR
  *
  * INSUFFICIENT_CREDITS adds `estimatedCredits` + `availableCredits` so the UI
  * can show a pre-flight "this long video needs N credits, you have M" message.

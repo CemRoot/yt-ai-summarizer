@@ -3,6 +3,7 @@
  *
  * Draws the same floating control as the article reader and asks the
  * service worker to inject the reader on click. Does not build a second panel.
+ * The button lives in GleanoShadowHost's shadow root, away from page CSS.
  */
 (function initArticleLauncher() {
 class ArticleLauncher {
@@ -68,9 +69,9 @@ class ArticleLauncher {
   }
 
   #sync() {
-    const existing = document.getElementById('gleano-article-toggle');
+    const existing = GleanoShadowHost.byId('gleano-article-toggle');
     if (!this.#pageAllowed()) {
-      if (existing && !document.getElementById('gleano-article-panel')) existing.remove();
+      if (existing && !GleanoShadowHost.byId('gleano-article-panel')) existing.remove();
       return;
     }
     if (existing || !document.body) return;
@@ -82,23 +83,24 @@ class ArticleLauncher {
     btn.type = 'button';
     btn.className = 'gleano-toggle-btn';
     btn.title = chrome.i18n?.getMessage('articleReaderTitle') || 'Gleano';
+    btn.setAttribute('aria-label', btn.title);
     btn.innerHTML = ArticleLauncher.#ICON;
     if (window.matchMedia?.('(prefers-color-scheme: dark)')?.matches) {
       btn.classList.add('dark');
     }
     btn.addEventListener('click', () => { void this.#onClick(); });
-    document.body.appendChild(btn);
+    GleanoShadowHost.layer().appendChild(btn);
   }
 
   async #onClick() {
     if (this.#busy) return;
     if (!this.#urlAllowed()) {
-      document.getElementById('gleano-article-toggle')?.remove();
+      GleanoShadowHost.byId('gleano-article-toggle')?.remove();
       return;
     }
 
     this.#busy = true;
-    const btn = document.getElementById('gleano-article-toggle');
+    const btn = GleanoShadowHost.byId('gleano-article-toggle');
     if (btn) btn.disabled = true;
     try {
       const response = await chrome.runtime.sendMessage({
@@ -112,7 +114,7 @@ class ArticleLauncher {
       console.error('[ArticleLauncher]', err?.message || err);
     } finally {
       this.#busy = false;
-      const again = document.getElementById('gleano-article-toggle');
+      const again = GleanoShadowHost.byId('gleano-article-toggle');
       if (again) again.disabled = false;
     }
   }
