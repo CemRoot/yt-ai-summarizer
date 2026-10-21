@@ -176,3 +176,30 @@ test('Gemini quota text is still classified ahead of the generic branch', async 
 
   assert.equal(err.code, 'AI_QUOTA_EXCEEDED');
 });
+
+test('streamed replies: _status in the body decides success or error', async () => {
+  const { api } = createClient([
+    { status: 200, body: { result: 'ok', _status: 200 } },
+    { status: 200, body: { error: 'INSUFFICIENT_CREDITS', estimated_credits: 9, available_credits: 2, _status: 402 } },
+    { status: 200, body: { error: 'PROVIDER_EMPTY_RESPONSE', _status: 502 } },
+  ]);
+  const ok = await summarize(api);
+  assert.equal(ok.result, 'ok');
+  assert.equal(ok._status, undefined, '_status is stripped from the data');
+  const credits = await summarize(api).then(() => null, (e) => e);
+  assert.equal(credits.code, 'INSUFFICIENT_CREDITS');
+  assert.equal(credits.estimatedCredits, 9);
+  const empty = await summarize(api).then(() => null, (e) => e);
+  assert.equal(empty.code, 'PROVIDER_EMPTY_RESPONSE');
+  assert.equal(empty.status, 502);
+});
+
+test('a 401 inside a streamed reply still renews the token once and retries', async () => {
+  const { api, calls } = createClient([
+    { status: 200, body: { error: 'Unauthorized', _status: 401 } },
+    { status: 200, body: { result: 'after refresh', _status: 200 } },
+  ]);
+  const ok = await summarize(api);
+  assert.equal(ok.result, 'after refresh');
+  assert.equal(calls.forceRefresh, 1);
+});

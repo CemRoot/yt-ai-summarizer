@@ -36,6 +36,15 @@ class DeviceFingerprint {
         return cached;
       }
 
+      // The fingerprint only seeds `ytaiPersistentAuthDeviceId` once
+      // (StorageHelper.getPersistentAuthDeviceId). When that id exists, skip
+      // FingerprintJS (canvas, audio, hidden iframe) on every browser session.
+      const persistent = await this.#readPersistentDeviceId();
+      if (persistent) {
+        this.#visitorId = persistent;
+        return persistent;
+      }
+
       if (typeof FingerprintJS === 'undefined') {
         return this.#fallback();
       }
@@ -68,6 +77,16 @@ class DeviceFingerprint {
     this.#visitorId = 'fb-' + Math.abs(hash).toString(36);
     this.#writeSession(this.#visitorId).catch(() => {});
     return this.#visitorId;
+  }
+
+  async #readPersistentDeviceId() {
+    try {
+      const r = await chrome.storage.local.get('ytaiPersistentAuthDeviceId');
+      const id = r?.ytaiPersistentAuthDeviceId;
+      return typeof id === 'string' && id.length >= 16 ? id : null;
+    } catch {
+      return null;
+    }
   }
 
   async #readSession() {

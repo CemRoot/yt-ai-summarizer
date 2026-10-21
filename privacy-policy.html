@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy Policy for Gleano v2.1.6 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
+  <meta name="description" content="Privacy Policy for Gleano v2.1.7 — BYOK or optional managed AI (Supabase, Google sign-in), Stripe billing, no ads or analytics telemetry.">
   <meta name="theme-color" content="#eceef2">
   <title>Privacy Policy — Gleano</title>
   <link rel="icon" href="icons/icon32.png?v=2.1.5" sizes="32x32" type="image/png">
@@ -598,7 +598,7 @@
           </div>
           <div class="doc-meta">
             <span class="meta-pill">Last updated · October 7, 2026</span>
-            <span class="meta-pill meta-pill--version">Extension v2.1.6</span>
+            <span class="meta-pill meta-pill--version">Extension v2.1.7</span>
           </div>
         </div>
       </header>
@@ -623,7 +623,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M12 19v2"/><path d="m5 5 1.4 1.4"/><path d="m17.6 17.6 1.4 1.4"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="m5 19 1.4-1.4"/><path d="m17.6 6.4 1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
           </span>
           <div class="glance-title">Transparent by design</div>
-          <div class="glance-sub">Network calls only fire when you click a feature — Summary, Chat, Podcast, or Article Reader.</div>
+          <div class="glance-sub">Network calls only fire when you click a feature — Summary, Chat, Podcast, or Article Reader. When you are signed in, opening the panel also checks your credits and asks for a cost estimate using only the transcript's length, never its text.</div>
         </div>
         <div class="glance-card">
           <span class="glance-icon" aria-hidden="true">
@@ -694,11 +694,11 @@
           <p class="spaced-top"><strong>Managed AI path</strong></p>
           <ul>
             <li><strong>Auth &amp; credits</strong> — Your session JWT and fingerprint are sent to Supabase Edge Functions (e.g. <span class="inline-code">auth-callback</span>, <span class="inline-code">check-credits</span>) to create/update your account, enforce free-tier and Pro limits, and return checkout links when applicable.</li>
-            <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>DeepSeek</strong>, <strong>Google Gemini</strong>, and <strong>Cerebras</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Results return to your browser.</li>
+            <li><strong>Summaries &amp; chat</strong> — When you run managed AI, transcript excerpts and prompts are sent to our Edge Function <span class="inline-code">summarize</span>, which calls server-side AI providers (<strong>Ollama Cloud</strong>, <strong>DeepSeek</strong>, <strong>Google Gemini</strong>, and <strong>Cerebras</strong> as configured) using <strong>keys held on the server</strong>, not your BYOK keys. Podcast audio is generated with Google Gemini text-to-speech. Results return to your browser. When a video chat question needs current facts the video does not cover, the server may send a short search query (written by the AI from your question, without the transcript) to <strong>Ollama Cloud web search</strong> and use the results in the answer; the answer then lists the source sites.</li>
             <li><strong>Article Reader (managed)</strong> — Article text and chat prompts follow the same managed path through <span class="inline-code">summarize</span> when you explicitly request a summary or send a chat message. Credits are consumed per request.</li>
             <li><strong>Billing</strong> — If you subscribe, <strong>Stripe</strong> processes payment; we store subscription status in our database as needed to unlock Pro features. Opening checkout uses Stripe-hosted pages (and may set Stripe cookies under their domain).</li>
           </ul>
-          <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your browsing history: the article button check stays on your device, and article URLs are not sent to our backend. For managed users, account email and usage records may exist on Supabase as described above (for each request: the action, the YouTube video ID when you summarize a video, token counts, cost and latency — used to enforce credits and limits); IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
+          <p class="spaced-top">We do <strong>not</strong> use your data for advertising or sell personal information. We do <strong>not</strong> collect your browsing history: the article button check stays on your device, and article URLs are not sent to our backend. For managed users, account email and usage records may exist on Supabase as described above (for each request: the action, the YouTube video ID when you summarize a video, token counts, cost and latency — used to enforce credits and limits; for chat, also a one-way SHA-256 fingerprint and the length of the transcript so follow-up messages on the same video can be charged less — the transcript text itself is not stored; which AI providers failed before the one that answered; and the credits charged); IP addresses may appear in standard service logs per Supabase/Stripe/provider policies.</p>
         </div>
       </div>
 
@@ -814,7 +814,7 @@
       </div>
 
       <footer class="site-footer">
-        Gleano · v2.1.6 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
+        Gleano · v2.1.7 · <a href="https://github.com/CemRoot/yt-ai-summarizer" target="_blank" rel="noopener noreferrer">Source</a>
       </footer>
     </main>
   </div>

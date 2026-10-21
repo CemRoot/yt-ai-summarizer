@@ -49,6 +49,8 @@ class TranscriptExtractor {
   // srv3, vtt and ttml alike, with or without credentials — so neither
   // another format nor the service-worker proxy can rescue it.
   #deadCaptionUrls = new Set();
+  /** { videoId, lang, result } of the last successful fetch (one transcript at most). */
+  #lastResult = null;
 
   #cachedWebVersion = null;
   #requestGeneration = 0;
@@ -626,6 +628,16 @@ class TranscriptExtractor {
   async getTranscript(preferredLang = 'auto') {
     const videoId = this.getVideoId();
     if (!videoId) throw new Error('NO_VIDEO_ID');
+    // Chat messages and the credit estimate ask again for the same video; keep
+    // the last result instead of refetching and re-parsing captions each time.
+    const last = this.#lastResult;
+    if (last && last.videoId === videoId && last.lang === preferredLang) return last.result;
+    const result = await this.#fetchTranscript(videoId, preferredLang);
+    if (this.getVideoId() === videoId) this.#lastResult = { videoId, lang: preferredLang, result };
+    return result;
+  }
+
+  async #fetchTranscript(videoId, preferredLang) {
     const requestCtx = this.#beginRequestContext(videoId);
     // Signed caption URLs expire, so dead-URL knowledge must not outlive the
     // request that established it.

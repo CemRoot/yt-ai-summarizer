@@ -250,3 +250,14 @@ test('reports UNAVAILABLE when no source produces any track at all', async () =>
 
   await assert.rejects(() => h.tx.getTranscript(), /TRANSCRIPT_UNAVAILABLE/);
 });
+
+test('a second request for the same video reuses the last transcript (no refetch)', async () => {
+  const h = createHarness({ clientTracks: { ANDROID: [{ baseUrl: LIVE }] } });
+  const first = await h.tx.getTranscript();
+  const fetchesAfterFirst = h.calls.captionFetches.length;
+  const clientsAfterFirst = h.calls.clients.length;
+  const second = await h.tx.getTranscript();
+  assert.equal(second, first);
+  assert.equal(h.calls.captionFetches.length, fetchesAfterFirst);
+  assert.equal(h.calls.clients.length, clientsAfterFirst);
+});

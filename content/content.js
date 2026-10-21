@@ -100,6 +100,9 @@ class SummarizerController {
 
   #currentVideoId = null;
   #combinedCache = null;  // { videoId, summary, keypoints, detailed }
+  #estimateByVideo = new Map();  // videoId → credit quotes for the header strip
+  #urlPoll = undefined;
+  #estimateInFlight = null;
   #podcastCache = null;   // { videoId, dialogue, audioBase64 }
   #chatCache = null;      // { videoId, messages: [] }
   #summaryCacheByVideo = new Map();
@@ -216,8 +219,11 @@ class SummarizerController {
 
     // Method 3: URL polling (catches pushState navigations not covered above)
     let lastUrl = window.location.href;
-    setInterval(() => {
-      if (!ytaiExtensionContextValid()) return;
+    this.#urlPoll = setInterval(() => {
+      if (!ytaiExtensionContextValid()) {
+        this.#teardownOrphaned();
+        return;
+      }
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl;
@@ -228,6 +234,26 @@ class SummarizerController {
         }
       }
     }, 1000);
+  }
+
+  /**
+   * After the extension is updated or reloaded, this script keeps running in
+   * the tab with a dead chrome.runtime. Drop everything it holds (caches,
+   * decoded audio, panel) so the old world does not pin memory until reload.
+   */
+  #teardownOrphaned() {
+    if (this.#urlPoll === null) return;
+    clearInterval(this.#urlPoll);
+    this.#urlPoll = null;
+    clearTimeout(this.#initTimeout);
+    try { player.destroy(); } catch { /* already gone */ }
+    this.#summaryCacheByVideo.clear();
+    this.#chatCacheByVideo.clear();
+    this.#estimateByVideo.clear();
+    this.#combinedCache = null;
+    this.#podcastCache = null;
+    this.#chatCache = null;
+    try { ui.destroy(); } catch { /* already gone */ }
   }
 
   #debouncedInitialize() {
@@ -702,6 +728,7 @@ class SummarizerController {
   async requestPodcast() {
     const videoId = tx.getVideoId();
     if (!videoId) return;
+    void this.#refreshCreditEstimate();
 
     // 1) Cached podcast → instant show
     if (this.#podcastCache?.videoId === videoId && this.#podcastCache.dialogue) {
@@ -723,20 +750,22 @@ class SummarizerController {
       return;
     }
 
-    const summaryText = this.#combinedCache?.summary;
-    if (!summaryText) {
-      const cached = await storage.getCachedSummary(videoId, 'summary');
-      if (cached?.content) {
-        return this.#generatePodcastFromText(cached.content, videoId);
-      }
+    // The hosts need every section, not only the short summary, or key points go missing.
+    const inMemory = this.#combinedCache?.videoId === videoId ? this.#combinedCache : null;
+    const notes = { summary: inMemory?.summary, keypoints: inMemory?.keypoints, detailed: inMemory?.detailed };
+    for (const mode of ['summary', 'keypoints', 'detailed']) {
+      if (!notes[mode]) notes[mode] = (await storage.getCachedSummary(videoId, mode))?.content;
+    }
+    if (!notes.summary) {
       ui.showPodcastPlayer(null);
       return;
     }
 
-    return this.#generatePodcastFromText(summaryText, videoId);
+    return this.#generatePodcastFromText(notes, videoId);
   }
 
-  async #generatePodcastFromText(text, videoId) {
+  /** @param {{summary: string, keypoints?: string, detailed?: string}} notes */
+  async #generatePodcastFromText(notes, videoId) {
     if (this.#podcastBusy) {
       ui.showPodcastLoading('Generating podcast...');
       return;
@@ -755,7 +784,7 @@ class SummarizerController {
       const settings = await storage.getSettings();
       const response = await chrome.runtime.sendMessage({
         action: 'generatePodcast',
-        data: { summaryText: text, language: settings.language || 'auto', videoId }
+        data: { notes, language: settings.language || 'auto', videoId }
       });
 
       if (!response) throw new Error('No response from extension.');
@@ -815,7 +844,12 @@ class SummarizerController {
         throw new Error(response.error);
       }
 
-      this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
+      // The user may have moved to another video while audio was generating;
+      // caching it then would keep ~4 MB per minute of base64 for nothing.
+      const stillHere = videoId === this.#currentVideoId && videoId === tx.getVideoId();
+      if (stillHere) {
+        this.#podcastCache = { videoId, dialogue: response.dialogue, audioBase64: response.audioBase64 };
+      }
       if (response.credits_remaining !== undefined) {
         ui.updateCredits(
           response.credits_remaining,
@@ -824,7 +858,7 @@ class SummarizerController {
         await storage.saveSettings({ credits: response.credits_remaining });
       }
       if (response.credits_used) ui.showCreditsUsed(response.credits_used);
-      if (ui.getCurrentMode() === 'podcast') {
+      if (stillHere && ui.getCurrentMode() === 'podcast') {
         ui.showPodcastPlayer(this.#podcastCache);
       }
 
@@ -851,6 +885,7 @@ class SummarizerController {
       return;
     }
 
+    void this.#refreshCreditEstimate();
     const chatCache = this.#ensureChatCache(ctx.videoId);
     ui.showChatUI(chatCache.messages);
   }
@@ -957,11 +992,47 @@ class SummarizerController {
     }
   }
 
+  // ─── Credit estimate (header strip) ────────────────────────────────
+
+  /**
+   * Shows "≈ Summary N · Chat N/message · Podcast N credits" for the open video.
+   * Managed (signed-in) users only; quotes come from the server and cost nothing.
+   */
+  async #refreshCreditEstimate() {
+    const videoId = tx.getVideoId();
+    if (!videoId || !this.#isValidVideoId(videoId)) return;
+    const cached = this.#estimateByVideo.get(videoId);
+    if (cached) {
+      ui.showCreditEstimate(cached);
+      return;
+    }
+    ui.showCreditEstimate(null);
+    if (this.#estimateInFlight === videoId || !(await this.#hasSupabaseSession())) return;
+    this.#estimateInFlight = videoId;
+    try {
+      const transcript = await tx.getTranscript();
+      if (!transcript?.fullText || tx.getVideoId() !== videoId) return;
+      const res = await chrome.runtime.sendMessage({
+        action: 'estimateCredits',
+        data: { videoId, transcript: transcript.fullText }
+      });
+      if (!res?.estimates) return;
+      this.#estimateByVideo.set(videoId, res.estimates);
+      this.#enforceCacheLimit(this.#estimateByVideo);
+      if (tx.getVideoId() === videoId) ui.showCreditEstimate(res.estimates);
+    } catch {
+      // The strip is optional: no captions or a failed quote just hides it.
+    } finally {
+      this.#estimateInFlight = null;
+    }
+  }
+
   // ─── Panel open handler ───────────────────────────────────────────
 
   onPanelOpen() {
     const videoId = tx.getVideoId();
     if (!videoId) return;
+    void this.#refreshCreditEstimate();
 
     const mode = ui.getCurrentMode();
 

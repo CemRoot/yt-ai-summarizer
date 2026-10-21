@@ -45,7 +45,20 @@ class ApiClient {
     if (podcastDialogue !== undefined) body.podcast_dialogue = podcastDialogue;
     if (voiceA !== undefined) body.voice_a = voiceA;
     if (voiceB !== undefined) body.voice_b = voiceB;
-    return this.#request('POST', '/summarize', body);
+    // Streamed reply: headers arrive at once, so Chrome does not stop the service
+    // worker while podcast audio or a long summary is still being generated.
+    return this.#request('POST', '/summarize?stream=1', body);
+  }
+
+  /**
+   * Credit quotes from character counts only: no AI call, no charge, and neither
+   * the transcript nor the video id leaves the browser (privacy policy).
+   */
+  async estimateCredits({ stats }) {
+    return this.#request('POST', '/summarize', {
+      action: 'estimate',
+      transcript_stats: stats,
+    });
   }
 
   async createPortalSession() {
@@ -83,7 +96,7 @@ class ApiClient {
       }
     }
 
-    const data = await res.json().catch(() => ({}));
+    const { data } = res;
 
     if (!res.ok) {
       if (res.status === 402) {
@@ -140,10 +153,31 @@ class ApiClient {
     }
   }
 
+  /**
+   * Fetch + JSON body as one step. A streamed reply carries its real status in
+   * `_status` (the HTTP status is always 200 there). While waiting, the service
+   * worker calls a cheap extension API every 20 s: extension API calls reset
+   * Chrome's 30 s idle timer, which a long body download would otherwise hit.
+   * @returns {Promise<{status: number, ok: boolean, data: any}>}
+   */
   async #fetch(method, path, headers, body) {
     const opts = { method, headers };
     if (body && method !== 'GET') opts.body = JSON.stringify(body);
-    return fetch(`${this.#BASE_URL}${path}`, opts);
+    const ping = typeof chrome !== 'undefined' && typeof chrome.runtime?.getPlatformInfo === 'function'
+      ? setInterval(() => { chrome.runtime.getPlatformInfo().catch(() => {}); }, 20000)
+      : null;
+    try {
+      const res = await fetch(`${this.#BASE_URL}${path}`, opts);
+      const data = await res.json().catch(() => ({}));
+      let status = res.status;
+      if (res.ok && data && typeof data === 'object' && Number.isInteger(data._status)) {
+        status = data._status;
+      }
+      if (data && typeof data === 'object') delete data._status;
+      return { status, ok: status >= 200 && status < 300, data };
+    } finally {
+      if (ping) clearInterval(ping);
+    }
   }
 }
 
