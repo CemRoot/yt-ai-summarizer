@@ -268,6 +268,15 @@ Full policy in [`privacy-policy.html`](privacy-policy.html) (bundled with the ex
 
 ## What's new
 
+### v2.1.7 — October 2026
+
+- **💬 Chat that answers the question** — the YouTube Chat tab used to be locked to the transcript: practical follow-ups ("can I just leave my MacBook on instead?") were refused or called impossible, and every reply opened with a greeting and a recap of the video. Now the first sentence answers, replies stay around 120 words, the transcript is the primary source, and when the video does not cover a related question Gleano answers from general knowledge and says so. With managed AI it can look up current facts (prices, versions, news) on the web and lists the source sites under the answer. "Auto" language now replies in the language of your question.
+- **🎙️ Better podcasts** — the hosts work from the summary, key points and detailed analysis (not only the short summary), cover every key point with its names and numbers, and discuss the ideas instead of reading the notes. The two voices are always one female and one male voice, so they never blend, and stray labels like `Alex:` or `(laughs)` are no longer read aloud.
+- **🔢 Credit estimate in the panel** — signed-in users see what the open video is expected to cost: `≈ Summary 4 · Chat 6→2/message · Podcast 24 credits`. The quote uses only the transcript's length; the text is not sent until you use a feature.
+- **⚖️ Fairer credits** — follow-up chat messages on the same video cost less (the transcript is charged at a quarter after the first full-price message). Credits are reserved before a request and anything unused is refunded; a failed or empty answer costs nothing.
+- **🧠 Less memory** — podcast audio is decoded once instead of on every visit to the Podcast tab, transcripts are reused between chat messages, old tabs drop their memory after an update, and the device fingerprint library no longer runs once your device id exists.
+- **🔊 New text-to-speech model** — podcast audio (managed and your own Gemini key) moves to Google's GA `gemini-3.8-flash-tts` before `gemini-2.5-flash-preview-tts` shuts down on 17 November 2026. Your Gemini key is now sent in a header instead of the URL.
+
 ### v2.1.6 — October 2026
 
 - **🧱 Article panel survives any site's CSS** — on sites such as 9to5Mac the panel slid down, its footer was cut off and the close button was an empty box, because the page's own rules (`* + * { margin-top }`, `button { … }`) reached it. The button and the panel now live in a closed shadow root, so page styles cannot touch them. The panel always fits the screen, the close button is always visible, and **Esc** closes it. The page itself no longer receives Gleano's stylesheet.
