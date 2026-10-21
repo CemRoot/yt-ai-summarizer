@@ -10,7 +10,8 @@ importScripts(
   'utils/supabase-auth.js',
   'utils/api-client.js',
   'utils/transcript-url-allowlist.js',
-  'utils/article-page-eligibility.js'
+  'utils/article-page-eligibility.js',
+  'utils/video-chat-prompt.js'
 );
 
 // Production uninstall page: hosted on developer domain (Vercel). Source file in
@@ -1403,10 +1404,8 @@ async function handleChatWithVideo(data) {
 
   if (mode.managed) {
     try {
-      const chatHistory = (history || []).slice(-10).map(m => ({
-        role: m.role === 'ai' ? 'assistant' : m.role,
-        content: m.text
-      }));
+      // Error bubbles from the panel cache are not conversation turns.
+      const chatHistory = VideoChatPrompt.normalizeHistory(history);
 
       const edgeResult = await ApiClient.getInstance().summarize({
         videoId: videoId || '',
@@ -1439,44 +1438,19 @@ async function handleChatWithVideo(data) {
   const { provider, apiKey, model } = await getProviderConfig();
   await requireByokApiKeyForProvider(mode, provider, apiKey);
 
-  const languageInstruction = buildLanguageInstruction(language, transcript);
-
   const maxChars = 80000;
   let contextTranscript = transcript;
   if (transcript.length > maxChars) {
     contextTranscript = transcript.substring(0, maxChars) + '\n... [Transcript truncated]';
   }
 
-  const systemPrompt = `You are a transcript-only analyst for this ONE YouTube video — not a general chatbot.
-
-Rules:
-- Answer strictly from the transcript below. If it is not there, say the video does not mention it.
-- Never reply with empty generic assistant lines as your whole answer (e.g. "How can I help?", "Size nasıl yardımcı olabilirim?", "Merhaba! Size nasıl yardımcı olabilirim?"). Every reply must be grounded in the transcript.
-- If the user only greets or asks how you can help: briefly acknowledge if needed, then 1–3 sentences on what the video covers (from the transcript), then ask one concrete question about that content.
-- Use markdown where appropriate (bold, lists).
-
-${languageInstruction}
-
---- VIDEO TRANSCRIPT ---
-${contextTranscript}
-------------------------`;
-
   const messages = [
-    { role: 'system', content: systemPrompt }
+    { role: 'system', content: VideoChatPrompt.buildSystemPrompt(language, contextTranscript) },
+    ...VideoChatPrompt.normalizeHistory(history),
+    { role: 'user', content: question }
   ];
 
-  if (history && history.length > 0) {
-    const recentHistory = history.slice(-10);
-    for (const msg of recentHistory) {
-      if (msg.role === 'user' || msg.role === 'ai') {
-        messages.push({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text });
-      }
-    }
-  }
-
-  messages.push({ role: 'user', content: question });
-
-  const result = await callAI(provider, apiKey, model, messages, 0, 2048);
+  const result = await callAI(provider, apiKey, model, messages, 0, VideoChatPrompt.MAX_OUTPUT_TOKENS);
   return { answer: result.content, model: result.model, provider };
 }
 
