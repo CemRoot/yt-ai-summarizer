@@ -249,7 +249,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return;
 
   if (message.action === 'summarizeAll') {
-    handleSummarizeAll(message.data, sender.tab?.id)
+    summarizeOnce(message.data, sender.tab?.id)
       .then(sendResponse)
       .catch((err) => sendResponse(serializeError(err)));
     return true;
@@ -1007,6 +1007,34 @@ function parseManagedResponse(text) {
  * Routing: authenticated + credits → managed AI (Edge Function);
  * otherwise → BYOK (Groq/Ollama direct).
  */
+/**
+ * One summary request per video at a time. A second click, a second tab or a
+ * reload while the first request is still running joins it instead of paying
+ * for the same summary twice (seen live: two charged requests 2 s apart).
+ */
+const summarizeInFlight = new Map();
+
+function summarizeOnce(data, tabId) {
+  const key = `${data?.videoId || ''}|${data?.language || 'auto'}`;
+  if (!data?.videoId) return handleSummarizeAll(data, tabId);
+  let pending = summarizeInFlight.get(key);
+  if (!pending) {
+    pending = handleSummarizeAll(data, tabId).finally(() => summarizeInFlight.delete(key));
+    summarizeInFlight.set(key, pending);
+  }
+  return pending;
+}
+
+/** Store all three sections where the panel looks first, even if the tab that asked is gone. */
+async function cacheSummarySections(videoId, sections, model) {
+  if (!videoId) return;
+  for (const mode of ['summary', 'keypoints', 'detailed']) {
+    if (sections[mode]) {
+      await StorageHelper.cacheSummary(videoId, mode, { content: sections[mode], model }).catch(() => {});
+    }
+  }
+}
+
 async function handleSummarizeAll(data, tabId) {
   const { transcript, language, videoId } = data;
 
@@ -1037,6 +1065,8 @@ async function handleSummarizeAll(data, tabId) {
 
       sendProgress('Done!', 1);
       const sections = parseManagedResponse(edgeResult.result);
+      // Credits are already spent: keep the result even if the page was reloaded meanwhile.
+      await cacheSummarySections(videoId, sections, edgeResult.provider);
 
       return {
         summary: sections.summary,
