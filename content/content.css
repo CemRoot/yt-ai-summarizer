@@ -224,6 +224,21 @@
   color: #fca5a5;
 }
 
+/* Expected credits for the current video, under the header. */
+.ytai-credit-estimate {
+  padding: 4px 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ytai-text-secondary, #606060);
+  background: var(--ytai-bg);
+  border-bottom: 1px solid var(--ytai-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  cursor: help;
+}
+
 /* Cost-weighted credit deduction indicator — flashes next to the badge after
    each managed-AI call so the user sees how much the action consumed. */
 .ytai-credit-delta {

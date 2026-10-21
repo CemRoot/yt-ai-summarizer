@@ -48,6 +48,17 @@ class ApiClient {
     return this.#request('POST', '/summarize', body);
   }
 
+  /**
+   * Credit quotes from character counts only: no AI call, no charge, and neither
+   * the transcript nor the video id leaves the browser (privacy policy).
+   */
+  async estimateCredits({ stats }) {
+    return this.#request('POST', '/summarize', {
+      action: 'estimate',
+      transcript_stats: stats,
+    });
+  }
+
   async createPortalSession() {
     return this.#request('POST', '/create-portal-session');
   }

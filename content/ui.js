@@ -102,6 +102,35 @@ class SummarizerUI {
     zh: { title: '要总结这个视频吗？',                desc: '通过AI获取摘要、要点和详细分析。',                            btn: '开始总结' },
   };
 
+  /**
+   * Header credit-estimate strip. `line(s, c, p)`: summary, chat (e.g. "6→2"),
+   * podcast; `tip(s, c)`: credits that must be free before summary / chat.
+   */
+  static #ESTIMATE_TEXT = {
+    en: { line: (s, c, p) => `≈ Summary ${s} · Chat ${c}/message · Podcast ${p} credits`,
+      tip: (s, c) => `Typical credits for this video. To start you need free credits for: summary ${s}, chat ${c}; any unused part is refunded. Follow-up chat messages on the same video cost less.` },
+    tr: { line: (s, c, p) => `≈ Özet ${s} · Sohbet ${c}/mesaj · Podcast ${p} kredi`,
+      tip: (s, c) => `Bu video için ortalama kredi tahmini. Başlamak için bakiyede şu kadar boş kredi gerekir: özet ${s}, sohbet ${c}; kullanılmayan kısım iade edilir. Aynı videoda sonraki sohbet mesajları daha ucuzdur.` },
+    es: { line: (s, c, p) => `≈ Resumen ${s} · Chat ${c}/mensaje · Podcast ${p} créditos`,
+      tip: (s, c) => `Créditos habituales para este video. Para empezar necesitas créditos libres: resumen ${s}, chat ${c}; lo que no se use se devuelve. Los mensajes siguientes en el mismo video cuestan menos.` },
+    fr: { line: (s, c, p) => `≈ Résumé ${s} · Chat ${c}/message · Podcast ${p} crédits`,
+      tip: (s, c) => `Crédits habituels pour cette vidéo. Pour commencer, il faut des crédits libres : résumé ${s}, chat ${c} ; la part non utilisée est rendue. Les messages suivants sur la même vidéo coûtent moins.` },
+    de: { line: (s, c, p) => `≈ Zusammenfassung ${s} · Chat ${c}/Nachricht · Podcast ${p} Credits`,
+      tip: (s, c) => `Übliche Credits für dieses Video. Zum Start brauchst du freie Credits: Zusammenfassung ${s}, Chat ${c}; nicht Verbrauchtes wird erstattet. Weitere Chat-Nachrichten zum selben Video kosten weniger.` },
+    pt: { line: (s, c, p) => `≈ Resumo ${s} · Chat ${c}/mensagem · Podcast ${p} créditos`,
+      tip: (s, c) => `Créditos típicos para este vídeo. Para começar, você precisa de créditos livres: resumo ${s}, chat ${c}; o que não for usado é devolvido. Mensagens seguintes no mesmo vídeo custam menos.` },
+    ja: { line: (s, c, p) => `≈ 要約 ${s} · チャット ${c}/件 · ポッドキャスト ${p} クレジット`,
+      tip: (s, c) => `この動画の目安クレジットです。開始には空きクレジットが必要です：要約 ${s}、チャット ${c}。使われなかった分は返却されます。同じ動画での続きのチャットは安くなります。` },
+    ko: { line: (s, c, p) => `≈ 요약 ${s} · 채팅 ${c}/메시지 · 팟캐스트 ${p} 크레딧`,
+      tip: (s, c) => `이 동영상의 예상 크레딧입니다. 시작하려면 남은 크레딧이 필요합니다: 요약 ${s}, 채팅 ${c}. 사용되지 않은 부분은 환불됩니다. 같은 동영상의 후속 채팅은 더 저렴합니다.` },
+    zh: { line: (s, c, p) => `≈ 摘要 ${s} · 聊天 ${c}/条 · 播客 ${p} 积分`,
+      tip: (s, c) => `此视频的常见积分消耗。开始前需要可用积分：摘要 ${s}，聊天 ${c}；未用完的部分会退还。同一视频的后续聊天更便宜。` },
+    ar: { line: (s, c, p) => `≈ الملخص ${s} · الدردشة ${c}/رسالة · البودكاست ${p} رصيد`,
+      tip: (s, c) => `الرصيد المعتاد لهذا الفيديو. للبدء تحتاج إلى رصيد متاح: الملخص ${s}، الدردشة ${c}؛ ويُعاد ما لا يُستخدم. رسائل الدردشة التالية على نفس الفيديو أرخص.` },
+    ru: { line: (s, c, p) => `≈ Резюме ${s} · Чат ${c}/сообщение · Подкаст ${p} кредитов`,
+      tip: (s, c) => `Обычный расход кредитов для этого видео. Для старта нужны свободные кредиты: резюме ${s}, чат ${c}; неиспользованное возвращается. Следующие сообщения по тому же видео дешевле.` }
+  };
+
   static #UNSUPPORTED_REGIONS = {
     zh: '抱歉，此功能在您所在的地区暂不可用。Gemini TTS 目前不支持此地区。',
     fa: 'متأسفانه، این قابلیت در منطقه شما در دسترس نیست.',
@@ -529,6 +558,36 @@ class SummarizerUI {
     } else {
       el.textContent = '';
     }
+  }
+
+  /**
+   * Strip under the header with what this video is expected to cost:
+   * "≈ Summary 4 · Chat 1/message · Podcast 23 credits". `null` hides it.
+   * @param {{summary: {typical: number, required: number}, chat: {typical: number, follow_up: number, required: number}, podcast: {typical: number}}|null} estimates
+   */
+  showCreditEstimate(estimates) {
+    const header = this.#panelRoot?.querySelector('.ytai-header');
+    if (!header) return;
+    let el = this.#panelRoot.querySelector('#ytaiCreditEstimate');
+    const valid = estimates
+      && [estimates.summary?.typical, estimates.chat?.typical, estimates.podcast?.typical]
+        .every((n) => Number.isFinite(n) && n >= 0);
+    if (!valid) {
+      el?.remove();
+      return;
+    }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ytaiCreditEstimate';
+      el.className = 'ytai-credit-estimate';
+      header.insertAdjacentElement('afterend', el);
+    }
+    const text = SummarizerUI.#ESTIMATE_TEXT[this.#uiLang()] || SummarizerUI.#ESTIMATE_TEXT.en;
+    const chat = estimates.chat.follow_up < estimates.chat.typical
+      ? `${estimates.chat.typical}→${estimates.chat.follow_up}`
+      : `${estimates.chat.typical}`;
+    el.textContent = text.line(estimates.summary.typical, chat, estimates.podcast.typical);
+    el.title = text.tip(estimates.summary.required, estimates.chat.required);
   }
 
   /**

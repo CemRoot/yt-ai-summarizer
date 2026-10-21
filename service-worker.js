@@ -11,7 +11,8 @@ importScripts(
   'utils/api-client.js',
   'utils/transcript-url-allowlist.js',
   'utils/article-page-eligibility.js',
-  'utils/video-chat-prompt.js'
+  'utils/video-chat-prompt.js',
+  'utils/podcast-script.js'
 );
 
 // Production uninstall page: hosted on developer domain (Vercel). Source file in
@@ -22,7 +23,11 @@ chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 const OLLAMA_API_BASE = 'https://ollama.com/api/chat';
 /** @see https://ai.google.dev/gemini-api/docs/speech-generation — preview TTS model id for generateContent */
-const GEMINI_TTS_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
+// Podcast audio (BYOK Gemini key). GA model through the Interactions API; the
+// preview model is a transition fallback until Google shuts it down on 2026-11-17.
+const GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
+const GEMINI_INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+const GEMINI_TTS_LEGACY_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent';
 const MAX_RETRIES = 3;
 
 /**
@@ -399,6 +404,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ session: null, credits: null });
       });
+    return true;
+  }
+
+  if (message.action === 'estimateCredits') {
+    (async () => {
+      // Quotes only matter when credits are spent; BYOK users pay their own provider.
+      const mode = await getManagedMode();
+      if (!mode.managed) return { skip: true };
+      const transcript = String(message.data?.transcript || '');
+      if (!transcript.trim()) return { skip: true };
+      // Privacy: only character counts leave the browser for a quote — no text, no video id.
+      return ApiClient.getInstance().estimateCredits({ stats: transcriptStats(transcript) });
+    })()
+      .then(sendResponse)
+      .catch((err) => sendResponse({ error: err?.message || 'Failed' }));
     return true;
   }
 
@@ -793,6 +813,20 @@ async function getProviderConfig() {
  * Determine if the current session supports managed AI (Edge Function).
  * Returns { managed: true, session } or { managed: false }.
  */
+/**
+ * Character counts by script for credit quotes (the server turns them into
+ * tokens: CJK/kana/Hangul ≈ 1 token per char, Cyrillic/Arabic/Indic/Thai ≈ 2
+ * chars per token, Latin ≈ 3.5). Same character classes as the server.
+ */
+function transcriptStats(text) {
+  const s = String(text || '');
+  return {
+    chars: s.length,
+    dense: (s.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff]/g) || []).length,
+    wide: (s.match(/[\u0370-\u03ff\u0400-\u052f\u0590-\u06ff\u0900-\u0dff\u0e00-\u0e7f]/g) || []).length
+  };
+}
+
 async function getManagedMode() {
   let session;
   try {
@@ -1085,78 +1119,75 @@ async function handleSummarizeAll(data, tabId) {
 }
 
 /**
- * Generate a NotebookLM-style two-host podcast script from summary text.
- * Returns a JSON array of dialogue lines: [{ speaker: "Alex"|"Sam", text: "..." }, ...].
- * Legacy models may emit "A"|"B"; the TTS step maps those to Alex/Sam for Gemini multi-speaker config.
+ * Two-host podcast: script (Alex/Sam JSON) → Gemini multi-speaker TTS.
+ * Voices, notes, dialogue repair and TTS formatting live in utils/podcast-script.js.
+ * The notes sent to the script step are summary + key points + detailed analysis.
  */
-/*
- * Verified voice list from Google Cloud official docs:
- * https://cloud.google.com/text-to-speech/docs/gemini-tts
- * https://github.com/GoogleCloudPlatform/generative-ai/blob/main/audio/speech/getting-started/get_started_with_gemini_tts_voices.ipynb
- *
- * Female: Achernar, Aoede, Autonoe, Callirrhoe, Despina, Erinome, Gacrux, Kore, Laomedeia, Leda, Pulcherrima, Sulafat, Vindemiatrix, Zephyr
- * Male:   Achird, Algenib, Algieba, Alnilam, Charon, Enceladus, Fenrir, Iapetus, Orus, Puck, Rasalgethi, Sadachbia, Sadaltager, Schedar, Umbriel, Zubenelgenubi
- */
-const VOICE_PAIRS = [
-  { a: { name: 'Charon',  gender: 'M' }, b: { name: 'Puck',    gender: 'M' } },
-  { a: { name: 'Kore',    gender: 'F' }, b: { name: 'Puck',    gender: 'M' } },
-  { a: { name: 'Charon',  gender: 'M' }, b: { name: 'Aoede',   gender: 'F' } },
-  { a: { name: 'Kore',    gender: 'F' }, b: { name: 'Aoede',   gender: 'F' } },
-  { a: { name: 'Fenrir',  gender: 'M' }, b: { name: 'Leda',    gender: 'F' } },
-  { a: { name: 'Leda',    gender: 'F' }, b: { name: 'Orus',    gender: 'M' } },
-  { a: { name: 'Orus',    gender: 'M' }, b: { name: 'Kore',    gender: 'F' } },
-  { a: { name: 'Zephyr',  gender: 'F' }, b: { name: 'Charon',  gender: 'M' } },
-  { a: { name: 'Fenrir',  gender: 'M' }, b: { name: 'Zephyr',  gender: 'F' } },
-  { a: { name: 'Aoede',   gender: 'F' }, b: { name: 'Fenrir',  gender: 'M' } },
-];
-
-function pickVoicePair() {
-  return VOICE_PAIRS[Math.floor(Math.random() * VOICE_PAIRS.length)];
-}
-
 /**
- * Guarantees a dialogue array has both "Alex" and "Sam" speakers with alternation.
- * Gemini multi-speaker TTS matches lines by exact speaker name — if the LLM emitted
- * all lines as "Alex" (common Ollama Cloud failure mode), only voiceA would speak
- * and users got a single-voice podcast. When the model got it right, this is a
- * no-op; when it didn't, we reassign speakers in alternation so both voices are
- * always used. Dialogue text is never altered.
- * @param {Array<{speaker?: string, text?: string}>} dialogue
+ * BYOK podcast audio: the GA TTS model first; while the preview still exists,
+ * any failure other than key / region / quota gets one legacy try. The key goes
+ * in the `x-goog-api-key` header, never in the URL.
+ * @returns {Promise<string>} base64 24 kHz mono PCM
  */
-function normalizePodcastDialogue(dialogue) {
-  if (!Array.isArray(dialogue) || dialogue.length < 2) return dialogue;
-  const clean = dialogue
-    .filter((l) => l && typeof l.text === 'string' && l.text.trim().length > 0)
-    .map((l) => ({
-      speaker: typeof l.speaker === 'string' ? l.speaker.trim() : '',
-      text: l.text.trim(),
-    }));
-  if (clean.length < 2) return dialogue;
-  const alexCount = clean.filter((l) => l.speaker === 'Alex').length;
-  const samCount = clean.filter((l) => l.speaker === 'Sam').length;
-  const needsRepair =
-    alexCount === 0 ||
-    samCount === 0 ||
-    Math.abs(alexCount - samCount) > Math.ceil(clean.length / 2);
-  if (!needsRepair) return clean;
-  console.warn(
-    `[YTAI] podcast repair: ${alexCount} Alex / ${samCount} Sam / ${clean.length} total — reassigning alternately`
-  );
-  return clean.map((l, i) => ({ speaker: i % 2 === 0 ? 'Alex' : 'Sam', text: l.text }));
-}
+async function renderByokPodcastAudio(dialogue, voices, geminiKey) {
+  const headers = { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey };
+  const failOn = async (res) => {
+    if (res.status === 403) throw new Error('GEMINI_REGION_BLOCKED');
+    if (res.status === 429) throw new Error('GEMINI_RATE_LIMITED');
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(`GEMINI_TTS_ERROR: ${errData.error?.message || res.status}`);
+  };
 
-function hostLabel(voice) {
-  return voice.gender === 'F' ? 'she' : 'he';
+  try {
+    const res = await fetch(GEMINI_INTERACTIONS_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(PodcastScript.buildInteractionsTtsRequest(
+        dialogue, { a: voices.a.name, b: voices.b.name }, GEMINI_TTS_MODEL
+      ))
+    });
+    if (!res.ok) await failOn(res);
+    const out = PodcastScript.extractInteractionsAudio(await res.json());
+    if (!out) throw new Error('GEMINI_TTS_ERROR: no audio in response');
+    return out.audioBase64;
+  } catch (err) {
+    if (/GEMINI_REGION_BLOCKED|GEMINI_RATE_LIMITED/.test(err?.message || '') || err?.status === 401) throw err;
+    console.warn('[YTAI] GA TTS failed, trying legacy preview:', err?.message);
+  }
+
+  const res = await fetch(GEMINI_TTS_LEGACY_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: PodcastScript.buildTtsPrompt(PodcastScript.formatTtsScript(dialogue)) }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          multiSpeakerVoiceConfig: {
+            speakerVoiceConfigs: [
+              { speaker: 'Alex', voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.a.name } } },
+              { speaker: 'Sam', voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.b.name } } }
+            ]
+          }
+        }
+      }
+    })
+  });
+  if (!res.ok) await failOn(res);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
 }
 
 async function handleGeneratePodcast(data, tabId) {
-  const { summaryText, language, videoId } = data;
+  const { language, videoId } = data;
+  // `notes` = { summary, keypoints, detailed }; `summaryText` is the pre-2.1.7 shape.
+  const summaryText = PodcastScript.buildNotes(data.notes || { summary: data.summaryText });
 
-  if (!summaryText || summaryText.trim().length === 0) {
+  if (!summaryText.trim()) {
     throw new Error('No summary available to generate podcast.');
   }
 
-  const voices = pickVoicePair();
+  const voices = PodcastScript.pickVoicePair();
 
   function sendProgress(text, progress) {
     if (tabId) {
@@ -1191,29 +1222,15 @@ async function handleGeneratePodcast(data, tabId) {
       throw err;
     }
 
-    let dialogue;
-    try {
-      let raw = (scriptRes.result || '').trim();
-      raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-      dialogue = JSON.parse(raw);
-    } catch {
-      const match = (scriptRes.result || '').match(/\[[\s\S]*\]/);
-      if (match) {
-        try { dialogue = JSON.parse(match[0]); } catch { /* ignore */ }
-      }
-    }
-
-    if (!Array.isArray(dialogue) || dialogue.length < 4) {
+    const dialogue = PodcastScript.normalizeDialogue(PodcastScript.parseJson(scriptRes.result));
+    if (!dialogue) {
       throw new Error('Failed to generate podcast script. Please try again.');
     }
 
     // Step 2: TTS via managed backend
     sendProgress('Generating audio (Cloud TTS)...', 0.5);
 
-    const ttsTranscript = dialogue.map(line => {
-      const name = line.speaker === 'A' ? 'Alex' : (line.speaker === 'B' ? 'Sam' : line.speaker);
-      return `${name}: ${line.text}`;
-    }).join('\n');
+    const ttsTranscript = PodcastScript.formatTtsScript(dialogue);
 
     let ttsRes;
     try {
@@ -1269,117 +1286,22 @@ async function handleGeneratePodcast(data, tabId) {
 
   sendProgress('Writing podcast script...', 0.2);
 
-  const languageInstruction = buildLanguageInstruction(language, summaryText);
-
-  const hostADesc = voices.a.gender === 'F'
-    ? 'HOST A ("Alex"): The knowledgeable female host who explains the topic. Enthusiastic, clear, uses analogies.'
-    : 'HOST A ("Alex"): The knowledgeable male host who explains the topic. Enthusiastic, clear, uses analogies.';
-  const hostBDesc = voices.b.gender === 'F'
-    ? 'HOST B ("Sam"): The curious female co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.'
-    : 'HOST B ("Sam"): The curious male co-host who asks smart questions, reacts with surprise/excitement, and adds witty comments.';
-
-  const podcastPrompt = `You are a podcast script writer. Convert the following video summary into a natural, engaging conversation between TWO podcast hosts.
-
-${hostADesc}
-${hostBDesc}
-
-HARD REQUIREMENTS (violating any breaks the podcast):
-- Speakers MUST strictly alternate: Alex → Sam → Alex → Sam → ... starting with Alex.
-- BOTH speakers MUST appear. Never give a long monologue to one host.
-- Aim for roughly 50/50 speaker split (±1 turn).
-- Write 10-14 dialogue turns total (5-7 per host). Shorter is better — TTS is slow.
-- Each turn is ONE speaker only. Never combine two hosts in one JSON element.
-- The "speaker" field MUST be exactly "Alex" or "Sam" (case-sensitive).
-
-Style:
-- Start with a warm intro: "Hey everyone, welcome back!" style (Alex opens).
-- End with a brief wrap-up and sign-off.
-- Keep it conversational and fun — use "wow", "that's wild", "wait, really?" naturally.
-- Each line should be 1-3 sentences (speakable in 5-15 seconds).
-- DO NOT use any markdown formatting. Plain text only.
-- Sam should occasionally summarize what Alex said in simpler terms.
-${languageInstruction}
-
-You MUST respond with ONLY a valid JSON array. No markdown, no code fences, no explanation.
-Format (note alternation):
-[{"speaker":"Alex","text":"Hey everyone, welcome back!"},{"speaker":"Sam","text":"So what are we diving into today?"},{"speaker":"Alex","text":"..."},{"speaker":"Sam","text":"..."}]`;
-
   const result = await callAI(provider, apiKey, model, [
-    { role: 'system', content: podcastPrompt },
-    { role: 'user', content: `Here is the video summary to convert into a podcast conversation:\n\n${summaryText}` }
+    { role: 'system', content: PodcastScript.buildSystemPrompt(language, voices) },
+    { role: 'user', content: PodcastScript.buildUserPrompt(summaryText) }
   ], 0, 4096);
 
-  let dialogue;
-  try {
-    let raw = result.content.trim();
-    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-    dialogue = JSON.parse(raw);
-  } catch {
-    const match = result.content.match(/\[[\s\S]*\]/);
-    if (match) {
-      try { dialogue = JSON.parse(match[0]); } catch { /* ignore */ }
-    }
-  }
-
-  if (!Array.isArray(dialogue) || dialogue.length < 4) {
+  // Same repair the managed server applies: Alex/Sam only, clean spoken text,
+  // no back-to-back turns, so multi-speaker TTS uses both voices.
+  const dialogue = PodcastScript.normalizeDialogue(PodcastScript.parseJson(result.content));
+  if (!dialogue) {
     throw new Error('Failed to generate podcast script. Please try again.');
   }
-
-  // Repair: if BYOK LLM collapsed to one speaker, force alternating Alex/Sam so
-  // multi-speaker TTS actually uses both voices. Mirrors the edge-side
-  // `repairPodcastDialogue` guard; TTS only respects speakers named exactly
-  // "Alex" and "Sam" per the speakerVoiceConfigs below.
-  dialogue = normalizePodcastDialogue(dialogue);
 
   // Step 2: Convert script to audio via Gemini TTS
   sendProgress('Generating audio with Gemini TTS...', 0.5);
 
-  const ttsTranscript = dialogue.map(line => {
-    const name = line.speaker === 'A' ? 'Alex' : (line.speaker === 'B' ? 'Sam' : line.speaker);
-    return `${name}: ${line.text}`;
-  }).join('\n');
-
-  const ttsResponse = await fetch(`${GEMINI_TTS_BASE}?key=${geminiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: ttsTranscript }] }],
-      generationConfig: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          multiSpeakerVoiceConfig: {
-            speakerVoiceConfigs: [
-              {
-                speaker: 'Alex',
-                voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.a.name } }
-              },
-              {
-                speaker: 'Sam',
-                voiceConfig: { prebuiltVoiceConfig: { voiceName: voices.b.name } }
-              }
-            ]
-          }
-        }
-      }
-    })
-  });
-
-  if (ttsResponse.status === 403) {
-    throw new Error('GEMINI_REGION_BLOCKED');
-  }
-
-  if (ttsResponse.status === 429) {
-    throw new Error('GEMINI_RATE_LIMITED');
-  }
-
-  if (!ttsResponse.ok) {
-    const errData = await ttsResponse.json().catch(() => ({}));
-    throw new Error(`GEMINI_TTS_ERROR: ${errData.error?.message || ttsResponse.status}`);
-  }
-
-  const ttsData = await ttsResponse.json();
-  const audioBase64 = ttsData.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
+  const audioBase64 = await renderByokPodcastAudio(dialogue, voices, geminiKey);
   if (!audioBase64) {
     throw new Error('Gemini TTS returned no audio data.');
   }

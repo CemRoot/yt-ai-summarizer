@@ -95,7 +95,8 @@ class ArticleExtractor {
 
       this.#lastExtraction = {
         title: article.title || document.title || 'Untitled',
-        content: article.content,
+        // Readability's HTML (`article.content`) is not used anywhere and can be
+        // hundreds of KB, so only the text is kept.
         textContent: textContent,
         excerpt: article.excerpt || this.#generateExcerpt(textContent),
         byline: article.byline || this.#extractAuthor(),

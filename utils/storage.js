@@ -554,8 +554,11 @@ class StorageHelper {
     try {
       const useSession = await this.#checkSession();
       const storage = useSession ? chrome.storage.session : chrome.storage.local;
+      // `entries` repeats the whole text as thousands of objects; session storage
+      // lives in RAM and shares a 10 MB quota with summaries, so keep the text only.
+      const { entries: _entries, ...compact } = transcript || {};
       await new Promise((resolve) => {
-        storage.set({ [cacheKey]: transcript }, () => resolve());
+        storage.set({ [cacheKey]: compact }, () => resolve());
       });
       await this.#touchCacheEntry(videoId);
       await this.#evictIfNeeded();

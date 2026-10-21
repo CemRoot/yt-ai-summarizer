@@ -14,6 +14,8 @@ class PodcastPlayer {
   #gainNode = null;
   #sourceNode = null;
   #audioBuffer = null;
+  /** Base64 the current buffer was decoded from (same string the content cache holds). */
+  #loadedFrom = null;
   /** Output gain 0–1; persisted via settings from UI */
   #volume = 1;
   #startTime = 0;
@@ -74,7 +76,31 @@ class PodcastPlayer {
 
   // ─── Audio loading ─────────────────────────────────────────────────
 
+  /**
+   * Gemini TTS PCM (24 kHz mono s16le, as a binary string from atob) → Float32
+   * samples in `out`, read straight from the string with no intermediate copy.
+   * @param {string} binary
+   * @param {Float32Array} out length = binary.length >> 1
+   */
+  static decodePcm16le(binary, out) {
+    for (let i = 0; i < out.length; i++) {
+      let s = (binary.charCodeAt(2 * i + 1) << 8) | binary.charCodeAt(2 * i);
+      if (s >= 0x8000) s -= 0x10000;
+      out[i] = s / 32768;
+    }
+  }
+
   async loadAudio(base64Data) {
+    // Returning to the Podcast tab re-renders the player with the same audio:
+    // keep the decoded buffer (≈ 6 MB per minute) and the playback position.
+    if (this.#audioBuffer && this.#loadedFrom === base64Data) {
+      this.#notifyState();
+      return;
+    }
+    this.#stopSource();
+    this.#stopProgressPolling();
+    this.#audioBuffer = null;
+
     if (!this.#audioContext) {
       this.#audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.#gainNode = this.#audioContext.createGain();
@@ -83,18 +109,11 @@ class PodcastPlayer {
     }
 
     const raw = atob(base64Data);
-    const bytes = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-
     const sampleRate = 24000;
-    const numSamples = bytes.length / 2;
+    const numSamples = raw.length >> 1;
     this.#audioBuffer = this.#audioContext.createBuffer(1, numSamples, sampleRate);
-    const channelData = this.#audioBuffer.getChannelData(0);
-
-    const view = new DataView(bytes.buffer);
-    for (let i = 0; i < numSamples; i++) {
-      channelData[i] = view.getInt16(i * 2, true) / 32768;
-    }
+    PodcastPlayer.decodePcm16le(raw, this.#audioBuffer.getChannelData(0));
+    this.#loadedFrom = base64Data;
 
     this.#duration = this.#audioBuffer.duration;
     this.#pauseOffset = 0;
@@ -158,7 +177,13 @@ class PodcastPlayer {
     this.#stopSource();
     this.#isPlaying = false;
     this.#stopProgressPolling();
+    this.#suspendContext();
     this.#notifyState();
+  }
+
+  /** Idle audio hardware between plays; #startPlayback resumes it. */
+  #suspendContext() {
+    if (this.#audioContext?.state === 'running') this.#audioContext.suspend().catch(() => {});
   }
 
   togglePlayPause(base64Data) {
@@ -178,6 +203,7 @@ class PodcastPlayer {
     this.#isPlaying = false;
     this.#pauseOffset = 0;
     this.#stopProgressPolling();
+    this.#suspendContext();
     this.#notifyState();
   }
 
@@ -255,6 +281,7 @@ class PodcastPlayer {
     }
     this.#gainNode = null;
     this.#audioBuffer = null;
+    this.#loadedFrom = null;
     this.#onStateChange = null;
     PodcastPlayer.#instance = null;
   }
